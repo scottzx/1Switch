@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -132,6 +133,11 @@ func GetGatewayToken(c *gin.Context) {
 // @Success 200 {string} string
 // @Router /api/gateway/dashboard-url [get]
 func GetDashboardURL(c *gin.Context) {
-	url := service.GetDashboardURL()
+	token, err := service.GetGatewayToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	url := fmt.Sprintf("http://localhost:%d?token=%s", service.ServicePort, token)
 	c.JSON(http.StatusOK, gin.H{"url": url})
 }

@@ -23,6 +23,7 @@ func SetupRouter(r *gin.Engine) {
 		system := api.Group("/system")
 		{
 			system.GET("/info", handler.GetSystemInfo)
+			system.GET("/device-ip", handler.GetDeviceIP)
 		}
 
 		// Config routes

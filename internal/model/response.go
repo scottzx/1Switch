@@ -190,7 +190,8 @@ type AgentConfig struct {
 
 // AgentBinding Agent 渠道绑定
 type AgentBinding struct {
-	Channel   string `json:"channel"`
+	AgentID   *string `json:"agentId,omitempty"`
+	Channel   string  `json:"channel"`
 	AccountID *string `json:"accountId,omitempty"`
 }
 

@@ -3,12 +3,12 @@ import {
   LayoutDashboard,
   Bot,
   Users,
-  MessageSquare,
-  Puzzle,
   FlaskConical,
   ScrollText,
   Settings,
   ShieldAlert,
+  Terminal,
+  Folder,
 } from 'lucide-react';
 import { PageType } from '../../App';
 import clsx from 'clsx';
@@ -29,11 +29,13 @@ const menuItems: { id: PageType; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard', label: '概览', icon: LayoutDashboard },
   { id: 'ai', label: 'AI 配置', icon: Bot },
   { id: 'agents', label: 'Agent 管理', icon: Users },
-  { id: 'channels', label: '消息渠道', icon: MessageSquare },
-  { id: 'skills', label: '技能库', icon: Puzzle },
+  // { id: 'channels', label: '消息渠道', icon: MessageSquare },
+  // { id: 'skills', label: '技能库', icon: Puzzle },
   { id: 'testing', label: '测试诊断', icon: FlaskConical },
   { id: 'logs', label: '应用日志', icon: ScrollText },
   { id: 'security', label: '安全防护', icon: ShieldAlert },
+  { id: 'terminal', label: '终端', icon: Terminal },
+  { id: 'filebrowser', label: '文件', icon: Folder },
   { id: 'settings', label: '设置', icon: Settings },
 ];
 
@@ -55,7 +57,7 @@ export function Sidebar({ currentPage, onNavigate, serviceStatus }: SidebarProps
             <span className="text-lg">🦞</span>
           </div>
           <div>
-            <h1 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>虾池子</h1>
+            <h1 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>iClaw虾窝</h1>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:18789';
+// Use relative path so it works with any port when served by the same origin
+const BASE_URL = '';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

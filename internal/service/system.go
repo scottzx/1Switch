@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"runtime"
 	"strings"
@@ -9,6 +10,34 @@ import (
 
 	"iclaw-admin-api/internal/model"
 )
+
+// GetDeviceIP 获取设备 IP 地址
+func GetDeviceIP() (string, error) {
+	// 获取本机 IP 地址
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+	for _, addr := range addrs {
+		// 检查是否是 IP 地址（排除 loopback）
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				return ipNet.IP.String(), nil
+			}
+		}
+	}
+
+	// 如果没找到，尝试通过连接获取
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String(), nil
+}
 
 // GetSystemInfo 获取系统信息
 func GetSystemInfo() (*model.SystemInfo, error) {
@@ -78,9 +107,105 @@ func GetServiceStatus() (*model.ServiceStatus, error) {
 	if running && len(pids) > 0 {
 		pid := pids[0]
 		status.Pid = &pid
+
+		// 获取进程启动后的运行时间（秒）
+		if uptime, err := getProcessUptime(int(pid)); err == nil {
+			status.UptimeSeconds = &uptime
+		}
+
+		// 获取内存使用（MB）
+		if memMB, err := getProcessMemoryMB(int(pid)); err == nil {
+			memMBFloat := float64(memMB)
+			status.MemoryMb = &memMBFloat
+		}
 	}
 
 	return status, nil
+}
+
+// getProcessUptime 获取进程运行时间（秒）
+func getProcessUptime(pid int) (uint64, error) {
+	var uptime uint64
+
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		// 使用 ps 获取 elapsed time，格式为 [[dd-]hh:]mm:ss
+		out, err := ExecuteCommand("ps", "-o", "etime=", "-p", fmt.Sprintf("%d", pid))
+		if err != nil {
+			return 0, err
+		}
+		etime := strings.TrimSpace(out)
+
+		// 解析时间
+		uptime = parseElapsedTime(etime)
+	} else if runtime.GOOS == "windows" {
+		// Windows 上使用 tasklist
+		_, err := ExecuteCommand("tasklist", "/FI", fmt.Sprintf("PID eq %d", pid), "/FO", "CSV", "/NH")
+		if err != nil {
+			return 0, err
+		}
+		// Windows 解析较复杂，这里返回 0
+		uptime = 0
+	}
+
+	return uptime, nil
+}
+
+// parseElapsedTime 解析 ps etime 输出 (格式: [[dd-]hh:]mm:ss)
+func parseElapsedTime(etime string) uint64 {
+	parts := strings.Split(etime, ":")
+	if len(parts) < 2 {
+		return 0
+	}
+
+	var seconds uint64
+	var minutes uint64
+	var hours uint64
+	var days uint64
+
+	if len(parts) == 4 {
+		// dd-hh:mm:ss
+		fmt.Sscanf(parts[0], "%d", &days)
+		fmt.Sscanf(parts[1], "%d", &hours)
+		fmt.Sscanf(parts[2], "%d", &minutes)
+		fmt.Sscanf(parts[3], "%d", &seconds)
+	} else if len(parts) == 3 {
+		// hh:mm:ss
+		fmt.Sscanf(parts[0], "%d", &hours)
+		fmt.Sscanf(parts[1], "%d", &minutes)
+		fmt.Sscanf(parts[2], "%d", &seconds)
+	} else if len(parts) == 2 {
+		// mm:ss
+		fmt.Sscanf(parts[0], "%d", &minutes)
+		fmt.Sscanf(parts[1], "%d", &seconds)
+	}
+
+	return days*86400 + hours*3600 + minutes*60 + seconds
+}
+
+// getProcessMemoryMB 获取进程内存使用（MB）
+func getProcessMemoryMB(pid int) (uint64, error) {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		out, err := ExecuteCommand("ps", "-o", "rss=", "-p", fmt.Sprintf("%d", pid))
+		if err != nil {
+			return 0, err
+		}
+		var rss uint64
+		fmt.Sscanf(strings.TrimSpace(out), "%d", &rss)
+		return rss / 1024, nil // Convert KB to MB
+	} else if runtime.GOOS == "windows" {
+		out, err := ExecuteCommand("tasklist", "/FI", fmt.Sprintf("PID eq %d", pid), "/FO", "CSV", "/NH")
+		if err != nil {
+			return 0, err
+		}
+		// Windows 格式: "imagename","pid","sessionname","sessionnum","memusage"
+		parts := strings.Split(strings.TrimSpace(out), ",")
+		if len(parts) >= 5 {
+			var mem uint64
+			fmt.Sscanf(strings.Trim(parts[4], " \""), "%d", &mem)
+			return mem / 1024, nil // Convert KB to MB
+		}
+	}
+	return 0, nil
 }
 
 // StartService 启动服务

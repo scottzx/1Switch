@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageType } from '../../App';
 import { RefreshCw, ExternalLink, Loader2, Sun, Moon } from 'lucide-react';
-import { api } from '../../lib/tauri';
 import { useTheme } from '../../lib/ThemeContext';
 
 interface HeaderProps {
@@ -19,6 +18,8 @@ const pageTitles: Record<PageType, { title: string; description: string }> = {
   logs: { title: '应用日志', description: '查看 Manager 应用的控制台日志' },
   security: { title: '安全防护', description: '安全风险检测与一键修复' },
   settings: { title: '设置', description: '身份配置与高级选项' },
+  terminal: { title: '终端', description: 'Web Terminal' },
+  filebrowser: { title: '文件', description: '文件浏览器' },
 };
 
 export function Header({ currentPage }: HeaderProps) {
@@ -32,11 +33,18 @@ export function Header({ currentPage }: HeaderProps) {
   const handleOpenDashboard = async () => {
     setOpening(true);
     try {
-      const url = await api.getDashboardURL();
-      window.open(url, '_blank');
+      // 获取设备 IP 和 token
+      const [ipResponse, tokenResponse] = await Promise.all([
+        fetch('/api/system/device-ip'),
+        fetch('/api/gateway/token')
+      ]);
+      const ipData = await ipResponse.json();
+      const tokenData = await tokenResponse.json();
+      const dashboardUrl = `http://${ipData.ip}:18789?token=${tokenData.token}`;
+      window.open(dashboardUrl, '_blank');
     } catch (e) {
       console.error('打开 Dashboard 失败:', e);
-      window.open('http://localhost:18789', '_blank');
+      window.open('/', '_blank');
     } finally {
       setOpening(false);
     }

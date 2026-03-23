@@ -377,6 +377,18 @@ export function Channels() {
       helpText: t('channels.dingtalk.helpText'),
       docUrl: 'https://open.dingtalk.com/document/',
     },
+    'dingtalk-connector': {
+      name: t('channels.dingtalk.name'),
+      icon: <Bell size={20} />,
+      color: 'text-blue-600',
+      fields: [
+        { key: 'clientId', label: 'Client ID', type: 'text', placeholder: '钉钉 Client ID' },
+        { key: 'clientSecret', label: 'Client Secret', type: 'password', placeholder: '钉钉 Client Secret' },
+        { key: 'gatewayToken', label: 'Gateway Token', type: 'text', placeholder: 'Gateway Token' },
+      ],
+      helpText: t('channels.dingtalk.helpText'),
+      docUrl: 'https://open.dingtalk.com/document/',
+    },
     qqbot: {
       name: 'QQ',
       icon: <MessageSquare size={20} />,

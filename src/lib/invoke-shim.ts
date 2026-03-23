@@ -51,14 +51,19 @@ const commandMap: Record<string, (args?: Record<string, unknown>) => Promise<unk
   test_channel: (args) => api.testChannel(args?.channelType as string),
   send_test_message: (args) => api.sendTestMessage(args?.channelType as string, args?.target as string),
   start_channel_login: (args) => api.startChannelLogin(args?.channelType as string),
+  check_feishu_plugin: () => Promise.resolve({ installed: false, version: null, plugin_name: null }),
+  install_feishu_plugin: () => Promise.resolve('Feishu plugin installation not implemented'),
+  check_qqbot_plugin: () => Promise.resolve({ installed: false, version: null, plugin_name: null }),
+  install_qqbot_plugin: () => Promise.resolve('QQBot plugin installation not implemented'),
 
   // Agents
-  get_agents: () => api.getAgents(),
+  get_agents_list: () => api.getAgents(),
   save_agent: (args) => api.saveAgent(args?.agent),
   delete_agent: (args) => api.deleteAgent(args?.agentId as string),
   set_default_agent: (args) => api.setDefaultAgent(args?.agentId as string),
 
   // Skills
+  get_skills_list: () => api.getSkills(),
   get_skills: () => api.getSkills(),
   install_skill: (args) => api.installSkill(args?.skillId as string),
   uninstall_skill: (args) => api.uninstallSkill(args?.skillId as string),
@@ -81,8 +86,9 @@ const commandMap: Record<string, (args?: Record<string, unknown>) => Promise<unk
   check_environment: () => api.checkEnvironment(),
   install_nodejs: () => api.installNodeJS(),
   install_openclaw: () => api.installOpenClaw(),
+  init_openclaw_config: () => api.initConfig(),
   init_config: () => api.initConfig(),
-  open_install_terminal: (args) => api.openInstallTerminal(args?.type as string),
+  open_install_terminal: (args) => api.openInstallTerminal(args?.installType as string || args?.type as string),
   uninstall_openclaw: () => api.uninstallOpenClaw(),
   check_openclaw_update: () => api.checkUpdate(),
   update_openclaw: () => api.updateOpenClaw(),
