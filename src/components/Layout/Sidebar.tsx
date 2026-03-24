@@ -9,6 +9,8 @@ import {
   ShieldAlert,
   Terminal,
   Folder,
+  Network,
+  Wifi,
 } from 'lucide-react';
 import { PageType } from '../../App';
 import clsx from 'clsx';
@@ -31,6 +33,8 @@ const menuItems: { id: PageType; label: string; icon: React.ElementType }[] = [
   { id: 'agents', label: 'Agent 管理', icon: Users },
   // { id: 'channels', label: '消息渠道', icon: MessageSquare },
   // { id: 'skills', label: '技能库', icon: Puzzle },
+  { id: 'network', label: '网络', icon: Network },
+  { id: 'wifi', label: 'Wi-Fi', icon: Wifi },
   { id: 'testing', label: '测试诊断', icon: FlaskConical },
   { id: 'logs', label: '应用日志', icon: ScrollText },
   { id: 'security', label: '安全防护', icon: ShieldAlert },

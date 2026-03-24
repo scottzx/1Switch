@@ -148,6 +148,105 @@ export interface ModelConfig {
   };
 }
 
+// System monitoring types (from admin-ui)
+export interface SystemInfo {
+  hostname: string;
+  os: string;
+  kernel: string;
+  uptime: number;
+  cpu_model: string;
+  cpu_cores: number;
+  memory_total: number;
+  memory_used: number;
+}
+
+export interface ServiceStatusDetail {
+  name: string;
+  active: boolean;
+  running: boolean;
+  pid?: number;
+}
+
+export interface SystemStatus {
+  services: ServiceStatusDetail[];
+}
+
+export interface SystemUsage {
+  cpu_percent: number;
+  memory_percent: number;
+  memory_used: number;
+  memory_total: number;
+  disk_percent: number;
+  disk_total: number;
+  disk_used: number;
+}
+
+export interface NetworkInterface {
+  name: string;
+  ip: string;
+  mac: string;
+  type: string;
+  state: string;
+}
+
+export interface WifiNetwork {
+  ssid: string;
+  bssid: string;
+  signal: number;
+  security: string;
+  frequency: number;
+}
+
+export interface ApStatus {
+  active: boolean;
+  ssid?: string;
+  ip?: string;
+}
+
+// System monitoring API (from admin-ui)
+export const systemApi = {
+  info: async (): Promise<SystemInfo> => {
+    const response = await apiClient.get<SystemInfo>('/api/system/info');
+    return response.data;
+  },
+  status: async (): Promise<SystemStatus> => {
+    const response = await apiClient.get<SystemStatus>('/api/system/status');
+    return response.data;
+  },
+  usage: async (): Promise<SystemUsage> => {
+    const response = await apiClient.get<SystemUsage>('/api/system/usage');
+    return response.data;
+  },
+  restartOpenclaw: async (): Promise<void> => {
+    await apiClient.post('/api/system/openclaw/restart');
+  },
+};
+
+// Network API (from admin-ui)
+export const networkApi = {
+  interfaces: async (): Promise<NetworkInterface[]> => {
+    const response = await apiClient.get<NetworkInterface[]>('/api/network/interfaces');
+    return response.data;
+  },
+  wifiScan: async (): Promise<WifiNetwork[]> => {
+    const response = await apiClient.get<WifiNetwork[]>('/api/network/wifi/scan');
+    return response.data;
+  },
+  wifiConnect: async (ssid: string, password?: string): Promise<void> => {
+    await apiClient.post('/api/network/wifi/connect', { ssid, password });
+  },
+  apStatus: async (): Promise<ApStatus> => {
+    const response = await apiClient.get<ApStatus>('/api/network/ap');
+    return response.data;
+  },
+  apStart: async (): Promise<void> => {
+    await apiClient.post('/api/network/ap/start');
+  },
+  apStop: async (): Promise<void> => {
+    await apiClient.post('/api/network/ap/stop');
+  },
+};
+
 // Legacy types for backward compatibility
 export interface AIProviderOption {
   id: string;

@@ -15,7 +15,7 @@ export type {
   AITestResult,
 } from '../services/api';
 
-import { api as apiClient } from '../services/api';
+import { api as apiClient, systemApi, networkApi } from '../services/api';
 import { apiLogger } from './logger';
 
 // Wrappers to maintain backward compatibility with existing Tauri API interface
@@ -113,6 +113,21 @@ export const api: Record<string, (...args: any[]) => Promise<any>> = {
   uninstallOpenClaw: () => apiCallWithLog(() => apiClient.uninstallOpenClaw()),
   checkUpdate: () => apiCallWithLog(() => apiClient.checkUpdate()),
   updateOpenClaw: () => apiCallWithLog(() => apiClient.updateOpenClaw()),
+
+  // System monitoring (from admin-ui)
+  getDeviceSystemInfo: () => apiCallWithLog(() => systemApi.info()),
+  getSystemStatus: () => apiCallWithLog(() => systemApi.status()),
+  getSystemUsage: () => apiCallWithLog(() => systemApi.usage()),
+  restartOpenClaw: () => apiCallWithLog(() => systemApi.restartOpenclaw()),
+
+  // Network / WiFi (from admin-ui)
+  getNetworkInterfaces: () => apiCallWithLog(() => networkApi.interfaces()),
+  wifiScan: () => apiCallWithLog(() => networkApi.wifiScan()),
+  wifiConnect: (ssid: string, password?: string) =>
+    apiCallWithLog(() => networkApi.wifiConnect(ssid, password)),
+  getApStatus: () => apiCallWithLog(() => networkApi.apStatus()),
+  startAp: () => apiCallWithLog(() => networkApi.apStart()),
+  stopAp: () => apiCallWithLog(() => networkApi.apStop()),
 };
 
 // isTauri is no longer relevant - we're using REST API

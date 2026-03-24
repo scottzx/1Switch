@@ -14,12 +14,14 @@ import { Testing } from './components/Testing';
 import { Logs } from './components/Logs';
 import { Terminal } from './components/Terminal';
 import { FileBrowser } from './components/FileBrowser';
+import { Network } from './components/Network';
+import { WifiSettings } from './components/WifiSettings';
 import { appLogger } from './lib/logger';
 import { api } from './lib/tauri';
 import { ThemeProvider } from './lib/ThemeContext';
 import { Download, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
-export type PageType = 'dashboard' | 'ai' | 'agents' | 'channels' | 'skills' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser';
+export type PageType = 'dashboard' | 'ai' | 'agents' | 'channels' | 'skills' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser' | 'network' | 'wifi';
 
 export interface EnvironmentStatus {
   node_installed: boolean;
@@ -181,6 +183,8 @@ function App() {
       settings: <Settings onEnvironmentChange={checkEnvironment} />,
       terminal: <Terminal />,
       filebrowser: <FileBrowser />,
+      network: <Network />,
+      wifi: <WifiSettings />,
     };
 
     return (
