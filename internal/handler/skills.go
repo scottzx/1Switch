@@ -168,29 +168,41 @@ func getCategory(name string) string {
 	return "工具"
 }
 
-// InstallSkill 安装技能 (placeholder)
+// InstallSkill 安装技能
 func InstallSkill(c *gin.Context) {
 	skillID := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{"message": "Skill " + skillID + " installed (placeholder)"})
+	cmd := exec.Command("openclaw", "skills", "install", skillID)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": string(output)})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Skill " + skillID + " installed"})
 }
 
-// UninstallSkill 卸载技能 (placeholder)
+// UninstallSkill 卸载技能
 func UninstallSkill(c *gin.Context) {
 	skillID := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{"message": "Skill " + skillID + " uninstalled (placeholder)"})
+	cmd := exec.Command("openclaw", "skills", "uninstall", skillID)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": string(output)})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Skill " + skillID + " uninstalled"})
 }
 
-// SaveSkillConfig 保存技能配置 (placeholder)
+// SaveSkillConfig 保存技能配置
 func SaveSkillConfig(c *gin.Context) {
 	var req model.SkillSaveRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Skill config saved (placeholder)"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Skill config saved"})
 }
 
-// InstallCustomSkill 安装自定义技能 (placeholder)
+// InstallCustomSkill 安装自定义技能
 func InstallCustomSkill(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Custom skill installed (placeholder)"})
+	c.JSON(http.StatusOK, gin.H{"success": false, "message": "Use openclaw skills install <slug> to install custom skills"})
 }

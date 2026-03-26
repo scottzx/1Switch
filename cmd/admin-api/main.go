@@ -11,7 +11,15 @@ import (
 	"iclaw-admin-api/internal/router"
 )
 
+const Version = "v2026.3.23-2"
+
 func main() {
+	// Check version flag
+	if len(os.Args) > 1 && os.Args[1] == "--version" {
+		println("iClaw Admin API version", Version)
+		os.Exit(0)
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "1420" // 前端端口
@@ -44,6 +52,14 @@ func main() {
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	// Version check
+	r.GET("/api/version", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"version": Version,
+			"name":    "iClaw Admin API",
+		})
 	})
 
 	// Setup API routes (router.SetupRouter already creates /api group)

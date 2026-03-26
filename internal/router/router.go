@@ -144,5 +144,12 @@ func SetupRouter(r *gin.Engine) {
 			install.GET("/update-check", handler.CheckOpenClawUpdate)
 			install.POST("/update", handler.UpdateOpenClaw)
 		}
+
+		// OTA routes
+		ota := api.Group("/ota")
+		{
+			ota.GET("/check", handler.CheckOtaUpdate)
+			ota.GET("/download/:type", handler.DownloadOtaUpdate)
+		}
 	}
 }

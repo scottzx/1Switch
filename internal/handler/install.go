@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -176,4 +180,79 @@ func UpdateOpenClaw(c *gin.Context) {
 		Success: true,
 		Message: strings.TrimSpace(string(output)),
 	})
+}
+
+// CheckOtaUpdate 检查 OTA 更新
+func CheckOtaUpdate(c *gin.Context) {
+	otaHost := os.Getenv("OTA_HOST")
+	if otaHost == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "OTA_HOST not configured",
+		})
+		return
+	}
+
+	otaUrl := strings.TrimRight(otaHost, "/") + "/api/ota/version/latest"
+
+	resp, err := http.Get(otaUrl)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   fmt.Sprintf("Failed to connect to OTA server: %v", err),
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "Failed to read OTA response",
+		})
+		return
+	}
+
+	// 转发响应
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), body)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// DownloadOtaUpdate 下载 OTA 更新包
+func DownloadOtaUpdate(c *gin.Context) {
+	downloadType := c.Param("type")
+	if downloadType != "web" && downloadType != "api" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid type, must be 'web' or 'api'"})
+		return
+	}
+
+	otaHost := os.Getenv("OTA_HOST")
+	if otaHost == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "OTA_HOST not configured",
+		})
+		return
+	}
+
+	otaUrl := strings.TrimRight(otaHost, "/") + "/api/ota/download/" + downloadType
+
+	resp, err := http.Get(otaUrl)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   fmt.Sprintf("Failed to download: %v", err),
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	// 转发文件
+	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 }
