@@ -91,66 +91,220 @@ func SaveProvider(c *gin.Context) {
 	if config["models"] == nil {
 		config["models"] = map[string]interface{}{}
 	}
-	models := config["models"].(map[string]interface{})
-	if models["providers"] == nil {
-		models["providers"] = map[string]interface{}{}
+	modelsMap := config["models"].(map[string]interface{})
+	if modelsMap["providers"] == nil {
+		modelsMap["providers"] = map[string]interface{}{}
 	}
-	providers := models["providers"].(map[string]interface{})
+	providersMap := modelsMap["providers"].(map[string]interface{})
 
-	// 构建 provider 数据
-	providerData := map[string]interface{}{
+	// 构建 provider 配置
+	providerConfig := map[string]interface{}{
 		"baseUrl": req.BaseURL,
+		"apiKey":  req.APIKey,
+		"models":  []map[string]interface{}{},
 	}
-	if req.APIKey != "" {
-		providerData["apiKey"] = req.APIKey
-	}
+
+	// 如果提供了模型列表，转换格式
 	if len(req.Models) > 0 {
 		modelsList := make([]map[string]interface{}, 0, len(req.Models))
-		for _, m := range req.Models {
-			modelMap := map[string]interface{}{
-				"id":   m.ID,
-				"name": m.Name,
-			}
-			if m.API != "" {
-				modelMap["api"] = m.API
-			}
-			if m.ContextWindow != 0 {
-				modelMap["contextWindow"] = m.ContextWindow
-			}
-			if m.MaxTokens != 0 {
-				modelMap["maxTokens"] = m.MaxTokens
-			}
-			modelsList = append(modelsList, modelMap)
+		for _, modelName := range req.Models {
+			modelsList = append(modelsList, map[string]interface{}{
+				"id":   modelName,
+				"name": modelName,
+				"api":  req.APIType,
+			})
 		}
-		providerData["models"] = modelsList
+		providerConfig["models"] = modelsList
 	}
 
-	providers[req.Name] = providerData
+	providersMap[req.Name] = providerConfig
 
 	if err := service.SaveConfig(config); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Provider " + req.Name + " saved"})
+	c.JSON(http.StatusOK, gin.H{"message": "Provider saved successfully"})
 }
 
-// DeleteProvider 删除 Provider (placeholder)
+// DeleteProvider 删除 Provider
 func DeleteProvider(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Provider deleted (placeholder)"})
+	providerName := c.Query("name")
+	if providerName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "provider name is required"})
+		return
+	}
+
+	config, err := service.GetConfig()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 从 providers 中删除
+	deleted := false
+	if modelsMap, ok := config["models"].(map[string]interface{}); ok {
+		if providersMap, ok := modelsMap["providers"].(map[string]interface{}); ok {
+			if _, exists := providersMap[providerName]; exists {
+				delete(providersMap, providerName)
+				deleted = true
+			}
+		}
+	}
+
+	// 从可用模型中删除该 provider 的所有模型
+	if agentsMap, ok := config["agents"].(map[string]interface{}); ok {
+		if defaultsMap, ok := agentsMap["defaults"].(map[string]interface{}); ok {
+			if modelsMap, ok := defaultsMap["models"].(map[string]interface{}); ok {
+				prefix := providerName + "/"
+				for modelID := range modelsMap {
+					if len(modelID) > len(prefix) && modelID[:len(prefix)] == prefix {
+						delete(modelsMap, modelID)
+					}
+				}
+			}
+		}
+	}
+
+	if !deleted {
+		c.JSON(http.StatusNotFound, gin.H{"error": "provider not found"})
+		return
+	}
+
+	if err := service.SaveConfig(config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Provider deleted successfully"})
 }
 
-// SetPrimaryModel 设置主模型 (placeholder)
+// SetPrimaryModel 设置主模型
 func SetPrimaryModel(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Primary model set (placeholder)"})
+	var req model.PrimaryModelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.ModelID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "modelId is required"})
+		return
+	}
+
+	config, err := service.GetConfig()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 确保路径存在: agents -> defaults -> model -> primary
+	if config["agents"] == nil {
+		config["agents"] = map[string]interface{}{}
+	}
+	agentsMap := config["agents"].(map[string]interface{})
+	if agentsMap["defaults"] == nil {
+		agentsMap["defaults"] = map[string]interface{}{}
+	}
+	defaultsMap := agentsMap["defaults"].(map[string]interface{})
+	if defaultsMap["model"] == nil {
+		defaultsMap["model"] = map[string]interface{}{}
+	}
+	modelMap := defaultsMap["model"].(map[string]interface{})
+	modelMap["primary"] = req.ModelID
+
+	if err := service.SaveConfig(config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Primary model set successfully"})
 }
 
-// AddAvailableModel 添加可用模型 (placeholder)
+// AddAvailableModel 添加可用模型
 func AddAvailableModel(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Model added (placeholder)"})
+	var req model.PrimaryModelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.ModelID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "modelId is required"})
+		return
+	}
+
+	config, err := service.GetConfig()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 确保路径存在: agents -> defaults -> models
+	if config["agents"] == nil {
+		config["agents"] = map[string]interface{}{}
+	}
+	agentsMap := config["agents"].(map[string]interface{})
+	if agentsMap["defaults"] == nil {
+		agentsMap["defaults"] = map[string]interface{}{}
+	}
+	defaultsMap := agentsMap["defaults"].(map[string]interface{})
+	if defaultsMap["models"] == nil {
+		defaultsMap["models"] = map[string]interface{}{}
+	}
+	modelsMap := defaultsMap["models"].(map[string]interface{})
+
+	// 添加模型（值为空对象）
+	modelsMap[req.ModelID] = map[string]interface{}{}
+
+	if err := service.SaveConfig(config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Model added successfully"})
 }
 
-// RemoveAvailableModel 移除模型 (placeholder)
+// RemoveAvailableModel 移除模型
 func RemoveAvailableModel(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Model removed (placeholder)"})
+	var req model.PrimaryModelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.ModelID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "modelId is required"})
+		return
+	}
+
+	config, err := service.GetConfig()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	removed := false
+	if agentsMap, ok := config["agents"].(map[string]interface{}); ok {
+		if defaultsMap, ok := agentsMap["defaults"].(map[string]interface{}); ok {
+			if modelsMap, ok := defaultsMap["models"].(map[string]interface{}); ok {
+				if _, exists := modelsMap[req.ModelID]; exists {
+					delete(modelsMap, req.ModelID)
+					removed = true
+				}
+			}
+		}
+	}
+
+	if !removed {
+		c.JSON(http.StatusNotFound, gin.H{"error": "model not found"})
+		return
+	}
+
+	if err := service.SaveConfig(config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Model removed successfully"})
 }

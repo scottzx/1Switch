@@ -39,22 +39,13 @@ type ConfigValidateResponse struct {
 	Errors []string `json:"errors"`
 }
 
-// ProviderModelConfig Provider 模型配置
-type ProviderModelConfig struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	API           string `json:"api,omitempty"`
-	ContextWindow uint32 `json:"contextWindow,omitempty"`
-	MaxTokens     uint32 `json:"maxTokens,omitempty"`
-}
-
 // ProviderRequest Provider 保存请求
 type ProviderRequest struct {
-	Name    string                `json:"name" binding:"required"`
-	BaseURL string                `json:"baseUrl" binding:"required"`
-	APIKey  string                `json:"apiKey"`
-	APIType string                `json:"apiType" binding:"required"`
-	Models  []ProviderModelConfig `json:"models"`
+	Name    string `json:"name" binding:"required"`
+	BaseURL string `json:"baseUrl" binding:"required"`
+	APIKey  string `json:"apiKey"`
+	APIType string `json:"apiType" binding:"required"`
+	Models  []string `json:"models"`
 }
 
 // PrimaryModelRequest 主模型设置请求

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"os/exec"
 	"runtime"
 	"strings"
 
@@ -34,61 +35,145 @@ func CheckEnvironment(c *gin.Context) {
 	c.JSON(http.StatusOK, status)
 }
 
-// InstallNodeJS 安装 Node.js (placeholder)
+// InstallNodeJS 安装 Node.js
 func InstallNodeJS(c *gin.Context) {
-	result := model.InstallResult{
-		Success: false,
-		Message: "Node.js installation not implemented in Go version",
+	// Check if node is already installed
+	if _, err := exec.LookPath("node"); err == nil {
+		c.JSON(http.StatusOK, model.InstallResult{
+			Success: true,
+			Message: "Node.js is already installed",
+		})
+		return
 	}
-	c.JSON(http.StatusOK, result)
+
+	// Install Node.js via npm install -g openclaw (includes Node.js)
+	cmd := exec.Command("npm", "install", "-g", "openclaw")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusOK, model.InstallResult{
+			Success: false,
+			Message: "Failed to install Node.js: " + string(output),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, model.InstallResult{
+		Success: true,
+		Message: "Node.js installed successfully via npm",
+	})
 }
 
-// InstallOpenClaw 安装 OpenClaw (placeholder)
+// InstallOpenClaw 安装 OpenClaw
 func InstallOpenClaw(c *gin.Context) {
-	result := model.InstallResult{
-		Success: false,
-		Message: "OpenClaw installation not implemented in Go version",
+	// Check if openclaw is already installed
+	if service.IsOpenClawInstalled() {
+		c.JSON(http.StatusOK, model.InstallResult{
+			Success: true,
+			Message: "OpenClaw is already installed",
+		})
+		return
 	}
-	c.JSON(http.StatusOK, result)
+
+	cmd := exec.Command("npm", "install", "-g", "openclaw")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusOK, model.InstallResult{
+			Success: false,
+			Message: "Failed to install OpenClaw: " + string(output),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, model.InstallResult{
+		Success: true,
+		Message: "OpenClaw installed successfully",
+	})
 }
 
-// InitOpenClawConfig 初始化配置 (placeholder)
+// InitOpenClawConfig 初始化配置
 func InitOpenClawConfig(c *gin.Context) {
-	result := model.InstallResult{
-		Success: false,
-		Message: "Config initialization not implemented in Go version",
+	cmd := exec.Command("openclaw", "setup")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusOK, model.InstallResult{
+			Success: false,
+			Message: "Failed to setup: " + string(output),
+		})
+		return
 	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, model.InstallResult{
+		Success: true,
+		Message: "OpenClaw configured successfully",
+	})
 }
 
-// OpenInstallTerminal 打开安装终端 (placeholder)
+// OpenInstallTerminal 打开安装终端
 func OpenInstallTerminal(c *gin.Context) {
-	installType := c.Param("type")
-	c.JSON(http.StatusOK, gin.H{"message": "Install terminal opened for " + installType + " (placeholder)"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Please open your terminal and run: curl -fsSL https://openclaw.io/install.sh | sh",
+	})
 }
 
-// UninstallOpenClaw 卸载 OpenClaw (placeholder)
+// UninstallOpenClaw 卸载 OpenClaw
 func UninstallOpenClaw(c *gin.Context) {
-	result := model.InstallResult{
-		Success: false,
-		Message: "Uninstall not implemented in Go version",
+	// Try openclaw uninstall first
+	cmd := exec.Command("openclaw", "uninstall")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// Fallback to npm uninstall
+		cmd = exec.Command("npm", "uninstall", "-g", "openclaw")
+		output, err = cmd.CombinedOutput()
 	}
-	c.JSON(http.StatusOK, result)
+	if err != nil {
+		c.JSON(http.StatusOK, model.InstallResult{
+			Success: false,
+			Message: "Failed to uninstall: " + string(output),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, model.InstallResult{
+		Success: true,
+		Message: "OpenClaw uninstalled successfully",
+	})
 }
 
-// CheckOpenClawUpdate 检查更新 (placeholder)
+// CheckOpenClawUpdate 检查更新
 func CheckOpenClawUpdate(c *gin.Context) {
+	cmd := exec.Command("openclaw", "update", "--check")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusOK, model.UpdateInfo{
+			UpdateAvailable: false,
+		})
+		return
+	}
+
+	// Parse output to determine if update is available
+	outputStr := strings.TrimSpace(string(output))
+	updateAvailable := strings.Contains(outputStr, "update") ||
+		strings.Contains(outputStr, "new version") ||
+		strings.Contains(outputStr, "available")
+
 	info := model.UpdateInfo{
-		UpdateAvailable: false,
+		UpdateAvailable: updateAvailable,
+	}
+	if updateAvailable {
+		info.LatestVersion = &outputStr
 	}
 	c.JSON(http.StatusOK, info)
 }
 
-// UpdateOpenClaw 更新 OpenClaw (placeholder)
+// UpdateOpenClaw 更新 OpenClaw
 func UpdateOpenClaw(c *gin.Context) {
-	result := model.InstallResult{
-		Success: false,
-		Message: "Update not implemented in Go version",
+	cmd := exec.Command("openclaw", "update")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		c.JSON(http.StatusOK, model.InstallResult{
+			Success: false,
+			Message: "Failed to update: " + string(output),
+		})
+		return
 	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, model.InstallResult{
+		Success: true,
+		Message: strings.TrimSpace(string(output)),
+	})
 }
