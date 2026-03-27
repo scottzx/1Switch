@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageType } from '../../App';
-import { RefreshCw, ExternalLink, Loader2, Sun, Moon } from 'lucide-react';
+import { RefreshCw, ExternalLink, Loader2, Sun, Moon, Menu } from 'lucide-react';
 import { useTheme } from '../../lib/ThemeContext';
+import { useAppStore } from '../../stores/appStore';
 
 interface HeaderProps {
   currentPage: PageType;
@@ -10,7 +11,7 @@ interface HeaderProps {
 
 const pageTitles: Record<PageType, { title: string; description: string }> = {
   dashboard: { title: '概览', description: '服务状态、日志与快捷操作' },
-  ai: { title: 'AI 模型配置', description: '配置 AI 提供商和模型' },
+  ai: { title: '模型配置', description: '配置 AI 提供商和模型' },
   agents: { title: '数字员工', description: '管理虚拟员工、角色分工与渠道绑定' },
   channels: { title: '消息渠道', description: '配置 Telegram、Discord、飞书等' },
   skills: { title: '技能管理', description: '管理内置、官方、社区与自定义技能' },
@@ -29,6 +30,7 @@ export function Header({ currentPage }: HeaderProps) {
   const description = t(`header.${currentPage}.description`, { defaultValue: fallback.description });
   const [opening, setOpening] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { openSidebar } = useAppStore();
 
   const handleOpenDashboard = async () => {
     setOpening(true);
@@ -58,10 +60,21 @@ export function Header({ currentPage }: HeaderProps) {
         borderBottom: '1px solid var(--border-primary)',
       }}
     >
-      {/* 左侧：页面标题 */}
-      <div className="titlebar-no-drag">
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
-        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{description}</p>
+      {/* 左侧：汉堡菜单 + 页面标题 */}
+      <div className="flex items-center gap-3 titlebar-no-drag">
+        {/* 移动端汉堡菜单按钮 */}
+        <button
+          onClick={openSidebar}
+          className="md:hidden p-2 -ml-2 rounded-lg transition-colors hover:bg-[var(--bg-elevated)]"
+          style={{ color: 'var(--text-secondary)' }}
+          title="打开菜单"
+        >
+          <Menu size={22} />
+        </button>
+        <div>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+          <p className="text-xs hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>{description}</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 titlebar-no-drag">

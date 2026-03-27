@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   Bot,
@@ -11,9 +11,11 @@ import {
   Terminal,
   Folder,
   Puzzle,
+  X,
 } from 'lucide-react';
 import { PageType } from '../../App';
 import clsx from 'clsx';
+import { useAppStore } from '../../stores/appStore';
 
 interface ServiceStatus {
   running: boolean;
@@ -29,7 +31,7 @@ interface SidebarProps {
 
 const menuItems: { id: PageType; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard', label: '概览', icon: LayoutDashboard },
-  { id: 'ai', label: 'AI 配置', icon: Bot },
+  { id: 'ai', label: '模型配置', icon: Bot },
   { id: 'agents', label: '数字员工', icon: Users },
   { id: 'channels', label: '消息渠道', icon: MessageSquare },
   { id: 'skills', label: '技能管理', icon: Puzzle },
@@ -41,15 +43,12 @@ const menuItems: { id: PageType; label: string; icon: React.ElementType }[] = [
   { id: 'settings', label: '系统设置', icon: Settings },
 ];
 
-export function Sidebar({ currentPage, onNavigate, serviceStatus }: SidebarProps) {
+function SidebarContent({ currentPage, onNavigate, serviceStatus }: SidebarProps) {
   const isRunning = serviceStatus?.running ?? false;
 
   return (
-    <aside
-      className="w-64 flex flex-col"
-      style={{ backgroundColor: 'var(--bg-sidebar)', borderRight: '1px solid var(--border-primary)' }}
-    >
-      {/* Logo 区域（macOS 标题栏拖拽） */}
+    <>
+      {/* Logo 区域 */}
       <div
         className="h-14 flex items-center px-6 titlebar-drag"
         style={{ borderBottom: '1px solid var(--border-primary)' }}
@@ -122,6 +121,67 @@ export function Sidebar({ currentPage, onNavigate, serviceStatus }: SidebarProps
           <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>端口: {serviceStatus?.port ?? 18789}</p>
         </div>
       </div>
+    </>
+  );
+}
+
+// 桌面端固定侧边栏 (md: 及以上)
+export function Sidebar({ currentPage, onNavigate, serviceStatus }: SidebarProps) {
+  return (
+    <aside
+      className="hidden md:flex w-64 flex-col flex-shrink-0"
+      style={{ backgroundColor: 'var(--bg-sidebar)', borderRight: '1px solid var(--border-primary)' }}
+    >
+      <SidebarContent currentPage={currentPage} onNavigate={onNavigate} serviceStatus={serviceStatus} />
     </aside>
+  );
+}
+
+// 移动端抽屉侧边栏
+export function MobileSidebar({ currentPage, onNavigate, serviceStatus }: SidebarProps) {
+  const { isSidebarOpen, closeSidebar } = useAppStore();
+
+  const handleNavigate = (page: PageType) => {
+    onNavigate(page);
+    closeSidebar();
+  };
+
+  return (
+    <AnimatePresence>
+      {isSidebarOpen && (
+        <>
+          {/* 遮罩层 */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={closeSidebar}
+          />
+          {/* 抽屉 */}
+          <motion.aside
+            initial={{ x: -280 }}
+            animate={{ x: 0 }}
+            exit={{ x: -280 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed left-0 top-0 bottom-0 z-50 w-72 flex flex-col"
+            style={{ backgroundColor: 'var(--bg-sidebar)', borderRight: '1px solid var(--border-primary)' }}
+          >
+            {/* 关闭按钮 */}
+            <div className="absolute top-4 right-4 titlebar-no-drag z-10">
+              <button
+                onClick={closeSidebar}
+                className="p-2 rounded-lg transition-colors hover:bg-[var(--bg-elevated)]"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <SidebarContent currentPage={currentPage} onNavigate={handleNavigate} serviceStatus={serviceStatus} />
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
