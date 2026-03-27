@@ -202,15 +202,27 @@ func SetPrimaryModel(c *gin.Context) {
 	if config["agents"] == nil {
 		config["agents"] = map[string]interface{}{}
 	}
-	agentsMap := config["agents"].(map[string]interface{})
+	agentsMap, ok := config["agents"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid agents config"})
+		return
+	}
 	if agentsMap["defaults"] == nil {
 		agentsMap["defaults"] = map[string]interface{}{}
 	}
-	defaultsMap := agentsMap["defaults"].(map[string]interface{})
+	defaultsMap, ok := agentsMap["defaults"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid agents.defaults config"})
+		return
+	}
 	if defaultsMap["model"] == nil {
 		defaultsMap["model"] = map[string]interface{}{}
 	}
-	modelMap := defaultsMap["model"].(map[string]interface{})
+	modelMap, ok := defaultsMap["model"].(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid agents.defaults.model config"})
+		return
+	}
 	modelMap["primary"] = req.ModelID
 
 	if err := service.SaveConfig(config); err != nil {

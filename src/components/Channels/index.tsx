@@ -608,10 +608,12 @@ export function Channels() {
   const fetchChannels = async () => {
     try {
       const result = await invoke<ChannelConfig[]>('get_channels_config');
+      console.log('[fetchChannels] 获取到渠道数量:', result.length);
+      console.log('[fetchChannels] 渠道列表:', JSON.stringify(result, null, 2));
       setChannels(result);
       return result;
     } catch (e) {
-      console.error('获取渠道配置失败:', e);
+      console.error('[fetchChannels] 获取渠道配置失败:', e);
       return [];
     }
   };
@@ -708,15 +710,21 @@ export function Channels() {
   // 检查渠道是否有有效配置
   const hasValidConfig = (channel: ChannelConfig) => {
     const info = channelInfo[channel.channel_type];
-    if (!info) return channel.enabled;
+    if (!info) {
+      console.warn(`[hasValidConfig] channel_type not found: ${channel.channel_type}`);
+      return channel.enabled;
+    }
 
     // 检查是否有必填字段已填写
     const requiredFields = info.fields.filter((f) => f.required);
     if (requiredFields.length === 0) return channel.enabled;
 
-    return requiredFields.some((field) => {
+    // 确保所有必填字段都有值
+    return requiredFields.every((field) => {
       const value = channel.config[field.key];
-      return value !== undefined && value !== null && value !== '';
+      const hasValue = value !== undefined && value !== null && value !== '';
+      console.log(`[hasValidConfig] ${channel.channel_type}.${field.key} = ${JSON.stringify(value)}, hasValue: ${hasValue}`);
+      return hasValue;
     });
   };
 

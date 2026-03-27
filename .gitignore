@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Node binaries
+openclaw/node/
+
 # Build outputs
 dist/
 src-tauri/target/

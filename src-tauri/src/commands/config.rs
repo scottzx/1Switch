@@ -835,9 +835,14 @@ pub async fn get_ai_providers() -> Result<Vec<crate::models::AIProviderOption>, 
 #[command]
 pub async fn get_channels_config() -> Result<Vec<ChannelConfig>, String> {
     info!("[渠道配置] 获取渠道配置列表...");
-    
-    let config = load_openclaw_config()?;
+
+    // 诊断：打印配置路径和内容
+    let config = load_openclaw_config().map_err(|e| {
+        error!("[渠道配置] 加载配置失败: {}", e);
+        e
+    })?;
     let channels_obj = config.get("channels").cloned().unwrap_or(json!({}));
+    debug!("[渠道配置] channels_obj 内容: {:?}", channels_obj);
     let env_path = platform::get_env_file_path();
     debug!("[渠道配置] 环境文件路径: {}", env_path);
     
@@ -892,7 +897,9 @@ pub async fn get_channels_config() -> Result<Vec<ChannelConfig>, String> {
         
         // 判断是否已配置（有任何非空配置项）
         let has_config = !config_map.is_empty() || enabled;
-        
+        debug!("[渠道配置] {} config_map 内容: {:?}", channel_id, config_map);
+        debug!("[渠道配置] {} has_config: {} (config_map.len={}, enabled={})", channel_id, has_config, config_map.len(), enabled);
+
         channels.push(ChannelConfig {
             id: channel_id.to_string(),
             channel_type: channel_type.to_string(),
@@ -946,7 +953,10 @@ pub async fn save_channel_config(channel: ChannelConfig) -> Result<String, Strin
     let mut channel_obj = json!({
         "enabled": true
     });
-    
+
+    // 诊断：打印收到的 config
+    debug!("[保存渠道配置] {} 收到的 config: {:?}", channel.id, channel.config);
+
     // 添加渠道特定配置
     for (key, value) in &channel.config {
         if test_only_fields.contains(&key.as_str()) {

@@ -3,12 +3,14 @@ import {
   LayoutDashboard,
   Bot,
   Users,
+  MessageSquare,
   FlaskConical,
   ScrollText,
   Settings,
   ShieldAlert,
   Terminal,
   Folder,
+  Puzzle,
 } from 'lucide-react';
 import { PageType } from '../../App';
 import clsx from 'clsx';
@@ -28,15 +30,15 @@ interface SidebarProps {
 const menuItems: { id: PageType; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard', label: '概览', icon: LayoutDashboard },
   { id: 'ai', label: 'AI 配置', icon: Bot },
-  { id: 'agents', label: 'Agent 管理', icon: Users },
-  // { id: 'channels', label: '消息渠道', icon: MessageSquare },
-  // { id: 'skills', label: '技能库', icon: Puzzle },
+  { id: 'agents', label: '数字员工', icon: Users },
+  { id: 'channels', label: '消息渠道', icon: MessageSquare },
+  { id: 'skills', label: '技能管理', icon: Puzzle },
   { id: 'testing', label: '测试诊断', icon: FlaskConical },
   { id: 'logs', label: '应用日志', icon: ScrollText },
   { id: 'security', label: '安全防护', icon: ShieldAlert },
-  { id: 'terminal', label: '终端', icon: Terminal },
-  { id: 'filebrowser', label: '文件', icon: Folder },
-  { id: 'settings', label: '设置', icon: Settings },
+  { id: 'terminal', label: '终端控制', icon: Terminal },
+  { id: 'filebrowser', label: '文件管理', icon: Folder },
+  { id: 'settings', label: '系统设置', icon: Settings },
 ];
 
 export function Sidebar({ currentPage, onNavigate, serviceStatus }: SidebarProps) {

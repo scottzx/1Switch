@@ -946,7 +946,7 @@ export function AIConfig() {
         )}
 
         {/* 概览卡片 */}
-        <div className="bg-gradient-to-br from-dark-700 to-dark-800 rounded-2xl p-6 border border-edge">
+        <div className="bg-surface-card rounded-2xl p-6 border border-edge shadow-card">
           <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-xl font-semibold text-content-primary flex items-center gap-2">
