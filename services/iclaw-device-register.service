@@ -1,0 +1,13 @@
+[Unit]
+Description=iClaw Device Registration
+After=network-online.target
+Wants=network-online.target
+After=iclaw-hostname.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/iclaw/scripts/register-device.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

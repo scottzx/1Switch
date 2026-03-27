@@ -1,0 +1,11 @@
+[Unit]
+Description=iClaw Device Registration Timer
+Requires=iclaw-device-register.service
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=1d
+RandomizedDelaySec=3600
+
+[Install]
+WantedBy=timers.target
