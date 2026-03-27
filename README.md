@@ -130,7 +130,7 @@
 
 从 GitHub Releases 下载对应平台的安装包，无需配置开发环境。
 
-👉 **[下载最新版本](https://github.com/VillageMoonlight/openclaw-manager/releases/latest)**
+👉 **[下载最新版本](https://github.com/miaoxworld/openclaw-manager/releases/latest)**
 
 | 平台 | 安装包格式 | 安装方式 |
 |------|-----------|---------|
@@ -182,7 +182,7 @@ sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
 
 ```bash
 # 克隆项目
-git clone https://github.com/VillageMoonlight/openclaw-manager.git
+git clone https://github.com/miaoxworld/openclaw-manager.git
 cd openclaw-manager
 
 # 安装依赖

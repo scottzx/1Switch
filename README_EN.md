@@ -130,7 +130,7 @@ Light/Dark dual-theme support, defaulting to light mode.
 
 Download the installer for your platform from GitHub Releases — no development environment required.
 
-👉 **[Download Latest Release](https://github.com/VillageMoonlight/openclaw-manager/releases/latest)**
+👉 **[Download Latest Release](https://github.com/miaoxworld/openclaw-manager/releases/latest)**
 
 | Platform | Format | Installation |
 |----------|--------|--------------|
@@ -186,7 +186,7 @@ sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
 
 ```bash
 # Clone the repository
-git clone https://github.com/VillageMoonlight/openclaw-manager.git
+git clone https://github.com/miaoxworld/openclaw-manager.git
 cd openclaw-manager
 
 # Install dependencies
