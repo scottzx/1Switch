@@ -8,6 +8,11 @@ openclaw/node/
 dist/
 src-tauri/target/
 
+# Go binaries
+admin-api
+bin/
+bin/**
+
 # IDE
 .vscode/
 .idea/

@@ -127,9 +127,9 @@ export function Logs() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full overflow-y-auto scroll-container pr-2">
       {/* 工具栏 */}
-      <div className="flex items-center gap-4 mb-4 flex-wrap">
+      <div className="flex items-center gap-4 mb-4 flex-wrap sticky top-0 z-10 bg-[var(--bg-app)] py-1">
         {/* 级别过滤 */}
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-content-tertiary" />
@@ -203,7 +203,7 @@ export function Logs() {
       </div>
 
       {/* 日志列表 */}
-      <div className="flex-1 bg-surface-sidebar rounded-xl border border-edge overflow-hidden flex flex-col">
+      <div className="bg-surface-sidebar rounded-xl border border-edge overflow-hidden flex flex-col" style={{ minHeight: '400px' }}>
         {/* 标题栏 */}
         <div className="flex items-center gap-2 px-4 py-2 bg-surface-card border-b border-edge">
           <Terminal size={14} className="text-content-tertiary" />
@@ -211,9 +211,9 @@ export function Logs() {
         </div>
 
         {/* 日志内容 */}
-        <div className="flex-1 overflow-y-auto p-2 font-mono text-xs">
+        <div className="overflow-y-auto p-2 font-mono text-xs" style={{ maxHeight: 'calc(100vh - 280px)' }}>
           {filteredLogs.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-content-tertiary">
+            <div className="flex items-center justify-center text-content-tertiary py-8">
               <div className="text-center">
                 <Terminal size={32} className="mx-auto mb-2 opacity-50" />
                 <p>{t('logs.noLogs')}</p>

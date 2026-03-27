@@ -56,10 +56,10 @@ export function Testing() {
     <div className="h-full overflow-y-auto scroll-container pr-2">
       <div className="max-w-4xl space-y-6">
         {/* 诊断测试 */}
-        <div className="bg-surface-card rounded-2xl p-6 border border-edge">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-surface-card rounded-2xl p-4 md:p-6 border border-edge">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
                 <Stethoscope size={20} className="text-purple-400" />
               </div>
               <div>
@@ -72,7 +72,7 @@ export function Testing() {
             <button
               onClick={runDiagnostics}
               disabled={loading}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               {loading ? (
                 <Loader2 size={16} className="animate-spin" />

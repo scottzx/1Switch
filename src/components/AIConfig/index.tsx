@@ -291,7 +291,7 @@ function ProviderDialog({ officialProviders, onClose, onSave, editingProvider }:
                 {/* 官方 Provider */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-medium text-content-secondary">官方 Provider</h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {officialProviders.map(provider => (
                 <button
                   key={provider.id}
@@ -680,12 +680,12 @@ function ProviderCard({ provider, officialProviders, onSetPrimary, onRefresh, on
     >
       {/* 头部 */}
       <div
-        className="flex items-center gap-3 p-4 cursor-pointer hover:bg-surface-elevated/50 transition-colors"
+        className="flex items-start sm:items-center gap-3 p-4 cursor-pointer hover:bg-surface-elevated/50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="text-xl">{officialInfo?.icon || '🔌'}</span>
+        <span className="text-xl flex-shrink-0">{officialInfo?.icon || '🔌'}</span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-medium text-content-primary">{provider.name}</h3>
             {provider.has_api_key && (
               <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-xs rounded">
@@ -700,8 +700,8 @@ function ProviderCard({ provider, officialProviders, onSetPrimary, onRefresh, on
           </div>
           <p className="text-xs text-content-tertiary truncate">{provider.base_url}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-content-tertiary">{provider.models.length} 模型</span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-sm text-content-tertiary hidden sm:inline">{provider.models.length} 模型</span>
           <motion.div animate={{ rotate: expanded ? 180 : 0 }}>
             <ChevronDown size={18} className="text-content-tertiary" />
           </motion.div>
@@ -946,11 +946,11 @@ export function AIConfig() {
         )}
 
         {/* 概览卡片 */}
-        <div className="bg-surface-card rounded-2xl p-6 border border-edge shadow-card">
-          <div className="flex items-start justify-between mb-4">
+        <div className="bg-surface-card rounded-2xl p-4 md:p-6 border border-edge shadow-card">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-content-primary flex items-center gap-2">
-                <Sparkles size={22} className="text-claw-400" />
+              <h2 className="text-lg md:text-xl font-semibold text-content-primary flex items-center gap-2">
+                <Sparkles size={20} className="text-claw-400" />
                 {t('aiConfig.title')}
               </h2>
               <p className="text-sm text-content-tertiary mt-1">
@@ -959,7 +959,7 @@ export function AIConfig() {
             </div>
             <button
               onClick={() => setShowAddDialog(true)}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Plus size={16} />
               {t('aiConfig.addProvider')}
@@ -967,19 +967,19 @@ export function AIConfig() {
           </div>
 
           {/* 主模型显示 */}
-          <div className="bg-surface-elevated/50 rounded-xl p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-claw-500/20 flex items-center justify-center">
+          <div className="bg-surface-elevated/50 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-claw-500/20 flex items-center justify-center flex-shrink-0">
               <Star size={24} className="text-claw-400" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-content-secondary">当前主模型</p>
               {aiConfig?.primary_model ? (
-                <p className="text-lg font-medium text-content-primary">{aiConfig.primary_model}</p>
+                <p className="text-lg font-medium text-content-primary truncate">{aiConfig.primary_model}</p>
               ) : (
                 <p className="text-lg text-content-tertiary">未设置</p>
               )}
             </div>
-            <div className="text-right mr-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:text-right">
               <p className="text-sm text-content-tertiary">
                 {aiConfig?.configured_providers.length || 0} 个 Provider
               </p>
@@ -990,7 +990,7 @@ export function AIConfig() {
             <button
               onClick={runAITest}
               disabled={testing || !aiConfig?.primary_model}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-secondary flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               {testing ? (
                     <Loader2 size={16} className="animate-spin" />

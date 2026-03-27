@@ -280,3 +280,69 @@ button:disabled {
 .theme-transition * {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease !important;
 }
+
+/* ===== 移动端触控优化 ===== */
+@media (max-width: 768px) {
+  /* 增大触控目标最小尺寸 (Apple HIG: 44x44px) */
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 侧边栏菜单项触控区域 */
+  nav ul li button {
+    min-height: 48px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* 输入框触控优化 */
+  .input-base {
+    min-height: 44px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* 图标按钮触控区域 */
+  .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* 页面内容区移动端适配 */
+  main.p-6 {
+    padding: 16px;
+  }
+
+  /* 卡片网格移动端优化 */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  /* 横向滚动容器 */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* iOS 安全区域适配 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* 防止水平溢出 */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+}

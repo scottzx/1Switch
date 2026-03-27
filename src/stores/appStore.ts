@@ -14,6 +14,12 @@ interface AppState {
   loading: boolean;
   setLoading: (loading: boolean) => void;
 
+  // 移动端侧边栏抽屉
+  isSidebarOpen: boolean;
+  openSidebar: () => void;
+  closeSidebar: () => void;
+  toggleSidebar: () => void;
+
   // 通知
   notifications: Notification[];
   addNotification: (notification: Omit<Notification, 'id'>) => void;
@@ -39,6 +45,12 @@ export const useAppStore = create<AppState>((set) => ({
   // UI 状态
   loading: false,
   setLoading: (loading) => set({ loading }),
+
+  // 移动端侧边栏抽屉
+  isSidebarOpen: false,
+  openSidebar: () => set({ isSidebarOpen: true }),
+  closeSidebar: () => set({ isSidebarOpen: false }),
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
 
   // 通知
   notifications: [],

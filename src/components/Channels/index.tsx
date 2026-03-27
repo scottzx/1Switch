@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   Trash2,
   ExternalLink,
+  Users,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../../lib/tauri';
@@ -66,173 +67,6 @@ interface ChannelInfoDefinition {
   helpText?: string;
   docUrl?: string;
 }
-
-export const builtinChannelInfo: Record<string, ChannelInfoDefinition> = {
-  telegram: {
-    name: 'Telegram',
-    icon: <MessageCircle size={20} />,
-    color: 'text-blue-400',
-    fields: [
-      { key: 'botToken', label: 'Bot Token', type: 'password', placeholder: '从 @BotFather 获取', required: true },
-      { key: 'userId', label: 'User ID', type: 'text', placeholder: '你的 Telegram User ID', required: true },
-      {
-        key: 'dmPolicy', label: '私聊策略', type: 'select', options: [
-          { value: 'pairing', label: '配对模式' },
-          { value: 'open', label: '开放模式' },
-          { value: 'disabled', label: '禁用' },
-        ]
-      },
-      {
-        key: 'groupPolicy', label: '群组策略', type: 'select', options: [
-          { value: 'allowlist', label: '白名单' },
-          { value: 'open', label: '开放' },
-          { value: 'disabled', label: '禁用' },
-        ]
-      },
-    ],
-    helpText: '1. 搜索 @BotFather 发送 /newbot 获取 Token  2. 搜索 @userinfobot 获取 User ID',
-    docUrl: 'https://core.telegram.org/bots/tutorial',
-  },
-  discord: {
-    name: 'Discord',
-    icon: <Hash size={20} />,
-    color: 'text-indigo-400',
-    fields: [
-      { key: 'token', label: 'Bot Token', type: 'password', placeholder: 'Discord Bot Token', required: true },
-      { key: 'testChannelId', label: '测试 Channel ID', type: 'text', placeholder: '用于发送测试消息的频道 ID (可选)' },
-      {
-        key: 'dmPolicy', label: '私聊策略', type: 'select', options: [
-          { value: 'pairing', label: '配对模式' },
-          { value: 'open', label: '开放模式' },
-          { value: 'disabled', label: '禁用' },
-        ]
-      },
-    ],
-    helpText: '从 Discord Developer Portal 获取，开启开发者模式可复制 Channel ID',
-    docUrl: 'https://discord.com/developers/docs/intro',
-  },
-  slack: {
-    name: 'Slack',
-    icon: <Slack size={20} />,
-    color: 'text-purple-400',
-    fields: [
-      { key: 'botToken', label: 'Bot Token', type: 'password', placeholder: 'xoxb-...', required: true },
-      { key: 'appToken', label: 'App Token', type: 'password', placeholder: 'xapp-...' },
-      { key: 'testChannelId', label: '测试 Channel ID', type: 'text', placeholder: '用于发送测试消息的频道 ID (可选)' },
-    ],
-    helpText: '从 Slack API 后台获取，Channel ID 可从频道详情复制',
-    docUrl: 'https://api.slack.com/start',
-  },
-  feishu: {
-    name: '飞书',
-    icon: <MessagesSquare size={20} />,
-    color: 'text-blue-500',
-    fields: [
-      { key: 'appId', label: 'App ID', type: 'text', placeholder: '飞书应用 App ID', required: true },
-      { key: 'appSecret', label: 'App Secret', type: 'password', placeholder: '飞书应用 App Secret', required: true },
-      { key: 'testChatId', label: '测试 Chat ID', type: 'text', placeholder: '用于发送测试消息的群聊/用户 ID (可选)' },
-      {
-        key: 'connectionMode', label: '连接模式', type: 'select', options: [
-          { value: 'websocket', label: 'WebSocket (推荐)' },
-          { value: 'webhook', label: 'Webhook' },
-        ]
-      },
-      {
-        key: 'domain', label: '部署区域', type: 'select', options: [
-          { value: 'feishu', label: '国内 (feishu.cn)' },
-          { value: 'lark', label: '海外 (larksuite.com)' },
-        ]
-      },
-      {
-        key: 'requireMention', label: '需要 @提及', type: 'select', options: [
-          { value: 'true', label: '是' },
-          { value: 'false', label: '否' },
-        ]
-      },
-    ],
-    helpText: '从飞书开放平台获取凭证，Chat ID 可从群聊设置中获取',
-    docUrl: 'https://open.feishu.cn/document/home/index',
-  },
-  imessage: {
-    name: 'iMessage',
-    icon: <Apple size={20} />,
-    color: 'text-green-400',
-    fields: [
-      {
-        key: 'dmPolicy', label: '私聊策略', type: 'select', options: [
-          { value: 'pairing', label: '配对模式' },
-          { value: 'open', label: '开放模式' },
-          { value: 'disabled', label: '禁用' },
-        ]
-      },
-      {
-        key: 'groupPolicy', label: '群组策略', type: 'select', options: [
-          { value: 'allowlist', label: '白名单' },
-          { value: 'open', label: '开放' },
-          { value: 'disabled', label: '禁用' },
-        ]
-      },
-    ],
-    helpText: '仅支持 macOS，需要授权消息访问权限',
-    docUrl: 'https://support.apple.com/guide/messages/welcome/mac',
-  },
-  whatsapp: {
-    name: 'WhatsApp',
-    icon: <MessageCircle size={20} />,
-    color: 'text-green-500',
-    fields: [
-      {
-        key: 'dmPolicy', label: '私聊策略', type: 'select', options: [
-          { value: 'pairing', label: '配对模式' },
-          { value: 'open', label: '开放模式' },
-          { value: 'disabled', label: '禁用' },
-        ]
-      },
-      {
-        key: 'groupPolicy', label: '群组策略', type: 'select', options: [
-          { value: 'allowlist', label: '白名单' },
-          { value: 'open', label: '开放' },
-          { value: 'disabled', label: '禁用' },
-        ]
-      },
-    ],
-    helpText: '需要扫描二维码登录，运行: openclaw channels login --channel whatsapp',
-    docUrl: 'https://business.whatsapp.com/developers',
-  },
-  wechat: {
-    name: '微信',
-    icon: <MessageSquare size={20} />,
-    color: 'text-green-600',
-    fields: [
-      { key: 'appId', label: 'App ID', type: 'text', placeholder: '微信开放平台 App ID' },
-      { key: 'appSecret', label: 'App Secret', type: 'password', placeholder: '微信开放平台 App Secret' },
-    ],
-    helpText: '微信公众号/企业微信配置',
-    docUrl: 'https://developers.weixin.qq.com/doc/',
-  },
-  dingtalk: {
-    name: '钉钉',
-    icon: <Bell size={20} />,
-    color: 'text-blue-600',
-    fields: [
-      { key: 'appKey', label: 'App Key', type: 'text', placeholder: '钉钉应用 App Key' },
-      { key: 'appSecret', label: 'App Secret', type: 'password', placeholder: '钉钉应用 App Secret' },
-    ],
-    helpText: '从钉钉开放平台获取',
-    docUrl: 'https://open.dingtalk.com/document/',
-  },
-  qqbot: {
-    name: 'QQ',
-    icon: <MessageSquare size={20} />,
-    color: 'text-sky-400',
-    fields: [
-      { key: 'appId', label: 'AppID', type: 'text', placeholder: 'QQ 机器人 AppID', required: true },
-      { key: 'appSecret', label: 'AppSecret', type: 'password', placeholder: 'QQ 机器人 AppSecret', required: true },
-    ],
-    helpText: '从 QQ 开放平台 (q.qq.com) 获取 AppID 和 AppSecret',
-    docUrl: 'https://q.qq.com/wiki/',
-  },
-};
 
 interface TestResult {
   success: boolean;
@@ -378,7 +212,7 @@ export function Channels() {
       docUrl: 'https://open.dingtalk.com/document/',
     },
     'dingtalk-connector': {
-      name: t('channels.dingtalk.name'),
+      name: 'dingtalk-connector',
       icon: <Bell size={20} />,
       color: 'text-blue-600',
       fields: [
@@ -395,10 +229,32 @@ export function Channels() {
       color: 'text-sky-400',
       fields: [
         { key: 'appId', label: 'AppID', type: 'text', placeholder: 'QQ 机器人 AppID', required: true },
-        { key: 'appSecret', label: 'AppSecret', type: 'password', placeholder: 'QQ 机器人 AppSecret', required: true },
+        { key: 'clientSecret', label: 'ClientSecret', type: 'password', placeholder: 'QQ 机器人 ClientSecret', required: true },
       ],
-      helpText: '从 QQ 开放平台 (q.qq.com) 获取 AppID 和 AppSecret',
+      helpText: '从 QQ 开放平台 (q.qq.com) 获取 AppID 和 ClientSecret',
       docUrl: 'https://q.qq.com/wiki/',
+    },
+    msteams: {
+      name: 'Microsoft Teams',
+      icon: <Users size={20} />,
+      color: 'text-purple-400',
+      fields: [
+        { key: 'tenantId', label: 'Tenant ID', type: 'text', placeholder: 'Microsoft Teams Tenant ID', required: true },
+        { key: 'clientId', label: 'Client ID', type: 'text', placeholder: 'Microsoft Teams Client ID', required: true },
+        { key: 'clientSecret', label: 'Client Secret', type: 'password', placeholder: 'Microsoft Teams Client Secret', required: true },
+      ],
+      helpText: '从 Azure AD 应用注册获取凭证',
+      docUrl: 'https://docs.microsoft.com/en-us/microsoftteams/platform/',
+    },
+    signal: {
+      name: 'Signal',
+      icon: <MessageCircle size={20} />,
+      color: 'text-green-500',
+      fields: [
+        { key: 'phoneNumber', label: 'Phone Number', type: 'text', placeholder: 'Signal 注册手机号', required: true },
+      ],
+      helpText: '需要扫描二维码登录',
+      docUrl: 'https://signal.org/',
     },
   };
 

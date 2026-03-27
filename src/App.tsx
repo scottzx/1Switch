@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Sidebar } from './components/Layout/Sidebar';
+import { Sidebar, MobileSidebar } from './components/Layout/Sidebar';
 import { Header } from './components/Layout/Header';
 import { Dashboard } from './components/Dashboard';
 import { AIConfig } from './components/AIConfig';
@@ -293,8 +293,11 @@ function App() {
           )}
         </AnimatePresence>
 
-        {/* 侧边栏 */}
+        {/* 侧边栏 - 桌面端固定 */}
         <Sidebar currentPage={currentPage} onNavigate={handleNavigate} serviceStatus={serviceStatus} />
+
+        {/* 侧边栏 - 移动端抽屉 */}
+        <MobileSidebar currentPage={currentPage} onNavigate={handleNavigate} serviceStatus={serviceStatus} />
 
         {/* 主内容区 */}
         <div className="flex-1 flex flex-col overflow-hidden">
