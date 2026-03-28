@@ -129,7 +129,7 @@ func SaveProvider(c *gin.Context) {
 
 // DeleteProvider 删除 Provider
 func DeleteProvider(c *gin.Context) {
-	providerName := c.Query("name")
+	providerName := c.Param("name")
 	if providerName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "provider name is required"})
 		return

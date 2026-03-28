@@ -530,26 +530,36 @@ func agentToJSON(agent *model.AgentConfig) map[string]interface{} {
 		"workspace": agent.Workspace,
 	}
 
-	if agent.Name != "" {
-		entry["name"] = agent.Name
-	}
-	if agent.Emoji != "" {
-		entry["emoji"] = agent.Emoji
+	// identity: emoji 和 name
+	if agent.Emoji != "" || agent.Name != "" {
+		entry["identity"] = map[string]interface{}{}
+		if agent.Emoji != "" {
+			entry["identity"].(map[string]interface{})["emoji"] = agent.Emoji
+		}
+		if agent.Name != "" {
+			entry["identity"].(map[string]interface{})["name"] = agent.Name
+		}
 	}
 	if agent.IsDefault {
 		entry["default"] = true
 	}
+	// sandbox: mode
 	if agent.SandboxMode != "" && agent.SandboxMode != "off" {
-		entry["sandboxMode"] = agent.SandboxMode
+		entry["sandbox"] = map[string]interface{}{"mode": agent.SandboxMode}
 	}
-	if agent.ToolsProfile != nil && *agent.ToolsProfile != "" {
-		entry["toolsProfile"] = *agent.ToolsProfile
-	}
-	if len(agent.ToolsAllow) > 0 {
-		entry["toolsAllow"] = agent.ToolsAllow
-	}
-	if len(agent.ToolsDeny) > 0 {
-		entry["toolsDeny"] = agent.ToolsDeny
+	// tools: profile, allow, deny
+	if agent.ToolsProfile != nil && *agent.ToolsProfile != "" ||
+		len(agent.ToolsAllow) > 0 || len(agent.ToolsDeny) > 0 {
+		entry["tools"] = map[string]interface{}{}
+		if agent.ToolsProfile != nil && *agent.ToolsProfile != "" {
+			entry["tools"].(map[string]interface{})["profile"] = *agent.ToolsProfile
+		}
+		if len(agent.ToolsAllow) > 0 {
+			entry["tools"].(map[string]interface{})["allow"] = agent.ToolsAllow
+		}
+		if len(agent.ToolsDeny) > 0 {
+			entry["tools"].(map[string]interface{})["deny"] = agent.ToolsDeny
+		}
 	}
 	if len(agent.MentionPatterns) > 0 {
 		entry["groupChat"] = map[string]interface{}{

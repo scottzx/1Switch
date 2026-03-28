@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(go build:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

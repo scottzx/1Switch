@@ -5,10 +5,21 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"iclaw-admin-api/internal/model"
 )
+
+// skills 缓存
+var (
+	skillsCache     []model.SkillDefinition
+	skillsCacheTime time.Time
+	skillsCacheMu   sync.RWMutex
+)
+
+const skillsCacheTTL = 2 * time.Minute // 缓存 2 分钟
 
 // GetSkillsList 获取技能列表
 func GetSkillsList(c *gin.Context) {
@@ -22,15 +33,38 @@ func GetSkillsList(c *gin.Context) {
 	c.JSON(http.StatusOK, skills)
 }
 
-// getSkillsFromCLI 执行 openclaw skills list 获取技能列表
+// getSkillsFromCLI 执行 openclaw skills list 获取技能列表（带缓存）
 func getSkillsFromCLI() []model.SkillDefinition {
+	skillsCacheMu.RLock()
+	if skillsCache != nil && time.Since(skillsCacheTime) < skillsCacheTTL {
+		defer skillsCacheMu.RUnlock()
+		return skillsCache
+	}
+	skillsCacheMu.RUnlock()
+
+	// 缓存过期或为空，重新获取
 	cmd := exec.Command("openclaw", "skills", "list")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil
 	}
 
-	return parseSkillsOutput(string(output))
+	skills := parseSkillsOutput(string(output))
+
+	skillsCacheMu.Lock()
+	skillsCache = skills
+	skillsCacheTime = time.Now()
+	skillsCacheMu.Unlock()
+
+	return skills
+}
+
+// invalidateSkillsCache 使技能缓存失效（安装/卸载/配置操作后调用）
+func invalidateSkillsCache() {
+	skillsCacheMu.Lock()
+	skillsCache = nil
+	skillsCacheTime = time.Time{}
+	skillsCacheMu.Unlock()
 }
 
 // parseSkillsOutput 解析 openclaw skills list 输出
@@ -177,6 +211,7 @@ func InstallSkill(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"success": false, "message": string(output)})
 		return
 	}
+	invalidateSkillsCache()
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Skill " + skillID + " installed"})
 }
 
@@ -189,6 +224,7 @@ func UninstallSkill(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"success": false, "message": string(output)})
 		return
 	}
+	invalidateSkillsCache()
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Skill " + skillID + " uninstalled"})
 }
 
@@ -199,6 +235,7 @@ func SaveSkillConfig(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	invalidateSkillsCache()
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Skill config saved"})
 }
 

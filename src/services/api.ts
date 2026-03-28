@@ -368,7 +368,7 @@ export const api = {
       baseUrl,
       apiKey,
       apiType,
-      models,
+      models: models.map(m => m.id),
     });
     return response.data.message;
   },
@@ -400,7 +400,11 @@ export const api = {
   },
 
   saveChannelConfig: async (channel: ChannelConfig): Promise<string> => {
-    const response = await apiClient.put<MessageResponse>('/api/channels', channel);
+    const response = await apiClient.put<MessageResponse>('/api/channels', {
+      channelType: channel.channel_type,
+      enabled: channel.enabled,
+      config: channel.config,
+    });
     return response.data.message;
   },
 

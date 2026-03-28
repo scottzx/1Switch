@@ -241,7 +241,7 @@ func StartService() (string, error) {
 	}
 
 	// 等待端口开始监听
-	for i := 1; i <= 15; i++ {
+	for i := 1; i <= 30; i++ {
 		time.Sleep(time.Second)
 		if CheckPortInUse(ServicePort) {
 			pids := GetPidsOnPort(ServicePort)
@@ -252,7 +252,7 @@ func StartService() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("服务启动超时（15秒），请检查 openclaw 日志")
+	return "", fmt.Errorf("服务启动超时（30秒），请检查 openclaw 日志")
 }
 
 // StopService 停止服务
