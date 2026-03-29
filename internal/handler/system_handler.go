@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"iclaw-admin-api/internal/model"
 	"iclaw-admin-api/internal/service"
 )
 
@@ -75,4 +76,43 @@ func (h *SystemHandler) RestartOpenClaw(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "OpenClaw restarted"})
+}
+
+// GetDeviceInfo 获取设备基本信息
+// @Summary 获取设备基本信息
+// @Tags System
+// @Produce json
+// @Success 200 {object} model.DeviceInfo
+// @Router /api/deviceinfo [get]
+func (h *SystemHandler) GetDeviceInfo(c *gin.Context) {
+	info, err := h.svc.GetDeviceInfo(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, info)
+}
+
+// UpdateDeviceInfo 更新设备信息
+// @Summary 更新设备信息
+// @Tags System
+// @Accept json
+// @Produce json
+// @Param request body model.DeviceInfoRequest true "设备信息"
+// @Success 200 {object} map[string]string
+// @Router /api/deviceinfo [post]
+func (h *SystemHandler) UpdateDeviceInfo(c *gin.Context) {
+	var req model.DeviceInfoRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.svc.UpdateDeviceInfo(c.Request.Context(), req.Hostname, req.Serial, req.IP)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "设备信息更新成功"})
 }

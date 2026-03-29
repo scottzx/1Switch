@@ -457,6 +457,71 @@ func (s *SystemService) RestartOpenClaw(ctx context.Context) error {
 	return err
 }
 
+// GetDeviceInfo 获取设备基本信息（hostname、序列号、IP）
+func (s *SystemService) GetDeviceInfo(ctx context.Context) (*model.DeviceInfo, error) {
+	info := &model.DeviceInfo{}
+
+	// 获取 hostname
+	hostname, err := s.runCommand(ctx, "hostname")
+	if err == nil {
+		info.Hostname = strings.TrimSpace(hostname)
+	}
+
+	// 获取序列号
+	serial := s.getSerial(ctx)
+	info.Serial = serial
+
+	// 获取 IP 地址
+	ip, err := s.runCommand(ctx, "hostname -I 2>/dev/null | awk '{print $1}'")
+	if err == nil {
+		info.IP = strings.TrimSpace(ip)
+	}
+
+	return info, nil
+}
+
+// UpdateDeviceInfo 更新设备信息
+func (s *SystemService) UpdateDeviceInfo(ctx context.Context, hostname, serial, ip string) error {
+	// 更新 hostname
+	if hostname != "" {
+		if _, err := s.runCommandWithContext(ctx, "hostname "+hostname); err != nil {
+			return fmt.Errorf("更新hostname失败: %w", err)
+		}
+	}
+
+	// 保存 serial 到文件
+	if serial != "" {
+		if _, err := s.runCommandWithContext(ctx, "mkdir -p /var/lib/iclaw && echo '"+serial+"' > /var/lib/iclaw/serial"); err != nil {
+			return fmt.Errorf("保存序列号失败: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// getSerial 获取设备序列号
+func (s *SystemService) getSerial(ctx context.Context) string {
+	// 优先读取静态文件
+	serial, err := s.runCommand(ctx, "cat /var/lib/iclaw/serial 2>/dev/null | tr -d '[:space:]'")
+	if err == nil && strings.TrimSpace(serial) != "" {
+		return strings.TrimSpace(serial)
+	}
+
+	// 尝试读取 DMI 信息
+	for _, path := range []string{
+		"/sys/class/dmi/id/product_uuid",
+		"/sys/firmware/devicetree/base/serial-number",
+		"/etc/serial-number",
+	} {
+		serial, err := s.runCommand(ctx, "cat "+path+" 2>/dev/null | tr -d '[:space:]'")
+		if err == nil && strings.TrimSpace(serial) != "" {
+			return strings.TrimSpace(serial)
+		}
+	}
+
+	return ""
+}
+
 // runCommand 执行 shell 命令
 func (s *SystemService) runCommand(ctx context.Context, cmd string) (string, error) {
 	return s.runCommandWithContext(ctx, cmd)

@@ -74,3 +74,10 @@ type SecurityFixRequest struct {
 type SendTestMessageRequest struct {
 	Target string `json:"target" binding:"required"`
 }
+
+// DeviceInfoRequest 设备信息更新请求
+type DeviceInfoRequest struct {
+	Hostname string `json:"hostname"`
+	Serial   string `json:"serial"`
+	IP       string `json:"ip"`
+}

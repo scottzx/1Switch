@@ -35,3 +35,10 @@ type SystemResourceUsage struct {
 	DiskTotal     uint64  `json:"disk_total"`
 	DiskUsed      uint64  `json:"disk_used"`
 }
+
+// DeviceInfo 设备基本信息
+type DeviceInfo struct {
+	Hostname string `json:"hostname"`
+	Serial   string `json:"serial"`
+	IP       string `json:"ip"`
+}

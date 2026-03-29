@@ -39,6 +39,13 @@ func SetupRouter(r *gin.Engine) {
 			system.POST("/openclaw/restart", systemHandler.RestartOpenClaw)
 		}
 
+		// Device routes
+		device := api.Group("/deviceinfo")
+		{
+			device.GET("", systemHandler.GetDeviceInfo)
+			device.POST("", systemHandler.UpdateDeviceInfo)
+		}
+
 		// Network routes (new)
 		network := api.Group("/network")
 		{
