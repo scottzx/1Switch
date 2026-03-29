@@ -6,9 +6,15 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"iclaw-admin-api/internal/model"
+)
+
+var (
+	cachedSystemInfo    *model.SystemInfo
+	systemInfoCacheOnce sync.Once
 )
 
 // GetDeviceIP 获取设备 IP 地址
@@ -39,14 +45,33 @@ func GetDeviceIP() (string, error) {
 	return localAddr.IP.String(), nil
 }
 
-// GetSystemInfo 获取系统信息
+// InitSystemInfoCache 初始化系统信息缓存（服务启动时调用一次）
+func InitSystemInfoCache() {
+	systemInfoCacheOnce.Do(func() {
+		cachedSystemInfo, _ = getSystemInfoImpl()
+	})
+}
+
+// GetSystemInfo 获取系统信息（优先返回缓存）
 func GetSystemInfo() (*model.SystemInfo, error) {
+	if cachedSystemInfo != nil {
+		return cachedSystemInfo, nil
+	}
+	InitSystemInfoCache()
+	if cachedSystemInfo != nil {
+		return cachedSystemInfo, nil
+	}
+	return getSystemInfoImpl()
+}
+
+// getSystemInfoImpl 实际获取系统信息的逻辑
+func getSystemInfoImpl() (*model.SystemInfo, error) {
 	configDir := GetConfigDir()
 
 	info := &model.SystemInfo{
-		OS:            runtime.GOOS,
-		Arch:          runtime.GOARCH,
-		ConfigDir:     configDir,
+		OS:               runtime.GOOS,
+		Arch:             runtime.GOARCH,
+		ConfigDir:        configDir,
 		OpenClawInstalled: IsOpenClawInstalled(),
 	}
 

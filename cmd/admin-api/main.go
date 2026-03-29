@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"iclaw-admin-api/internal/router"
+	"iclaw-admin-api/internal/service"
 )
 
 const Version = "v2026.3.23-2"
@@ -63,6 +64,8 @@ func main() {
 	})
 
 	// Setup API routes (router.SetupRouter already creates /api group)
+	// 初始化系统信息缓存
+	service.InitSystemInfoCache()
 	router.SetupRouter(r)
 
 	// Serve static files from same directory as executable

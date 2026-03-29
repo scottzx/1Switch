@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageType } from '../../App';
-import { RefreshCw, ExternalLink, Loader2, Sun, Moon, Menu } from 'lucide-react';
+import { RefreshCw, ExternalLink, Loader2, Sun, Moon, Menu, Network, Wifi, WifiOff } from 'lucide-react';
 import { useTheme } from '../../lib/ThemeContext';
 import { useAppStore } from '../../stores/appStore';
+import { LanPopup } from '../Network/LanPopup';
+import { WifiPopup } from '../Network/WifiPopup';
+import { networkApi } from '../../services/api';
 
 interface HeaderProps {
   currentPage: PageType;
@@ -31,6 +34,10 @@ export function Header({ currentPage }: HeaderProps) {
   const [opening, setOpening] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { openSidebar } = useAppStore();
+  const [showLanPopup, setShowLanPopup] = useState(false);
+  const [showWifiPopup, setShowWifiPopup] = useState(false);
+  const [lanConnected, setLanConnected] = useState(false);
+  const [wifiConnected, setWifiConnected] = useState(false);
 
   const handleOpenDashboard = async () => {
     setOpening(true);
@@ -52,7 +59,30 @@ export function Header({ currentPage }: HeaderProps) {
     }
   };
 
+  // Load network status periodically
+  useEffect(() => {
+    const loadNetworkStatus = async () => {
+      try {
+        const [interfaces, wifiStatus] = await Promise.all([
+          networkApi.interfaces(),
+          networkApi.wifiStatus()
+        ]);
+        // Check if any ethernet interface is connected
+        const ethernetConnected = interfaces.some(i => i.type === 'ethernet' && i.state === 'up' && i.ip);
+        setLanConnected(ethernetConnected);
+        setWifiConnected(wifiStatus.connected);
+      } catch (e) {
+        // Silently fail
+      }
+    };
+
+    loadNetworkStatus();
+    const interval = setInterval(loadNetworkStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
+    <>
     <header
       className="h-14 flex items-center justify-between px-6 titlebar-drag backdrop-blur-sm"
       style={{
@@ -78,6 +108,26 @@ export function Header({ currentPage }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 titlebar-no-drag">
+        {/* LAN */}
+        <button
+          onClick={() => setShowLanPopup(true)}
+          className="icon-button"
+          style={{ color: lanConnected ? '#22c55e' : 'var(--text-tertiary)' }}
+          title="LAN"
+        >
+          <Network size={16} />
+        </button>
+
+        {/* Wi-Fi */}
+        <button
+          onClick={() => setShowWifiPopup(true)}
+          className="icon-button"
+          style={{ color: wifiConnected ? '#22c55e' : 'var(--text-tertiary)' }}
+          title="Wi-Fi"
+        >
+          {wifiConnected ? <Wifi size={16} /> : <WifiOff size={16} />}
+        </button>
+
         {/* 主题切换 */}
         <button
           onClick={toggleTheme}
@@ -110,5 +160,12 @@ export function Header({ currentPage }: HeaderProps) {
         </button>
       </div>
     </header>
+
+    {/* LAN Popup */}
+    {showLanPopup && <LanPopup onClose={() => setShowLanPopup(false)} />}
+
+    {/* WiFi Popup */}
+    {showWifiPopup && <WifiPopup onClose={() => setShowWifiPopup(false)} />}
+    </>
   );
 }

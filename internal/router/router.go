@@ -55,6 +55,7 @@ func SetupRouter(r *gin.Engine) {
 			{
 				wifi.GET("/scan", networkHandler.ScanWifi)
 				wifi.POST("/connect", networkHandler.ConnectWifi)
+				wifi.GET("/status", networkHandler.GetWifiStatus)
 			}
 
 			ap := network.Group("/ap")

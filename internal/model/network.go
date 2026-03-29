@@ -24,3 +24,11 @@ type ApStatus struct {
 	SSID   string `json:"ssid,omitempty"`
 	IP     string `json:"ip,omitempty"`
 }
+
+// WifiStatus WiFi 连接状态
+type WifiStatus struct {
+	Connected bool   `json:"connected"`
+	SSID      string `json:"ssid,omitempty"`
+	Signal    int    `json:"signal,omitempty"`
+	IP        string `json:"ip,omitempty"`
+}

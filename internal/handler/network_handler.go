@@ -70,6 +70,21 @@ func (h *NetworkHandler) ConnectWifi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Connected to " + req.SSID})
 }
 
+// GetWifiStatus 获取 WiFi 连接状态
+// @Summary 获取 WiFi 连接状态
+// @Tags Network
+// @Produce json
+// @Success 200 {object} model.WifiStatus
+// @Router /api/network/wifi/status [get]
+func (h *NetworkHandler) GetWifiStatus(c *gin.Context) {
+	status, err := h.svc.GetWifiStatus(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, status)
+}
+
 // GetApStatus 获取 AP 热点状态
 // @Summary 获取 AP 热点状态
 // @Tags Network

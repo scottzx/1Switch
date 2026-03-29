@@ -45,7 +45,7 @@ export function FileBrowser() {
         <div className="flex items-center gap-2">
           <Folder size={16} className="text-content-secondary" />
           <span className="text-sm font-medium text-content-primary">FileBrowser</span>
-          <span className="text-xs text-content-tertiary">(admin / Admin123456!)</span>
+          <span className="text-xs text-content-tertiary">(admin / Admin@123456)</span>
         </div>
         <div className="flex items-center gap-2">
           <a

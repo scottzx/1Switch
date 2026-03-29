@@ -428,6 +428,70 @@ func (s *NetworkService) GetApStatus(ctx context.Context) (*model.ApStatus, erro
 	return status, nil
 }
 
+// GetWifiStatus 获取 WiFi 连接状态
+func (s *NetworkService) GetWifiStatus(ctx context.Context) (*model.WifiStatus, error) {
+	status := &model.WifiStatus{
+		Connected: false,
+		Signal:    0,
+	}
+
+	// 优先使用 nmcli (Linux)
+	_, err := s.runCommand(ctx, "which nmcli")
+	if err == nil {
+		// Linux: 使用 nmcli 获取当前连接的 WiFi
+		output, err := s.runCommand(ctx, "nmcli -t -f active,ssid,signal,ip4 dev wifi|grep '^yes'")
+		if err == nil && output != "" {
+			fields := strings.Split(output, ":")
+			if len(fields) >= 4 {
+				status.Connected = true
+				status.SSID = strings.TrimSpace(fields[1])
+				status.Signal = s.parseIntOrZero(fields[2])
+				status.IP = strings.TrimSpace(fields[3])
+			} else if len(fields) >= 2 {
+				status.Connected = true
+				status.SSID = strings.TrimSpace(fields[1])
+				if len(fields) >= 3 {
+					status.Signal = s.parseIntOrZero(fields[2])
+				}
+			}
+		}
+	} else {
+		// macOS: 使用 networksetup
+		ssid, err := s.runCommand(ctx, "networksetup -getairportnetwork en0")
+		if err == nil {
+			ssid = strings.TrimSpace(ssid)
+			if ssid != "" && !strings.Contains(ssid, "not associated") {
+				status.Connected = true
+				status.SSID = ssid
+				status.Signal = 100 // macOS doesn't provide signal strength
+			}
+		}
+
+		// 获取 IP
+		if status.Connected {
+			ip, err := s.runCommand(ctx, "ipconfig getifaddr en0")
+			if err == nil {
+				status.IP = strings.TrimSpace(ip)
+			}
+		}
+	}
+
+	// 如果获取到 SSID 但没有 IP，尝试获取 IP
+	if status.Connected && status.IP == "" {
+		ip, err := s.runCommand(ctx, "hostname -I")
+		if err == nil {
+			ips := strings.TrimSpace(ip)
+			if strings.Contains(ips, " ") {
+				status.IP = strings.Split(ips, " ")[0]
+			} else {
+				status.IP = ips
+			}
+		}
+	}
+
+	return status, nil
+}
+
 // StartAp 启动 AP 热点
 func (s *NetworkService) StartAp(ctx context.Context) error {
 	// 使用 nmcli 创建 AP 热点

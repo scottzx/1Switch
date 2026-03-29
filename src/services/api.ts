@@ -203,6 +203,13 @@ export interface ApStatus {
   ip?: string;
 }
 
+export interface WifiStatus {
+  connected: boolean;
+  ssid?: string;
+  signal?: number;
+  ip?: string;
+}
+
 // System monitoring API (from admin-ui)
 export const systemApi = {
   info: async (): Promise<SystemInfo> => {
@@ -234,6 +241,10 @@ export const networkApi = {
   },
   wifiConnect: async (ssid: string, password?: string): Promise<void> => {
     await apiClient.post('/api/network/wifi/connect', { ssid, password });
+  },
+  wifiStatus: async (): Promise<WifiStatus> => {
+    const response = await apiClient.get<WifiStatus>('/api/network/wifi/status');
+    return response.data;
   },
   apStatus: async (): Promise<ApStatus> => {
     const response = await apiClient.get<ApStatus>('/api/network/ap');
