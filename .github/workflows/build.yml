@@ -38,6 +38,12 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Inject version into index.html
+        run: |
+          TAG_NAME="${{ github.event.inputs.release_tag || github.ref_name }}"
+          sed -i "s/{{VERSION}}/${TAG_NAME}/g" dist/index.html
+          grep 'data-version' dist/index.html
+
       - name: Create dist.zip
         run: |
           cd dist
