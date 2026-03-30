@@ -250,7 +250,7 @@ export function Settings({ onEnvironmentChange }: SettingsProps) {
 
           <div className="space-y-3">
             <button
-              onClick={() => deviceIP && window.open(`http://${deviceIP}:8089`, '_blank')}
+              onClick={() => deviceIP && window.open(`http://${deviceIP}:8089/ui/ota.html`, '_blank')}
               disabled={!deviceIP}
               className="w-full flex items-center gap-3 p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors text-left disabled:opacity-50"
             >

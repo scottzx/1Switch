@@ -43,7 +43,7 @@ if [ "$VERSION" = "latest" ]; then
     gh release download --repo scottzx/iclaw-manager -p "admin-api" -p "dist.zip" -D .
 else
     log "下载版本 $VERSION ..."
-    gh release download --repo scottzx/iclaw-manager -p "admin-api" -p "dist.zip" -D . --tag "$VERSION"
+    gh release download --repo scottzx/iclaw-manager "$VERSION" -p "admin-api" -p "dist.zip" -D .
 fi
 
 log "下载完成: $(ls -lh)"
