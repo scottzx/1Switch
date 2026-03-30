@@ -63,6 +63,9 @@ jobs:
           GOOS: linux
           GOARCH: arm64
         run: |
+          TAG_NAME="${{ github.event.inputs.release_tag || github.ref_name }}"
+          sed -i "s/const Version = \".*\"/const Version = \"${TAG_NAME#v}\"/" cmd/admin-api/main.go
+          grep "const Version" cmd/admin-api/main.go
           GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="-s -w" -o admin-api ./cmd/admin-api
           file admin-api
           du -sh admin-api
