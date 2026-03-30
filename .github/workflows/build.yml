@@ -96,7 +96,7 @@ jobs:
           prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag == '' }}
           generate_release_notes: true
           files: |
-            artifacts/dist.zip
-            artifacts/admin-api
+            artifacts/ota-artifacts/dist.zip
+            artifacts/ota-artifacts/admin-api
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
