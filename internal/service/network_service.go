@@ -152,7 +152,7 @@ func (s *NetworkService) getCurrentWifiSSID(ctx context.Context) string {
 	// 优先使用 nmcli (Linux)
 	_, err := s.runCommand(ctx, "which nmcli")
 	if err == nil {
-		ssid, err := s.runCommand(ctx, "nmcli -t -f active,ssid dev wifi|grep '^yes'")
+		ssid, err := s.runCommand(ctx, "nmcli -t -f active,ssid dev wifi|grep -E '^(是|yes):'")
 		if err == nil && ssid != "" {
 			parts := strings.SplitN(ssid, ":", 2)
 			if len(parts) >= 2 {
@@ -183,6 +183,8 @@ func (s *NetworkService) parseNmcliWifiOutput(output string) []model.WifiNetwork
 
 	for scanner.Scan() {
 		line := scanner.Text()
+		// BSSID contains escaped colons, unescape them first
+		line = strings.ReplaceAll(line, "\\:", ":")
 		fields := strings.Split(line, ":")
 		if len(fields) >= 5 {
 			network := model.WifiNetwork{
@@ -396,7 +398,7 @@ func (s *NetworkService) GetApStatus(ctx context.Context) (*model.ApStatus, erro
 		}
 
 		// 获取当前连接的 SSID
-		ssid, err := s.runCommand(ctx, "nmcli -t -f active,ssid dev wifi|grep '^yes'")
+		ssid, err := s.runCommand(ctx, "nmcli -t -f active,ssid dev wifi|grep -E '^(是|yes):'")
 		if err == nil && ssid != "" {
 			parts := strings.SplitN(ssid, ":", 2)
 			if len(parts) >= 2 {
@@ -439,7 +441,7 @@ func (s *NetworkService) GetWifiStatus(ctx context.Context) (*model.WifiStatus, 
 	_, err := s.runCommand(ctx, "which nmcli")
 	if err == nil {
 		// Linux: 使用 nmcli 获取当前连接的 WiFi
-		output, err := s.runCommand(ctx, "nmcli -t -f active,ssid,signal,ip4 dev wifi|grep '^yes'")
+		output, err := s.runCommand(ctx, "nmcli -t -f active,ssid,signal dev wifi|grep -E '^(是|yes):'")
 		if err == nil && output != "" {
 			fields := strings.Split(output, ":")
 			if len(fields) >= 4 {

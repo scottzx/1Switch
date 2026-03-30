@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { networkApi, WifiNetwork } from '../../services/api';
 import { Wifi, WifiOff, RefreshCw, Loader2, Lock, Unlock, Signal } from 'lucide-react';
 
 interface WifiPopupProps {
   onClose: () => void;
+}
+
+interface GroupedWifiNetwork extends WifiNetwork {
+  bssids: string[];
+  apCount: number;
 }
 
 export function WifiPopup({ onClose }: WifiPopupProps) {
@@ -14,6 +19,30 @@ export function WifiPopup({ onClose }: WifiPopupProps) {
   const [selectedNetwork, setSelectedNetwork] = useState<WifiNetwork | null>(null);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Group networks by SSID
+  const groupedNetworks = useMemo<GroupedWifiNetwork[]>(() => {
+    const groups = new Map<string, GroupedWifiNetwork>();
+    for (const network of networks) {
+      const key = network.ssid;
+      if (!key) continue;
+      if (groups.has(key)) {
+        const existing = groups.get(key)!;
+        if (network.signal > existing.signal) {
+          existing.signal = network.signal;
+        }
+        existing.bssids.push(network.bssid);
+        existing.apCount = existing.bssids.length;
+      } else {
+        groups.set(key, {
+          ...network,
+          bssids: [network.bssid],
+          apCount: 1,
+        });
+      }
+    }
+    return Array.from(groups.values());
+  }, [networks]);
 
   useEffect(() => {
     loadWifiStatus();
@@ -133,19 +162,19 @@ export function WifiPopup({ onClose }: WifiPopupProps) {
 
         {/* Network List */}
         <div className="flex-1 overflow-y-auto p-2">
-          {scanning && networks.length === 0 ? (
+          {scanning && groupedNetworks.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 size={20} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
             </div>
-          ) : networks.length === 0 ? (
+          ) : groupedNetworks.length === 0 ? (
             <div className="text-center py-8 text-sm" style={{ color: 'var(--text-tertiary)' }}>
               No networks found
             </div>
           ) : (
             <div className="space-y-1">
-              {networks.map((network, index) => (
+              {groupedNetworks.map((network) => (
                 <button
-                  key={`${network.bssid || network.ssid}-${index}`}
+                  key={network.ssid}
                   onClick={() => handleNetworkClick(network)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-[var(--bg-overlay)]"
                   style={{ color: 'var(--text-primary)' }}
@@ -157,6 +186,11 @@ export function WifiPopup({ onClose }: WifiPopupProps) {
                       <Lock size={14} style={{ color: 'var(--text-tertiary)' }} />
                     )}
                     <span className="truncate text-sm">{network.ssid}</span>
+                    {network.apCount > 1 && (
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-overlay)', color: 'var(--text-tertiary)' }}>
+                        {network.apCount} APs
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {getSignalIcon(network.signal)}
