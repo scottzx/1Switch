@@ -139,10 +139,65 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
           if-no-files-found: error
 
+  # ── OTA 构建 (admin-api ARM64 + dist.zip) ───────────────────
+  ota:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: Build OTA Package
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Create dist.zip
+        run: |
+          cd dist
+          zip -r ../dist.zip .
+          cd ..
+          unzip -l dist.zip
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: false
+
+      - name: Install Go dependencies
+        run: go mod download
+
+      - name: Build admin-api (Linux ARM64)
+        env:
+          GOOS: linux
+          GOARCH: arm64
+        run: |
+          GOOS=$GOOS GOARCH=$GOARCH go build -o admin-api ./cmd/admin-api
+          file admin-api
+          du -sh admin-api
+
+      - name: Upload OTA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ota-artifacts
+          path: |
+            dist.zip
+            admin-api
+          if-no-files-found: error
+
   # ── 发布 Release ───────────────────────────────────────────
   release:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-    needs: build
+    needs: [build, ota]
     runs-on: ubuntu-latest
     name: Create Release
     permissions:
@@ -173,5 +228,7 @@ jobs:
             artifacts/**/*.exe
             artifacts/**/*.deb
             artifacts/**/*.AppImage
+            artifacts/dist.zip
+            artifacts/admin-api
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
