@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   User,
@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   X,
   Globe,
+  Download,
 } from 'lucide-react';
 import { api } from '../../lib/tauri';
 
@@ -26,6 +27,20 @@ interface SettingsProps {
 
 export function Settings({ onEnvironmentChange }: SettingsProps) {
   const { t, i18n } = useTranslation();
+  const [deviceIP, setDeviceIP] = useState<string>('');
+
+  useEffect(() => {
+    const fetchDeviceIP = async () => {
+      try {
+        const response = await fetch('/api/system/device-ip');
+        const data = await response.json();
+        setDeviceIP(data.ip);
+      } catch {
+        // ignore
+      }
+    };
+    fetchDeviceIP();
+  }, []);
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -218,6 +233,33 @@ export function Settings({ onEnvironmentChange }: SettingsProps) {
                 <div className="w-11 h-6 bg-surface-elevated peer-focus:ring-2 peer-focus:ring-claw-500/50 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-claw-500"></div>
               </label>
             </div>
+          </div>
+        </div>
+
+        {/* 检查更新 */}
+        <div className="bg-surface-card rounded-2xl p-6 border border-edge">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <Download size={20} className="text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-content-primary">检查更新</h3>
+              <p className="text-xs text-content-tertiary">检查并更新系统组件</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => deviceIP && window.open(`http://${deviceIP}:8089`, '_blank')}
+              disabled={!deviceIP}
+              className="w-full flex items-center gap-3 p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors text-left disabled:opacity-50"
+            >
+              <Download size={18} className="text-green-400" />
+              <div className="flex-1">
+                <p className="text-sm text-content-primary">文件管理</p>
+                <p className="text-xs text-content-tertiary">OTA 系统更新</p>
+              </div>
+            </button>
           </div>
         </div>
 
