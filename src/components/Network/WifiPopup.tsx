@@ -250,9 +250,9 @@ export function WifiPopup({ onClose }: WifiPopupProps) {
                   </button>
                   <button
                     onClick={handleConnect}
-                    disabled={connecting !== null || !password}
+                    disabled={connecting !== null || password.length < 8}
                     className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                    style={{ backgroundColor: 'var(--primary)', color: 'var(--text-inverse)' }}
+                    style={{ backgroundColor: password.length >= 8 ? '#22c55e' : 'var(--bg-overlay)', color: password.length >= 8 ? 'white' : 'var(--text-secondary)' }}
                   >
                     {connecting ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Connect'}
                   </button>

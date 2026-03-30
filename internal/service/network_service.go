@@ -183,10 +183,25 @@ func (s *NetworkService) parseNmcliWifiOutput(output string) []model.WifiNetwork
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		// BSSID contains escaped colons, unescape them first
+		// BSSID contains escaped colons (\:), unescape them first
 		line = strings.ReplaceAll(line, "\\:", ":")
 		fields := strings.Split(line, ":")
-		if len(fields) >= 5 {
+		// Format: SSID:BSSID(octets):Signal:Security:Frequency
+		// After unescape, BSSID octets are still colon-separated, so we get 10 fields
+		// fields: [0]=SSID, [1-6]=BSSID octets, [7]=Signal, [8]=Security, [9]=Freq
+		if len(fields) >= 10 {
+			network := model.WifiNetwork{
+				SSID:     fields[0],
+				BSSID:    strings.Join(fields[1:7], ":"),
+				Signal:   s.parseIntOrZero(fields[7]),
+				Security: fields[8],
+				Frequency: s.parseFrequency(fields[9]),
+			}
+			if network.SSID != "" {
+				networks = append(networks, network)
+			}
+		} else if len(fields) >= 5 {
+			// Fallback for already unescaped or different format
 			network := model.WifiNetwork{
 				SSID:     fields[0],
 				BSSID:    fields[1],

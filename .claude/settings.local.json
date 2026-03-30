@@ -3,7 +3,14 @@
     "allow": [
       "Bash(cd:*)",
       "Bash(go build:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(rsync:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Read(//Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-deploy/services/**)",
+      "Bash(rm -f iclaw-device-register.timer)",
+      "Bash(ls iclaw-device*)"
     ]
   }
 }
