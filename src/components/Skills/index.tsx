@@ -22,6 +22,7 @@ import {
     Filter,
 } from 'lucide-react';
 import clsx from 'clsx';
+import api from '../../services/api';
 import { invoke } from '../../lib/invoke-shim';
 
 // ============ 类型定义 ============
@@ -252,8 +253,8 @@ export function Skills() {
 
     const fetchSkills = useCallback(async () => {
         try {
-            const result = await invoke<SkillDefinition[]>('get_skills_list');
-            setSkills(result);
+            const result = await api.getSkills();
+            setSkills(result as SkillDefinition[]);
             return result;
         } catch (e) {
             console.error('获取技能列表失败:', e);
@@ -297,11 +298,7 @@ export function Skills() {
         setInstalling(skill.id);
         setActionResult(null);
         try {
-            await invoke<string>('install_skill', {
-                skillId: skill.id,
-                packageName: skill.package_name,
-                clawhubSlug: skill.clawhub_slug,
-            });
+            await api.installSkill(skill.id);
             setActionResult({ success: true, message: `${skill.name} 安装成功` });
             await fetchSkills();
         } catch (e) {
@@ -315,10 +312,7 @@ export function Skills() {
         setUninstalling(skill.id);
         setActionResult(null);
         try {
-            await invoke<string>('uninstall_skill', {
-                skillId: skill.id,
-                packageName: skill.package_name,
-            });
+            await api.uninstallSkill(skill.id);
             setActionResult({ success: true, message: `${skill.name} 已卸载` });
             await fetchSkills();
         } catch (e) {
@@ -341,11 +335,7 @@ export function Skills() {
                 if (value) config[key] = value;
             });
 
-            await invoke<string>('save_skill_config', {
-                skillId: selectedSkill,
-                enabled: skill.enabled,
-                config,
-            });
+            await api.saveSkillConfig(selectedSkill, skill.enabled, config);
             setActionResult({ success: true, message: `${skill.name} 配置已保存` });
             await fetchSkills();
         } catch (e) {
@@ -361,11 +351,7 @@ export function Skills() {
             Object.entries(skill.config_values).forEach(([key, value]) => {
                 config[key] = value;
             });
-            await invoke<string>('save_skill_config', {
-                skillId: skill.id,
-                enabled: !skill.enabled,
-                config,
-            });
+            await api.saveSkillConfig(skill.id, !skill.enabled, config);
             await fetchSkills();
         } catch (e) {
             console.error('切换技能状态失败:', e);
