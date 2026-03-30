@@ -12,7 +12,7 @@ import (
 	"iclaw-admin-api/internal/service"
 )
 
-const Version = "v2026.3.23-2"
+const Version = "v2026.3.23-9"
 
 func main() {
 	// Check version flag

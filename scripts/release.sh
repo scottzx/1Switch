@@ -34,7 +34,7 @@ if [ -z "$1" ]; then
 fi
 
 VERSION="$1"
-ADMIN_API_VERSION="${VERSION#v}"  # 去掉 v 前缀
+ADMIN_API_VERSION="$VERSION"  # 保留 v 前缀
 
 log "==> 开始发布 $VERSION"
 
@@ -64,7 +64,7 @@ npm ci --silent 2>/dev/null || npm install --silent 2>/dev/null
 npm run build
 
 # 注入版本号
-sed -i "s/{{VERSION}}/${VERSION}/g" dist/index.html
+sed -i '' "s/{{VERSION}}/${VERSION}/g" dist/index.html
 log "    前端版本: $(grep -o 'data-version="[^"]*"' dist/index.html)"
 
 # 打包
@@ -78,7 +78,7 @@ log "    dist.zip 大小: $(du -sh dist.zip | cut -f1)"
 log "==> [2/5] 构建 admin-api (Linux ARM64)..."
 
 # 更新版本号
-sed -i "s/const Version = \".*\"/const Version = \"${ADMIN_API_VERSION}\"/" cmd/admin-api/main.go
+sed -i '' "s/const Version = \".*\"/const Version = \"${ADMIN_API_VERSION}\"/" cmd/admin-api/main.go
 log "    admin-api 版本: $(grep 'const Version' cmd/admin-api/main.go)"
 
 # 编译
