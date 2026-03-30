@@ -87,6 +87,10 @@ GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o admin-api ./cmd/admin-api
 log "    admin-api 大小: $(du -sh admin-api | cut -f1)"
 file admin-api
 
+# 同时执行本地编译脚本
+log "==> [2.5/5] 执行本地编译..."
+./scripts/build-linux-arm64.sh
+
 # ========== 3. 复制到构建目录 ==========
 log "==> [3/5] 准备发布文件..."
 cp dist.zip "$BUILD_DIR/$VERSION/"
