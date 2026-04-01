@@ -5,6 +5,9 @@
   "author": "OpenClaw Team",
   "license": "MIT",
   "type": "module",
+  "bin": {
+    "openclaw-gateway-lan-access": "./scripts/openclaw-gateway-lan-access.sh"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
