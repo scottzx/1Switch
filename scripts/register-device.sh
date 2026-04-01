@@ -342,6 +342,9 @@ if 'controlUi' not in config['gateway']:
 # 设置gateway.bind模式
 config['gateway']['bind'] = 'lan'
 
+# 设置 gateway.mode 为 local（关键修复！）
+config['gateway']['mode'] = 'local'
+
 # 设置 dangerouslyDisableDeviceAuth=true
 config['gateway']['controlUi']['dangerouslyDisableDeviceAuth'] = True
 
