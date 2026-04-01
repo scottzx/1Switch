@@ -18,6 +18,8 @@ MAX_RETRIES=30
 MAX_REGISTER_RETRIES=3
 REGISTER_RETRY_DELAY=5
 CACHE_FILE="/var/lib/iclaw/registration_cache.json"
+FAIL_COUNT_FILE="/var/lib/iclaw/registration_fail_count"
+MAX_CONSECUTIVE_FAILS=5
 
 # ========== 日志函数 ==========
 log() {
@@ -33,6 +35,21 @@ debug() {
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] DEBUG: $*" >&2
     fi
 }
+
+# ========== 随机抖动（避免多设备同时上报造成雪崩） ==========
+# 判断是否是开机后首次执行（运行时间 < 5 分钟）
+BOOT_THRESHOLD=300  # 5 分钟，单位秒
+uptime_seconds=$(awk '{print int($1)}' /proc/uptime)
+
+if [[ $uptime_seconds -lt $BOOT_THRESHOLD ]]; then
+    log "Boot detected (uptime: ${uptime_seconds}s), skipping jitter"
+    jitter=0
+else
+    # 使用 awk 替代 $RANDOM 以兼容嵌入式设备
+    jitter=$((1 + $(awk 'BEGIN{srand(); print int(rand()*299)}')))
+    log "Jitter: sleeping ${jitter}s before registration..."
+fi
+sleep "$jitter"
 
 # ========== 网络检测 ==========
 is_network_ready() {
@@ -127,10 +144,12 @@ get_serial() {
     # ARM 设备最后 fallback: 使用 CPU part+revision+implementer 生成伪序列号
     if [[ -f /proc/cpuinfo ]]; then
         local implementer=$(grep -oP 'CPU implementer\s*:\s*\K0x[a-f0-9]+' /proc/cpuinfo | head -1)
-        local part=$(grep -oP 'CPU part\s*:\s*\K[a-f0-9]+' /proc/cpuinfo | head -1)
+        local part=$(grep -oP 'CPU part\s*:\s*\K0x[a-f0-9]+' /proc/cpuinfo | head -1)
         local revision=$(grep -oP 'CPU revision\s*:\s*\K[a-f0-9]+' /proc/cpuinfo | head -1)
+        local date_suffix=$(date +%m%d)
+        local rand=$(od -An -N2 -tx1 /dev/urandom | tr -d ' \n' | head -c 4)
         if [[ -n "$implementer" && -n "$part" ]]; then
-            echo "${implementer#0x}${part}${revision}"
+            echo "${implementer#0x}${part#0x}${date_suffix}${rand}"
             return 0
         fi
     fi
@@ -138,24 +157,32 @@ get_serial() {
     return 1
 }
 
-# 获取 IP 地址
-get_ip() {
-    local ip
-    for iface in end0 eth0 en0 en1 enp0s1; do
-        ip=$(ip -4 addr show "${iface}" 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1)
-        if [[ -n "$ip" ]]; then
-            echo "$ip"
-            return 0
-        fi
-    done
-
-    ip=$(hostname -I 2>/dev/null | awk '{print $1}')
-    if [[ -n "$ip" ]]; then
-        echo "$ip"
-        return 0
+# 获取所有 IPv4 地址（过滤 IPv6 和 loopback）
+get_ips() {
+    local ips
+    ips=$(ip -4 addr show 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1 | grep -v '^127\.')
+    if [[ -z "$ips" ]]; then
+        return 1
     fi
-
-    return 1
+    # 输出为 JSON 数组格式
+    if command -v jq &>/dev/null; then
+        echo "$ips" | jq -Rs 'split("\n") | map(select(length > 0))'
+    else
+        # Fallback: 无 jq 时手动构造 JSON 数组
+        local json="["
+        local first=true
+        while IFS= read -r ip; do
+            [[ -z "$ip" ]] && continue
+            if [[ "$first" == "true" ]]; then
+                first=false
+            else
+                json+=","
+            fi
+            json+="\"$ip\""
+        done <<< "$ips"
+        json+="]"
+        echo "$json"
+    fi
 }
 
 # 获取 hostname
@@ -268,8 +295,14 @@ clear_cache() {
 
 # ========== OpenClaw Config 更新 ==========
 update_openclaw_config() {
-    local ip origin
-    ip=$(get_ip) || return 0
+    # 获取所有 IP（JSON 数组格式）
+    local ips_json
+    ips_json=$(get_ips) || return 0
+
+    if [[ "$ips_json" == "[]" ]] || [[ -z "$ips_json" ]]; then
+        debug "No IPs found, skipping"
+        return 0
+    fi
 
     # openclaw 配置路径（root 用户安装时在 /root/.openclaw）
     local openclaw_json="/root/.openclaw/openclaw.json"
@@ -279,28 +312,35 @@ update_openclaw_config() {
         return 0
     fi
 
-    origin="http://${ip}:18789"
-
-    # 使用 Python 更新 JSON
-    python3 -c "
+    # 使用 Python 更新 JSON，通过 stdin 传入 IP 数组（避免 bash 引号冲突）
+    echo "$ips_json" | python3 -c "
 import json
+import sys
 
 config_path = '$openclaw_json'
-ip = '$ip'
-origin = 'http://${ip}:18789'
+
+try:
+    ips_json = sys.stdin.read()
+    ips = json.loads(ips_json)
+except json.JSONDecodeError as e:
+    print(f'Failed to parse IPs JSON: {e}')
+    sys.exit(0)
 
 try:
     with open(config_path, 'r') as f:
         config = json.load(f)
 except Exception as e:
     print(f'Failed to read openclaw.json: {e}')
-    exit(0)
+    sys.exit(0)
 
 # 确保 gateway.controlUi 存在
 if 'gateway' not in config:
     config['gateway'] = {}
 if 'controlUi' not in config['gateway']:
     config['gateway']['controlUi'] = {}
+
+# 设置gateway.bind模式
+config['gateway']['bind'] = 'lan'
 
 # 设置 dangerouslyDisableDeviceAuth=true
 config['gateway']['controlUi']['dangerouslyDisableDeviceAuth'] = True
@@ -309,12 +349,14 @@ config['gateway']['controlUi']['dangerouslyDisableDeviceAuth'] = True
 if 'allowedOrigins' not in config['gateway']['controlUi']:
     config['gateway']['controlUi']['allowedOrigins'] = []
 
-# 追加当前 IP（如果不在列表中）
-if origin not in config['gateway']['controlUi']['allowedOrigins']:
-    config['gateway']['controlUi']['allowedOrigins'].append(origin)
-    print(f'Added {origin} to allowedOrigins')
-else:
-    print(f'{origin} already in allowedOrigins')
+# 遍历所有 IP，追加到 allowedOrigins
+for ip in ips:
+    origin = f'http://{ip}:18789'
+    if origin not in config['gateway']['controlUi']['allowedOrigins']:
+        config['gateway']['controlUi']['allowedOrigins'].append(origin)
+        print(f'Added {origin} to allowedOrigins')
+    else:
+        print(f'{origin} already in allowedOrigins')
 
 # 写回文件
 with open(config_path, 'w') as f:
@@ -324,11 +366,11 @@ with open(config_path, 'w') as f:
 
 # ========== 注册 ==========
 build_payload() {
-    local mac serial ip hostname os arch kernel uptime memory disk cpu
+    local mac serial ips hostname os arch kernel uptime memory disk cpu
 
     mac=$(get_mac) || mac="unknown"
     serial=$(get_serial) || serial="unknown"
-    ip=$(get_ip) || ip="unknown"
+    ips=$(get_ips) || ips="[]"
     hostname=$(get_hostname) || hostname="unknown"
     os=$(get_os_info) || os="unknown"
     arch=$(get_arch) || arch="unknown"
@@ -338,12 +380,11 @@ build_payload() {
     disk=$(get_disk_info) || disk="unknown"
     cpu=$(get_cpu_info) || cpu="unknown"
 
-    # 使用 jq 生成 JSON（如果可用），否则手动转义
+    # 使用 jq 生成 JSON，同时发送 ip（兼容）和 ips（完整列表）
     if command -v jq &>/dev/null; then
         jq -n \
             --arg mac "$mac" \
             --arg serial "$serial" \
-            --arg ip "$ip" \
             --arg hostname "$hostname" \
             --arg os "$os" \
             --arg arch "$arch" \
@@ -352,10 +393,12 @@ build_payload() {
             --arg memory "$memory" \
             --arg disk "$disk" \
             --arg cpu "$cpu" \
+            --argjson ips "$ips" \
             '{
                 mac: $mac,
                 serial: $serial,
-                ip: $ip,
+                ip: ($ips | .[0] // null),
+                ips: $ips,
                 hostname: $hostname,
                 os: $os,
                 arch: $arch,
@@ -370,10 +413,15 @@ build_payload() {
         _escape_json() {
             echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g'
         }
-        printf '{"mac":"%s","serial":"%s","ip":"%s","hostname":"%s","os":"%s","arch":"%s","kernel":"%s","uptime":"%s","memory":"%s","disk":"%s","cpu":"%s"}' \
+        # 从 ips 数组中取第一个元素作为 ip
+        local first_ip
+        first_ip=$(echo "$ips" | sed 's/\["//; s/",.*$//; s/\]//' | tr -d '"')
+        [[ -z "$first_ip" ]] && first_ip="unknown"
+        printf '{"mac":"%s","serial":"%s","ip":"%s","ips":%s,"hostname":"%s","os":"%s","arch":"%s","kernel":"%s","uptime":"%s","memory":"%s","disk":"%s","cpu":"%s"}' \
             "$(_escape_json "$mac")" \
             "$(_escape_json "$serial")" \
-            "$(_escape_json "$ip")" \
+            "$first_ip" \
+            "$ips" \
             "$(_escape_json "$hostname")" \
             "$(_escape_json "$os")" \
             "$(_escape_json "$arch")" \
@@ -409,11 +457,36 @@ do_register() {
 
     if [[ "$status_code" == "200" ]]; then
         log "Device registered successfully"
+        reset_fail_count
         clear_cache
         return 0
     else
         error "Registration failed: HTTP ${status_code}, body: ${body}"
         return 1
+    fi
+}
+
+# ========== 失败计数 ==========
+get_fail_count() {
+    if [[ -f "$FAIL_COUNT_FILE" ]]; then
+        cat "$FAIL_COUNT_FILE" 2>/dev/null || echo 0
+    else
+        echo 0
+    fi
+}
+
+inc_fail_count() {
+    local count
+    count=$(get_fail_count)
+    count=$((count + 1))
+    mkdir -p "$(dirname "$FAIL_COUNT_FILE")"
+    echo "$count" > "$FAIL_COUNT_FILE"
+    log "Consecutive fail count: ${count}/${MAX_CONSECUTIVE_FAILS}"
+}
+
+reset_fail_count() {
+    if [[ -f "$FAIL_COUNT_FILE" ]]; then
+        rm -f "$FAIL_COUNT_FILE"
     fi
 }
 
@@ -439,6 +512,7 @@ register_with_retry() {
     done
 
     error "Registration failed after ${MAX_REGISTER_RETRIES} attempts"
+    inc_fail_count
     return 1
 }
 
@@ -446,9 +520,18 @@ register_with_retry() {
 main() {
     log "Starting device registration..."
 
+    # 检查连续失败计数，超过阈值则跳过
+    local fail_count
+    fail_count=$(get_fail_count)
+    if [[ "$fail_count" -ge "$MAX_CONSECUTIVE_FAILS" ]]; then
+        log "Consecutive failures (${fail_count}) reached limit (${MAX_CONSECUTIVE_FAILS}), skipping registration"
+        exit 0
+    fi
+
     # 等待网络就绪
     if ! wait_for_network; then
         error "Network check failed, exiting"
+        inc_fail_count
         # 保存缓存以便下次重试
         if [[ -t 0 ]] && [[ -w /var/lib/iclaw ]]; then
             payload=$(build_payload)
