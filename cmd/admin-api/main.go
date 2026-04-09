@@ -27,6 +27,7 @@ func main() {
 
 	portalStaticDir := "portal/dist"
 	iclawStaticDir := "app/iclaw/dist"
+	terminalStaticDir := "app/terminal/dist"
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -107,6 +108,26 @@ func main() {
 		log.Printf("iclaw directory not found: %s", iclawStaticDir)
 	}
 
+	// terminal 静态文件
+	if _, err := os.Stat(terminalStaticDir); err == nil {
+		terminalGroup := r.Group("/app/terminal")
+		terminalGroup.GET("", func(c *gin.Context) {
+			c.File(filepath.Join(terminalStaticDir, "index.html"))
+		})
+		terminalGroup.GET("/*path", func(c *gin.Context) {
+			requestedPath := c.Param("path")
+			staticPath := filepath.Join(terminalStaticDir, requestedPath)
+			if _, err := os.Stat(staticPath); err == nil {
+				c.File(staticPath)
+			} else {
+				c.File(filepath.Join(terminalStaticDir, "index.html"))
+			}
+		})
+		log.Printf("terminal serving from: %s", terminalStaticDir)
+	} else {
+		log.Printf("terminal directory not found: %s", terminalStaticDir)
+	}
+
 	// SPA fallback - 非 API 路由 fallback 到 portal
 	r.NoRoute(func(c *gin.Context) {
 		if !strings.HasPrefix(c.Request.URL.Path, "/api") {
@@ -118,5 +139,6 @@ func main() {
 	log.Printf("Portal: http://localhost:%s/", port)
 	log.Printf("iclaw: http://localhost:%s/app/iclaw/", port)
 	log.Printf("frp: http://localhost:%s/app/frp/", port)
+	log.Printf("terminal: http://localhost:%s/app/terminal/", port)
 	r.Run("0.0.0.0:" + port)
 }

@@ -22,7 +22,9 @@
       "Bash(/opt/iclaw-manager/bin/admin-api)",
       "Bash(curl -s http://localhost:8080/)",
       "Bash(kill 59123)",
-      "Bash(kill 68102 go build -o bin/admin-api ./cmd/admin-api PORT=9999 /opt/iclaw-manager/bin/admin-api)"
+      "Bash(kill 68102 go build -o bin/admin-api ./cmd/admin-api PORT=9999 /opt/iclaw-manager/bin/admin-api)",
+      "Bash(kill 91046)",
+      "Bash(./bin/admin-api)"
     ]
   }
 }

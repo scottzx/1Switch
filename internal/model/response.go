@@ -220,3 +220,24 @@ type UpdateInfo struct {
 	LatestVersion  *string `json:"latest_version,omitempty"`
 	UpdateAvailable bool   `json:"update_available"`
 }
+
+// ErrorResponse 错误响应
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+// MessageResponse 消息响应
+type MessageResponse struct {
+	Message string `json:"message"`
+}
+
+// CreateSessionRequest 创建会话请求
+type CreateSessionRequest struct {
+	Name string `json:"name"`
+}
+
+// CreateSessionResponse 创建会话响应
+type CreateSessionResponse struct {
+	Port int    `json:"port"`
+	Name string `json:"name"`
+}

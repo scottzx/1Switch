@@ -17,6 +17,7 @@ func SetupRouter(r *gin.Engine) {
 	systemHandler := handler.NewSystemHandler(systemService)
 	networkHandler := handler.NewNetworkHandler(networkService)
 	frpHandler := handler.NewFrpHandler(frpService)
+	sessionHandler := handler.NewSessionHandler()
 
 	api := r.Group("/api")
 	{
@@ -169,6 +170,15 @@ func SetupRouter(r *gin.Engine) {
 			frp.POST("/connect", frpHandler.Connect)
 			frp.POST("/disconnect", frpHandler.Disconnect)
 			frp.POST("/install", frpHandler.Install)
+		}
+
+		// Terminal sessions routes
+		terminal := api.Group("/terminal")
+		{
+			terminal.GET("/sessions", sessionHandler.ListSessions)
+			terminal.POST("/sessions", sessionHandler.CreateSession)
+			terminal.DELETE("/sessions/:name", sessionHandler.DeleteSession)
+			terminal.GET("/sessions/default", sessionHandler.GetDefaultSession)
 		}
 	}
 }
