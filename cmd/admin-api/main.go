@@ -15,7 +15,6 @@ import (
 const Version = "v2026.3.23-9"
 
 func main() {
-	// Check version flag
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
 		println("iClaw Admin API version", Version)
 		os.Exit(0)
@@ -23,22 +22,16 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "1420" // 前端端口
+		port = "8080"
 	}
 
-	// 静态文件目录 - 优先使用 dist 目录（前端构建产物）
-	staticDir := "dist"
-	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
-		// 如果 dist 不存在，使用可执行文件所在目录
-		execDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-		staticDir = execDir
-	}
+	portalStaticDir := "portal/dist"
+	iclawStaticDir := "iclaw/dist"
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 
-	// CORS middleware
 	r.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -50,12 +43,10 @@ func main() {
 		c.Next()
 	})
 
-	// Health check
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	// Version check
 	r.GET("/api/version", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"version": Version,
@@ -63,8 +54,6 @@ func main() {
 		})
 	})
 
-	// Setup API routes (router.SetupRouter already creates /api group)
-	// 初始化系统信息缓存
 	service.InitSystemInfoCache()
 	router.SetupRouter(r)
 
@@ -87,28 +76,43 @@ func main() {
 		log.Printf("Serving FRP app from: %s", frpStaticDir)
 	}
 
-	// Serve static files from same directory as executable
-	if _, err := os.Stat(staticDir); err == nil {
+	if _, err := os.Stat(portalStaticDir); err == nil {
 		r.GET("/", func(c *gin.Context) {
-			c.File(filepath.Join(staticDir, "index.html"))
+			c.File(filepath.Join(portalStaticDir, "index.html"))
 		})
-		r.Static("/assets", filepath.Join(staticDir, "assets"))
-		r.Static("/icons", filepath.Join(staticDir, "icons"))
-		// PWA static files
-		r.StaticFile("/manifest.json", filepath.Join(staticDir, "manifest.json"))
-		r.StaticFile("/sw.js", filepath.Join(staticDir, "sw.js"))
-		r.StaticFile("/registerSW.js", filepath.Join(staticDir, "registerSW.js"))
-		r.StaticFile("/workbox-78ef5c9b.js", filepath.Join(staticDir, "workbox-78ef5c9b.js"))
-		r.StaticFile("/claw.svg", filepath.Join(staticDir, "claw.svg"))
-		// SPA fallback - only non-API routes serve index.html
-		r.NoRoute(func(c *gin.Context) {
-			if !strings.HasPrefix(c.Request.URL.Path, "/api") {
-				c.File(filepath.Join(staticDir, "index.html"))
-			}
-		})
-		log.Printf("Serving static files from: %s", staticDir)
+		log.Printf("Portal serving from: %s", portalStaticDir)
+	} else {
+		log.Printf("Portal directory not found: %s", portalStaticDir)
 	}
 
+	if _, err := os.Stat(iclawStaticDir); err == nil {
+		appGroup := r.Group("/app/iclaw")
+		appGroup.GET("", func(c *gin.Context) {
+			c.File(filepath.Join(iclawStaticDir, "index.html"))
+		})
+		appGroup.GET("/*path", func(c *gin.Context) {
+			requestedPath := c.Param("path")
+			staticPath := filepath.Join(iclawStaticDir, requestedPath)
+			if _, err := os.Stat(staticPath); err == nil {
+				c.File(staticPath)
+			} else {
+				c.File(filepath.Join(iclawStaticDir, "index.html"))
+			}
+		})
+		log.Printf("iclaw serving from: %s", iclawStaticDir)
+	} else {
+		log.Printf("iclaw directory not found: %s", iclawStaticDir)
+	}
+
+	r.NoRoute(func(c *gin.Context) {
+		if !strings.HasPrefix(c.Request.URL.Path, "/api") {
+			c.File(filepath.Join(portalStaticDir, "index.html"))
+		}
+	})
+
 	log.Printf("iClaw Admin API starting on port %s", port)
+	log.Printf("Portal: http://localhost:%s/", port)
+	log.Printf("iclaw: http://localhost:%s/app/iclaw/", port)
+	log.Printf("frp: http://localhost:%s/app/frp/", port)
 	r.Run("0.0.0.0:" + port)
 }

@@ -13,7 +13,12 @@
       "Bash(ls iclaw-device*)",
       "Bash(curl -X POST http://localhost:1422/api/ngrok/install -v)",
       "Bash(curl:*)",
-      "Bash(VITE_API_BASE_URL=http://10.100.71.143:8080 npm run dev -- --port 3001)"
+      "Bash(VITE_API_BASE_URL=http://10.100.71.143:8080 npm run dev -- --port 3001)",
+      "Bash(git:*)",
+      "Bash(chmod +x:*)",
+      "Bash(kill 1251)",
+      "Bash(/opt/iclaw/iclaw-manager/bin/admin-api)",
+      "Bash(kill 53525 53645)"
     ]
   }
 }
