@@ -26,7 +26,7 @@ func main() {
 	}
 
 	portalStaticDir := "portal/dist"
-	iclawStaticDir := "iclaw/dist"
+	iclawStaticDir := "app/iclaw/dist"
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -76,15 +76,18 @@ func main() {
 		log.Printf("Serving FRP app from: %s", frpStaticDir)
 	}
 
+	// Portal 静态文件
 	if _, err := os.Stat(portalStaticDir); err == nil {
 		r.GET("/", func(c *gin.Context) {
 			c.File(filepath.Join(portalStaticDir, "index.html"))
 		})
+		r.Static("/assets", filepath.Join(portalStaticDir, "assets"))
 		log.Printf("Portal serving from: %s", portalStaticDir)
 	} else {
 		log.Printf("Portal directory not found: %s", portalStaticDir)
 	}
 
+	// iclaw 静态文件
 	if _, err := os.Stat(iclawStaticDir); err == nil {
 		appGroup := r.Group("/app/iclaw")
 		appGroup.GET("", func(c *gin.Context) {
@@ -104,6 +107,7 @@ func main() {
 		log.Printf("iclaw directory not found: %s", iclawStaticDir)
 	}
 
+	// SPA fallback - 非 API 路由 fallback 到 portal
 	r.NoRoute(func(c *gin.Context) {
 		if !strings.HasPrefix(c.Request.URL.Path, "/api") {
 			c.File(filepath.Join(portalStaticDir, "index.html"))
