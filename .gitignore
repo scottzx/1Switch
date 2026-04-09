@@ -6,7 +6,6 @@ openclaw/node/
 
 # Build outputs
 dist/
-src-tauri/target/
 
 # Go binaries
 admin-api
@@ -34,8 +33,6 @@ npm-debug.log*
 .env.*.local
 
 # Tauri
-src-tauri/target/
-src-tauri/Cargo.lock
 dist.zip
 macOS.pem
 .playwright-mcp
