@@ -42,7 +42,10 @@
       "Bash(systemctl cat:*)",
       "Bash(python3:*)",
       "Bash(systemctl stop:*)",
-      "Bash(systemctl disable:*)"
+      "Bash(systemctl disable:*)",
+      "Bash(kill 412248)",
+      "Bash(/tmp/admin-api-new)",
+      "Bash(systemctl status:*)"
     ]
   }
 }
