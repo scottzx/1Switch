@@ -22,9 +22,15 @@ function buildDisplayUrl(module: Module, deviceIp: string): string {
   if (module.type === 'route') {
     return `${window.location.origin}${module.url}`;
   }
-  // external: replace hostname with deviceIp, keep the port
+  // external: 硬编码域名（如 xfusion, clawhub）保持不变，本地服务替换 IP
   try {
     const u = new URL(module.url!);
+    // 如果 URL 包含域名（非 IP、非 localhost），保持不变
+    const isDomain = u.hostname.includes('.') && !u.hostname.includes('localhost');
+    if (isDomain) {
+      return module.url!;
+    }
+    // 否则是本地服务，替换为设备 IP
     return `http://${deviceIp}:${u.port}${u.pathname}`;
   } catch {
     return module.url ?? '';

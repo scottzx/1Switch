@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import ModuleSection from './components/ModuleSection';
 import { LanPopup } from './components/Network/LanPopup';
 import { WifiPopup } from './components/Network/WifiPopup';
-import { networkApi } from './services/api';
+import { networkApi, systemApi } from './services/api';
 
 interface Module {
   id: string;
@@ -14,110 +14,137 @@ interface Module {
   status: 'available' | 'coming-soon';
 }
 
-const sections: { titleKey: string; modules: Module[] }[] = [
-  {
-    titleKey: 'sections.aiApplications',
-    modules: [
-      {
-        id: 'open-claude',
-        nameKey: 'modules.openClaude.name',
-        descriptionKey: 'modules.openClaude.description',
-        type: 'external',
-        url: 'http://localhost:18789',
-        status: 'available',
-      },
-      {
-        id: 'iclaw',
-        nameKey: 'modules.iclaw.name',
-        descriptionKey: 'modules.iclaw.description',
-        type: 'route',
-        url: '/app/iclaw/',
-        status: 'available',
-      },
-      {
-        id: 'claude-code',
-        nameKey: 'modules.claudeCode.name',
-        descriptionKey: 'modules.claudeCode.description',
-        type: 'route',
-        status: 'coming-soon',
-      },
-    ],
-  },
-  {
-    titleKey: 'sections.extendedApplications',
-    modules: [
-      {
-        id: 'qingliu',
-        nameKey: 'modules.qingliu.name',
-        descriptionKey: 'modules.qingliu.description',
-        type: 'route',
-        status: 'coming-soon',
-      },
-    ],
-  },
-  {
-    titleKey: 'sections.aiConfiguration',
-    modules: [
-      {
-        id: 'llm-router',
-        nameKey: 'modules.llmRouter.name',
-        descriptionKey: 'modules.llmRouter.description',
-        type: 'route',
-        status: 'coming-soon',
-      },
-      {
-        id: 'skillhub',
-        nameKey: 'modules.skillhub.name',
-        descriptionKey: 'modules.skillhub.description',
-        type: 'route',
-        status: 'coming-soon',
-      },
-      {
-        id: 'toolshub',
-        nameKey: 'modules.toolshub.name',
-        descriptionKey: 'modules.toolshub.description',
-        type: 'route',
-        status: 'coming-soon',
-      },
-    ],
-  },
-  {
-    titleKey: 'sections.systemFunctions',
-    modules: [
-      {
-        id: 'tailscale',
-        nameKey: 'modules.tailscale.name',
-        descriptionKey: 'modules.tailscale.description',
-        type: 'route',
-        status: 'coming-soon',
-      },
-      {
-        id: 'file-manager',
-        nameKey: 'modules.fileManager.name',
-        descriptionKey: 'modules.fileManager.description',
-        type: 'external',
-        url: 'http://localhost:8081',
-        status: 'available',
-      },
-      {
-        id: 'terminal',
-        nameKey: 'modules.terminal.name',
-        descriptionKey: 'modules.terminal.description',
-        type: 'route',
-        url: '/app/terminal/',
-        status: 'available',
-      },
-      {
-        id: 'ota',
-        nameKey: 'modules.ota.name',
-        descriptionKey: 'modules.ota.description',
-        type: 'external',
-        url: 'http://localhost:8089',
-        status: 'available',
-      },
-    ],
-  },
-];
+// 根据设备 IP 动态构建所有模块（按正确顺序：AI 应用 > 扩展应用 > AI 生态 > 系统功能）
+function buildAllSections(deviceIp: string): { titleKey: string; modules: Module[] }[] {
+  return [
+    {
+      titleKey: 'sections.aiApplications',
+      modules: [
+        {
+          id: 'open-claude',
+          nameKey: 'modules.openClaude.name',
+          descriptionKey: 'modules.openClaude.description',
+          type: 'external',
+          url: `http://${deviceIp}:18789`, // 动态获取 IP
+          status: 'available',
+        },
+        {
+          id: 'iclaw',
+          nameKey: 'modules.iclaw.name',
+          descriptionKey: 'modules.iclaw.description',
+          type: 'route',
+          url: '/app/iclaw/',
+          status: 'available',
+        },
+        {
+          id: 'claude-code',
+          nameKey: 'modules.claudeCode.name',
+          descriptionKey: 'modules.claudeCode.description',
+          type: 'route',
+          status: 'coming-soon',
+        },
+      ],
+    },
+    {
+      titleKey: 'sections.extendedApplications',
+      modules: [
+        {
+          id: 'qingliu',
+          nameKey: 'modules.qingliu.name',
+          descriptionKey: 'modules.qingliu.description',
+          type: 'route',
+          status: 'coming-soon',
+        },
+      ],
+    },
+    {
+      titleKey: 'sections.aiEcosystem',
+      modules: [
+        {
+          id: 'xfusion',
+          nameKey: 'modules.xfusion.name',
+          descriptionKey: 'modules.xfusion.description',
+          type: 'external',
+          url: 'https://llm.azopenai.com/', // 硬编码域名
+          status: 'available',
+        },
+        {
+          id: 'clawhub',
+          nameKey: 'modules.clawhub.name',
+          descriptionKey: 'modules.clawhub.description',
+          type: 'external',
+          url: 'https://clawhub.ai/', // 硬编码域名
+          status: 'available',
+        },
+        {
+          id: 'skillatlas',
+          nameKey: 'modules.skillatlas.name',
+          descriptionKey: 'modules.skillatlas.description',
+          type: 'external',
+          url: 'https://ai.skillatlas.cn/', // 硬编码域名
+          status: 'available',
+        },
+      ],
+    },
+    {
+      titleKey: 'sections.aiTips',
+      modules: [
+        {
+          id: 'openclaw-docs',
+          nameKey: 'modules.openclawDocs.name',
+          descriptionKey: 'modules.openclawDocs.description',
+          type: 'external',
+          url: 'https://docs.openclaw.ai/zh-CN', // 硬编码域名
+          status: 'available',
+        },
+        {
+          id: 'iclaw-manual',
+          nameKey: 'modules.iclawManual.name',
+          descriptionKey: 'modules.iclawManual.description',
+          type: 'external',
+          url: 'https://my.feishu.cn/wiki/XaVHwwfD5i6Lzhky9PFcLOJwnHd?from=from_copylink', // 硬编码域名
+          status: 'available',
+        },
+      ],
+    },
+    {
+      titleKey: 'sections.systemFunctions',
+      modules: [
+        {
+          id: 'tailscale',
+          nameKey: 'modules.tailscale.name',
+          descriptionKey: 'modules.tailscale.description',
+          type: 'route',
+          status: 'coming-soon',
+        },
+        {
+          id: 'file-manager',
+          nameKey: 'modules.fileManager.name',
+          descriptionKey: 'modules.fileManager.description',
+          type: 'external',
+          url: `http://${deviceIp}:8081`, // 动态获取 IP
+          status: 'available',
+        },
+        {
+          id: 'terminal',
+          nameKey: 'modules.terminal.name',
+          descriptionKey: 'modules.terminal.description',
+          type: 'external',
+          url: `http://${deviceIp}:7681`,
+          status: 'available',
+        },
+        {
+          id: 'ota',
+          nameKey: 'modules.ota.name',
+          descriptionKey: 'modules.ota.description',
+          type: 'external',
+          url: `http://${deviceIp}:8089`, // 动态获取 IP
+          status: 'available',
+        },
+      ],
+    },
+  ];
+}
 
 function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
@@ -195,6 +222,8 @@ function App() {
   const [showWifiPopup, setShowWifiPopup] = useState(false);
   const [lanConnected, setLanConnected] = useState(false);
   const [wifiConnected, setWifiConnected] = useState(false);
+  const [deviceIp, setDeviceIp] = useState<string>('');
+  const [sections, setSections] = useState<{ titleKey: string; modules: Module[] }[]>([]);
 
   useEffect(() => {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -204,6 +233,21 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  // 获取设备 IP 并构建所有模块
+  useEffect(() => {
+    const loadDeviceIp = async () => {
+      try {
+        const ip = await systemApi.getDeviceIp();
+        setDeviceIp(ip);
+        setSections(buildAllSections(ip));
+      } catch (e) {
+        // 使用默认值
+        setSections(buildAllSections('localhost'));
+      }
+    };
+    loadDeviceIp();
+  }, []);
 
   useEffect(() => {
     const loadNetworkStatus = async () => {

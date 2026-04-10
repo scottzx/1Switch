@@ -19,13 +19,14 @@
   "sections": {
     "aiApplications": "AI Applications",
     "extendedApplications": "Extended Applications",
-    "aiConfiguration": "AI Configuration",
+    "aiEcosystem": "AI Ecosystem",
+    "aiTips": "AI Tips",
     "systemFunctions": "System Functions"
   },
   "modules": {
     "openClaude": {
-      "name": "OpenClaude",
-      "description": "AI Agent core service. Fixed port 18789."
+      "name": "OpenClaw Console",
+      "description": "OpenClaw Agent core service. Fixed port 18789."
     },
     "iclaw": {
       "name": "iClaw",
@@ -51,6 +52,26 @@
       "name": "Toolshub",
       "description": "AI tools center for extending capabilities."
     },
+    "xfusion": {
+      "name": "Xfusion",
+      "description": "Enterprise platform connecting global AI models. One API to access 300+ top models from OpenAI, Anthropic, Google and more. Lower cost, higher availability, faster response."
+    },
+    "clawhub": {
+      "name": "ClawHub",
+      "description": "Agent tooling platform for useful workflows, not abuse. If a skill is built to evade defenses, abuse platforms, scam people, invade privacy, or enable non-consensual behavior, it does not belong here."
+    },
+    "skillatlas": {
+      "name": "虾小宝",
+      "description": "All configurations for Agent actions. Configure your Agent with safe, usable Skills and real identity assets, so it can autonomously register, verify, and operate, truly working for you."
+    },
+    "openclawDocs": {
+      "name": "OpenClaw Official Documentation",
+      "description": "Self-hosted AI gateway connecting chat apps to AI agents. Keep your data in control."
+    },
+    "iclawManual": {
+      "name": "iClaw H1 User Manual",
+      "description": "iClaw H1 device user manual with quick start guide, feature introduction, and operation instructions."
+    },
     "tailscale": {
       "name": "Tailscale",
       "description": "Network tunneling and mesh VPN for secure remote access."
@@ -61,7 +82,7 @@
     },
     "terminal": {
       "name": "Terminal",
-      "description": "Web-based terminal session management."
+      "description": "Web-based terminal session management. Fixed port 7681."
     },
     "ota": {
       "name": "OTA Update",

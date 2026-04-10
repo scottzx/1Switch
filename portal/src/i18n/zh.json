@@ -19,13 +19,14 @@
   "sections": {
     "aiApplications": "AI 应用",
     "extendedApplications": "扩展应用",
-    "aiConfiguration": "AI 配置",
+    "aiEcosystem": "AI 生态",
+    "aiTips": "AI 技巧",
     "systemFunctions": "系统功能"
   },
   "modules": {
     "openClaude": {
-      "name": "OpenClaude",
-      "description": "AI Agent 核心服务，固定端口 18789。"
+      "name": "OpenClaw 控制台",
+      "description": "OpenClaw Agent 核心服务，固定端口 18789。"
     },
     "iclaw": {
       "name": "iClaw",
@@ -51,6 +52,26 @@
       "name": "Toolshub",
       "description": "AI 工具中心，扩展系统能力。"
     },
+    "xfusion": {
+      "name": "Xfusion",
+      "description": "连接全球 AI 模型的企业级平台。一个 API，畅享 OpenAI、Anthropic、Google 等 300+ 顶级模型。更低成本、更高可用、更快响应。"
+    },
+    "clawhub": {
+      "name": "ClawHub",
+      "description": "Agent 工具平台，只做有用的 Agent 工作流，不做滥用。若 Skill 用于防御规避、平台滥用、诈骗、隐私侵犯或非自愿行为，则不属于此处。"
+    },
+    "skillatlas": {
+      "name": "虾小宝",
+      "description": "Agent 行动的一切配置。给你的 Agent 配置安全可用的 Skill 和真实身份资产，让它自主完成注册、验证、操作，真正替你干活。"
+    },
+    "openclawDocs": {
+      "name": "OpenClaw 官方文档",
+      "description": "自托管 AI Gateway，连接聊天应用到 AI 智能体。数据自主可控，适合开发者。"
+    },
+    "iclawManual": {
+      "name": "iClaw H1 使用手册",
+      "description": "iClaw H1 设备使用手册，包含快速入门、功能介绍、操作指南等内容。"
+    },
     "tailscale": {
       "name": "Tailscale",
       "description": "网络隧道与 Mesh VPN，安全远程访问。"
@@ -61,7 +82,7 @@
     },
     "terminal": {
       "name": "Terminal",
-      "description": "基于 Web 的终端会话管理。"
+      "description": "基于 Web 的终端会话管理。固定端口 7681"
     },
     "ota": {
       "name": "OTA Update",
