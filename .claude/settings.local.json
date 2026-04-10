@@ -33,7 +33,16 @@
       "Bash(/tmp/admin-api)",
       "Bash(GIN_MODE=debug curl -s http://localhost:8080/api/terminal/sessions)",
       "Bash(pkill -f \"filebrowser\")",
-      "Bash(pkill -f \"simpletest.go|/tmp/admin-api\")"
+      "Bash(pkill -f \"simpletest.go|/tmp/admin-api\")",
+      "Bash(pkill -f \"admin-api|/tmp/admin\")",
+      "Bash(mkdir -p /opt/iclaw-manager/.claude/skills/design-system/assets/tokens)",
+      "Bash(mkdir -p /opt/iclaw-manager/.claude/skills/design-system/references)",
+      "Bash(jobs:*)",
+      "Bash(systemctl list-units:*)",
+      "Bash(systemctl cat:*)",
+      "Bash(python3:*)",
+      "Bash(systemctl stop:*)",
+      "Bash(systemctl disable:*)"
     ]
   }
 }

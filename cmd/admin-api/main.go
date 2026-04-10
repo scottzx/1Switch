@@ -58,6 +58,11 @@ func main() {
 	service.InitSystemInfoCache()
 	router.SetupRouter(r)
 
+	// Debug: print registered routes
+	for _, route := range r.Routes() {
+		log.Printf("Route: %s %s", route.Method, route.Path)
+	}
+
 	// Serve FRP app static files
 	frpStaticDir := "app/frp/dist"
 	if _, err := os.Stat(frpStaticDir); err == nil {
