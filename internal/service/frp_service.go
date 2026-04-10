@@ -15,6 +15,7 @@ type FrpService struct {
 	mu        sync.Mutex
 	pid       int
 	config    *model.FrpConnectRequest
+	allocatedPorts map[int]bool // 记录已分配的端口
 }
 
 var frpInstance *FrpService
@@ -23,9 +24,29 @@ var frpOnce sync.Once
 // GetFrpService 获取 FRP 服务单例
 func GetFrpService() *FrpService {
 	frpOnce.Do(func() {
-		frpInstance = &FrpService{}
+		frpInstance = &FrpService{
+			allocatedPorts: make(map[int]bool),
+		}
 	})
 	return frpInstance
+}
+
+// allocatePort 分配一个可用端口 (从 20000 开始)
+func (s *FrpService) allocatePort() int {
+	basePort := 20000
+	maxPort := 29999
+	for port := basePort; port <= maxPort; port++ {
+		if !s.allocatedPorts[port] {
+			s.allocatedPorts[port] = true
+			return port
+		}
+	}
+	return 0 // 无可用端口
+}
+
+// releasePort 释放端口
+func (s *FrpService) releasePort(port int) {
+	delete(s.allocatedPorts, port)
 }
 
 // GetStatus 获取 FRP 状态
@@ -66,10 +87,19 @@ func (s *FrpService) Connect(ctx context.Context, req *model.FrpConnectRequest) 
 		s.stopProcess(ctx)
 	}
 
+	// 分配一个可用端口
+	remotePort := s.allocatePort()
+	if remotePort == 0 {
+		return &model.FrpConnectResponse{
+			Success: false,
+			Error:   "no available port",
+		}, fmt.Errorf("no available port")
+	}
+
 	// 生成随机 token
 	token := generateToken(12)
 
-	// 构建 frpc 配置
+	// 构建 frpc 配置，指定 remote_port
 	frpcConfig := fmt.Sprintf(`[common]
 server_addr = %s
 server_port = %d
@@ -79,8 +109,8 @@ token = %s
 type = tcp
 local_ip = 127.0.0.1
 local_port = %d
-remote_port = 0
-`, req.Server, req.ServerPort, token, req.LocalPort)
+remote_port = %d
+`, req.Server, req.ServerPort, token, req.LocalPort, remotePort)
 
 	// 写入临时配置文件
 	configFile := "/tmp/frpc.ini"
@@ -103,13 +133,10 @@ remote_port = 0
 	s.pid = cmd.Process.Pid
 	s.config = &model.FrpConnectRequest{
 		Server:     req.Server,
-		ServerPort: req.ServerPort,
+		ServerPort: remotePort, // 存储分配的端口
 		Token:      token,
 		LocalPort:  req.LocalPort,
 	}
-
-	// 获取分配的远程端口（从 frpc 输出或配置中获取）
-	remotePort := s.config.ServerPort // 实际端口需要从 frpc 输出解析
 
 	return &model.FrpConnectResponse{
 		Success:    true,
@@ -126,6 +153,11 @@ remote_port = 0
 func (s *FrpService) Disconnect(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// 释放端口
+	if s.config != nil {
+		s.releasePort(s.config.ServerPort)
+	}
 
 	s.stopProcess(ctx)
 	s.pid = 0
