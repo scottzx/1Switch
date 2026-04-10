@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import ModuleSection from './components/ModuleSection';
 
 interface Module {
@@ -7,159 +8,200 @@ interface Module {
   type: 'link' | 'route' | 'external';
   url?: string;
   status: 'available' | 'coming-soon';
-  icon?: string;
 }
 
-const sections: { title: string; icon: string; modules: Module[] }[] = [
+const sections: { title: string; modules: Module[] }[] = [
   {
-    title: 'AI应用',
-    icon: '🤖',
+    title: 'AI Applications',
     modules: [
       {
         id: 'open-claude',
         name: 'OpenClaude',
-        description: 'AI Agent 核心服务，固定端口 18789',
+        description: 'AI Agent core service. Fixed port 18789.',
         type: 'external',
         url: 'http://localhost:18789',
         status: 'available',
-        icon: '🤖',
       },
       {
         id: 'iclaw',
-        name: 'iclaw',
-        description: 'OpenClaw 设备管理与配置界面',
+        name: 'iClaw',
+        description: 'OpenClaw device management and configuration console.',
         type: 'route',
         url: '/app/iclaw/',
         status: 'available',
-        icon: '🦐',
       },
       {
         id: 'claude-code',
         name: 'Claude Code',
-        description: 'AI 编程助手，智能代码生成与调试',
+        description: 'AI programming assistant for intelligent code generation.',
         type: 'route',
         status: 'coming-soon',
-        icon: '💻',
       },
     ],
   },
   {
-    title: '拓展应用',
-    icon: '🚀',
+    title: 'Extended Applications',
     modules: [
       {
         id: 'qingliu',
-        name: '轻流-AI无代码平台',
-        description: '企业级无代码开发平台，快速构建业务应用',
+        name: 'QingLiu',
+        description: 'Enterprise no-code platform for rapid business application development.',
         type: 'route',
         status: 'coming-soon',
-        icon: '🔧',
       },
     ],
   },
   {
-    title: 'AI配置',
-    icon: '⚙️',
+    title: 'AI Configuration',
     modules: [
       {
         id: 'llm-router',
         name: 'LLM Router',
-        description: '大模型路由配置，智能分配 AI 请求',
+        description: 'Large language model routing and intelligent request distribution.',
         type: 'route',
         status: 'coming-soon',
-        icon: '🔀',
       },
       {
         id: 'skillhub',
         name: 'Skillhub',
-        description: 'AI 技能中心，管理与配置 AI 技能',
+        description: 'AI skills center for management and configuration.',
         type: 'route',
         status: 'coming-soon',
-        icon: '🧩',
       },
       {
         id: 'toolshub',
         name: 'Toolshub',
-        description: 'AI 工具中心，扩展 AI 能力边界',
+        description: 'AI tools center for extending capabilities.',
         type: 'route',
         status: 'coming-soon',
-        icon: '🛠️',
       },
     ],
   },
   {
-    title: '系统功能',
-    icon: '🖥️',
+    title: 'System Functions',
     modules: [
       {
         id: 'tailscale',
         name: 'Tailscale',
-        description: '内网穿透与组网，安全远程访问',
+        description: 'Network tunneling and mesh VPN for secure remote access.',
         type: 'route',
         status: 'coming-soon',
-        icon: '🌐',
       },
       {
         id: 'file-manager',
-        name: '文件管理',
-        description: '设备文件浏览与编辑，固定端口 8081',
+        name: 'File Manager',
+        description: 'Device file browser and editor. Fixed port 8081.',
         type: 'external',
         url: 'http://localhost:8081',
         status: 'available',
-        icon: '📁',
       },
       {
         id: 'terminal',
-        name: '终端管理',
-        description: 'Web Terminal 会话管理，远程shell访问',
+        name: 'Terminal',
+        description: 'Web-based terminal session management.',
         type: 'route',
         url: '/app/terminal/',
         status: 'available',
-        icon: '🖥️',
       },
       {
         id: 'ota',
-        name: 'OTA远程更新',
-        description: '设备固件远程升级，固定端口 8089',
+        name: 'OTA Update',
+        description: 'Remote device firmware upgrade. Fixed port 8089.',
         type: 'external',
         url: 'http://localhost:8089',
         status: 'available',
-        icon: '📦',
       },
     ],
   },
 ];
 
-function App() {
+function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
   return (
-    <div className="min-h-screen flex flex-col items-center p-8 bg-surface-app">
-      {/* 背景渐变 */}
-      <div className="fixed inset-0 bg-gradient-radial pointer-events-none" />
+    <button
+      onClick={onToggle}
+      className="w-8 h-8 flex items-center justify-center rounded text-content-secondary hover:text-content-primary hover:bg-surface-elevated transition-colors"
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? (
+        /* Sun icon */
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5" strokeWidth={1.5} />
+          <path strokeLinecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeWidth={1.5} />
+        </svg>
+      ) : (
+        /* Moon icon */
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
-      {/* Logo / 标题区 */}
-      <div className="text-center mb-10 animate-fade-in">
-        <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-claw-400 to-claw-600 bg-clip-text text-transparent">
-          iClaw 统一门户
-        </h1>
-        <p className="text-content-secondary text-lg">OpenClaw Management Portal</p>
-      </div>
+function App() {
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem('theme');
+    if (stored) return stored === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
-      {/* 模块列表 */}
-      <div className="w-full max-w-5xl animate-slide-up">
-        {sections.map((section) => (
-          <ModuleSection
-            key={section.title}
-            title={section.title}
-            icon={section.icon}
-            modules={section.modules}
-          />
-        ))}
-      </div>
+  useEffect(() => {
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDark]);
 
-      {/* 底部信息 */}
-      <div className="mt-12 text-content-tertiary text-sm animate-fade-in">
-        <p>OpenClaw Portal &bull; v0.1.0</p>
-      </div>
+  return (
+    <div className="min-h-screen bg-surface-app">
+      {/* Header */}
+      <header className="border-b border-edge">
+        <div className="max-w-grid mx-auto px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-medium text-content-primary tracking-tight">
+                iClaw Portal
+              </h1>
+              <p className="text-xs text-content-tertiary mt-0.5">
+                OpenClaw Management Interface
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
+              <span className="text-2xs text-content-tertiary uppercase tracking-widest">
+                v0.1.0
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-grid mx-auto px-6 py-8">
+        <div className="grid grid-cols-12 gap-6">
+          {sections.map((section) => (
+            <div key={section.title} className="col-span-12">
+              <ModuleSection title={section.title} modules={section.modules} />
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-edge mt-auto">
+        <div className="max-w-grid mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <span className="text-2xs text-content-tertiary">
+              OpenClaw Portal
+            </span>
+            <span className="text-2xs text-content-tertiary">
+              Good design is as little design as possible.
+            </span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

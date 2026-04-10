@@ -8,21 +8,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        // OpenClaw 品牌色
-        claw: {
-          50: '#fef3f2',
-          100: '#fee4e2',
-          200: '#ffccc7',
-          300: '#ffa8a0',
-          400: '#ff7a6b',
-          500: '#f94d3a',  // 主色 - 龙虾红
-          600: '#e63024',
-          700: '#c1241a',
-          800: '#a02119',
-          900: '#84221c',
-          950: '#480d09',
+        // Neutral palette - Dieter Rams inspired
+        neutral: {
+          50: '#FAFAF8',
+          100: '#F5F5F3',
+          200: '#EFEFED',
+          300: '#E8E8E5',
+          400: '#D8D8D5',
+          500: '#C4C4C0',
+          600: '#A0A09C',
+          700: '#6B6B6B',
+          800: '#3D3D3D',
+          900: '#1A1A1A',
+          950: '#141414',
         },
-        // 语义化颜色 - 引用 CSS 变量
+        // Warm accent - brass/gold (Braun reference)
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          muted: 'var(--accent-muted)',
+          foreground: '#FFFFFF',
+        },
+        // Semantic colors
         surface: {
           app: 'var(--bg-app)',
           sidebar: 'var(--bg-sidebar)',
@@ -43,25 +50,11 @@ export default {
           DEFAULT: 'var(--border-primary)',
           secondary: 'var(--border-secondary)',
         },
-        // 深色主题背景（保留兼容）
-        dark: {
-          900: '#0a0a0b',
-          800: '#111113',
-          700: '#1a1a1d',
-          600: '#242428',
-          500: '#2e2e33',
-          400: '#3d3d44',
-        },
-        // 强调色
-        accent: {
-          cyan: '#22d3ee',
-          purple: '#a78bfa',
-          green: '#4ade80',
-          amber: '#fbbf24',
-        }
       },
       fontFamily: {
+        // Clean, functional sans-serif
         sans: [
+          'Inter',
           'SF Pro Display',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -78,40 +71,54 @@ export default {
           'monospace',
         ],
       },
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '1' }],
+        'xs': ['0.75rem', { lineHeight: '1.4' }],
+        'sm': ['0.8125rem', { lineHeight: '1.5' }],
+        'base': ['0.875rem', { lineHeight: '1.6' }],
+        'lg': ['1rem', { lineHeight: '1.5' }],
+        'xl': ['1.125rem', { lineHeight: '1.4' }],
+        '2xl': ['1.5rem', { lineHeight: '1.3' }],
+        '3xl': ['2rem', { lineHeight: '1.2' }],
+        '4xl': ['2.5rem', { lineHeight: '1.1' }],
+      },
+      spacing: {
+        'grid': 'var(--grid-gap)',
+        'section': '48px',
+        'card': '20px',
+      },
+      maxWidth: {
+        'grid': 'var(--grid-max-width)',
+      },
+      boxShadow: {
+        'card': 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+        'elevated': 'var(--shadow-elevated)',
+      },
+      borderRadius: {
+        'none': '0',
+        'sm': '2px',
+        'DEFAULT': '4px',
+        'md': '6px',
+        'lg': '8px',
+      },
       animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
-        'slide-up': 'slideUp 0.3s ease-out',
-        'slide-down': 'slideDown 0.3s ease-out',
         'fade-in': 'fadeIn 0.2s ease-out',
+        'slide-up': 'slideUp 0.3s ease-out',
       },
       keyframes: {
-        glow: {
-          '0%': { boxShadow: '0 0 5px rgba(249, 77, 58, 0.5)' },
-          '100%': { boxShadow: '0 0 20px rgba(249, 77, 58, 0.8)' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideDown: {
-          '0%': { transform: 'translateY(-10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        slideUp: {
+          '0%': { transform: 'translateY(8px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
-      boxShadow: {
-        'glow-claw': '0 0 30px rgba(249, 77, 58, 0.3)',
-        'glow-cyan': '0 0 30px rgba(34, 211, 238, 0.3)',
-        'glow-green': '0 0 30px rgba(74, 222, 128, 0.3)',
-        'inner-light': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
-        'card': 'var(--shadow-card)',
-      },
-      backdropBlur: {
-        xs: '2px',
+      gridTemplateColumns: {
+        '12': 'repeat(12, minmax(0, 1fr))',
+        'module': 'repeat(auto-fill, minmax(240px, 1fr))',
       },
     },
   },

@@ -31,7 +31,9 @@
       "Bash(pkill -f \"vite\")",
       "Bash(xargs kill:*)",
       "Bash(/tmp/admin-api)",
-      "Bash(GIN_MODE=debug curl -s http://localhost:8080/api/terminal/sessions)"
+      "Bash(GIN_MODE=debug curl -s http://localhost:8080/api/terminal/sessions)",
+      "Bash(pkill -f \"filebrowser\")",
+      "Bash(pkill -f \"simpletest.go|/tmp/admin-api\")"
     ]
   }
 }

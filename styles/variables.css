@@ -41,10 +41,9 @@
   /* Selection */
   --selection-bg: rgba(184, 149, 110, 0.25);
 
-  /* Grid system */
+  /* Grid system - using raw values */
   --grid-gap: 16px;
   --grid-max-width: 1200px;
-  --grid-cols: 12;
 }
 
 /* Dark Mode - Cool Neutral Palette */

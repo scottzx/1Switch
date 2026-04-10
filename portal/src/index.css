@@ -1,8 +1,8 @@
+@import "../../styles/variables.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import "../../styles/variables.css";
 
 * {
   margin: 0;
@@ -15,7 +15,7 @@ html, body, #root {
 }
 
 body {
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   background-color: var(--bg-app);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -25,4 +25,9 @@ body {
 ::selection {
   background-color: var(--selection-bg);
   color: var(--text-primary);
+}
+
+/* Subtle transitions only */
+a, button {
+  transition: color 0.15s ease, background-color 0.15s ease;
 }

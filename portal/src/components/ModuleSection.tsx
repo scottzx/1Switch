@@ -7,30 +7,30 @@ interface Module {
   type: 'link' | 'route' | 'external';
   url?: string;
   status: 'available' | 'coming-soon';
-  icon?: string;
+  badge?: string;
 }
 
 interface ModuleSectionProps {
   title: string;
-  icon: string;
   modules: Module[];
 }
 
-export default function ModuleSection({ title, icon, modules }: ModuleSectionProps) {
+export default function ModuleSection({ title, modules }: ModuleSectionProps) {
   return (
-    <div className="mb-8">
-      {/* Section Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-xl">{icon}</span>
-        <h2 className="text-lg font-semibold text-content-primary">{title}</h2>
+    <section className="mb-12">
+      {/* Section Header - Dieter Rams: typography-driven hierarchy */}
+      <div className="mb-6 pb-3 border-b border-edge">
+        <h2 className="text-xs font-medium text-content-tertiary uppercase tracking-widest">
+          {title}
+        </h2>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Module Grid - 6 columns on desktop */}
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {modules.map((module) => (
           <ModuleCard key={module.id} module={module} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
