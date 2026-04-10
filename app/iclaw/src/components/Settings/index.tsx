@@ -108,18 +108,18 @@ export function Settings({ onEnvironmentChange }: SettingsProps) {
     <div className="h-full overflow-y-auto scroll-container pr-2">
       <div className="max-w-2xl space-y-6">
         {/* Language Settings */}
-        <div className="bg-dark-700 rounded-2xl p-6 border border-dark-500">
+        <div className="bg-surface-card rounded-2xl p-6 border border-edge">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
               <Globe size={20} className="text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white">{t('settings.language')}</h3>
-              <p className="text-xs text-gray-500">{t('settings.languageDesc')}</p>
+              <h3 className="text-lg font-semibold text-content-primary">{t('settings.language')}</h3>
+              <p className="text-xs text-content-tertiary">{t('settings.languageDesc')}</p>
             </div>
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-2">{t('settings.displayLanguage')}</label>
+            <label className="block text-sm text-content-secondary mb-2">{t('settings.displayLanguage')}</label>
             <select
               value={i18n.language?.startsWith('zh') ? 'zh' : 'en'}
               onChange={(e) => changeLanguage(e.target.value)}
@@ -290,7 +290,7 @@ export function Settings({ onEnvironmentChange }: SettingsProps) {
         </div>
 
         {/* 危险操作 */}
-        <div className="bg-surface-card rounded-2xl p-6 border border-red-900/30">
+        <div className="bg-surface-card rounded-2xl p-6 border border-edge">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
               <AlertTriangle size={20} className="text-red-400" />

@@ -699,7 +699,7 @@ export function Channels() {
                         <div className="flex-1">
                           <p className="text-green-400 font-medium">飞书插件已安装</p>
                           <p className="text-xs text-content-secondary mt-0.5">
-                            {feishuPluginStatus.plugin_name || '@m1heng-clawd/feishu'}
+                            {feishuPluginStatus.plugin_name || '@openclaw/feishu'}
                             {feishuPluginStatus.version && ` v${feishuPluginStatus.version}`}
                           </p>
                         </div>
@@ -712,7 +712,7 @@ export function Channels() {
                           <div className="flex-1">
                             <p className="text-amber-400 font-medium">需要安装飞书插件</p>
                             <p className="text-xs text-content-secondary mt-1">
-                              飞书渠道需要先安装 @m1heng-clawd/feishu 插件才能使用。
+                              飞书渠道需要先安装 @openclaw/feishu 插件才能使用。
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2">
                               <button
@@ -736,7 +736,7 @@ export function Channels() {
                               </button>
                             </div>
                             <p className="text-xs text-content-tertiary mt-2">
-                              或手动执行: <code className="px-1.5 py-0.5 bg-surface-elevated rounded text-content-secondary">openclaw plugins install @m1heng-clawd/feishu</code>
+                              或手动执行: <code className="px-1.5 py-0.5 bg-surface-elevated rounded text-content-secondary">openclaw plugins install @openclaw/feishu</code>
                             </p>
                           </div>
                         </div>

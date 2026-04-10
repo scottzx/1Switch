@@ -214,7 +214,6 @@ function App() {
     return (
       <ThemeProvider>
         <div className="flex h-screen items-center justify-center" style={{ backgroundColor: 'var(--bg-app)' }}>
-          <div className="fixed inset-0 bg-gradient-radial pointer-events-none" />
           <div className="relative z-10 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-claw-500 to-claw-700 mb-4 animate-pulse">
               <span className="text-3xl">🦞</span>
@@ -229,7 +228,6 @@ function App() {
   return (
     <ThemeProvider>
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg-app)' }}>
-        <div className="fixed inset-0 bg-gradient-radial pointer-events-none" />
 
         <AnimatePresence>
           {showUpdateBanner && updateInfo?.update_available && (

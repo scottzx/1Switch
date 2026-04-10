@@ -198,11 +198,9 @@ export function Security() {
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-br from-red-950/40 via-dark-700 to-dark-700 rounded-2xl p-6 border border-red-900/40 relative overflow-hidden"
+                    className="rounded-2xl p-6 border border-red-900/40 relative overflow-hidden"
+                    style={{ backgroundColor: 'var(--bg-card)' }}
                 >
-                    {/* 背景装饰 */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl" />
 
                     <div className="relative z-10">
                         <div className="flex items-start gap-4 mb-4">

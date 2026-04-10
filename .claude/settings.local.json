@@ -27,11 +27,9 @@
       "Bash(./bin/admin-api)",
       "Bash(go mod:*)",
       "Bash(go run:*)",
-      "Bash(curl:*)",
       "Bash(pkill -f \"vite\")",
       "Bash(xargs kill:*)",
       "Bash(/tmp/admin-api)",
-      "Bash(GIN_MODE=debug curl -s http://localhost:8080/api/terminal/sessions)",
       "Bash(pkill -f \"filebrowser\")",
       "Bash(pkill -f \"simpletest.go|/tmp/admin-api\")",
       "Bash(pkill -f \"admin-api|/tmp/admin\")",
@@ -47,7 +45,12 @@
       "Bash(/tmp/admin-api-new)",
       "Bash(systemctl status:*)",
       "Bash(pkill -f 'vite.*iclaw')",
-      "Bash(npx tailwindcss:*)"
+      "Bash(npx tailwindcss:*)",
+      "Bash(lsof -ti:1420,1423)",
+      "Bash(ps:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

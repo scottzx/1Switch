@@ -108,26 +108,6 @@ function SidebarContent({ currentPage, onNavigate, serviceStatus }: SidebarProps
           })}
         </ul>
 
-        {/* 多终端链接 */}
-        <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-primary)' }}>
-          <a
-            href="/app/terminal"
-            target="_self"
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
-            style={{ color: 'var(--text-secondary)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-          >
-            <Terminal size={18} />
-            <span>多终端</span>
-          </a>
-        </div>
       </nav>
 
       {/* 底部信息 */}

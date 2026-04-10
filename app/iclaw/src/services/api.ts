@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use relative path so it works with any port when served by the same origin
-const BASE_URL = '';
+// Use relative path when served by the same origin, or backend URL from env for dev
+const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
