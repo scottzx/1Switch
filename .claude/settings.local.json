@@ -24,7 +24,14 @@
       "Bash(kill 59123)",
       "Bash(kill 68102 go build -o bin/admin-api ./cmd/admin-api PORT=9999 /opt/iclaw-manager/bin/admin-api)",
       "Bash(kill 91046)",
-      "Bash(./bin/admin-api)"
+      "Bash(./bin/admin-api)",
+      "Bash(go mod:*)",
+      "Bash(go run:*)",
+      "Bash(curl:*)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(xargs kill:*)",
+      "Bash(/tmp/admin-api)",
+      "Bash(GIN_MODE=debug curl -s http://localhost:8080/api/terminal/sessions)"
     ]
   }
 }

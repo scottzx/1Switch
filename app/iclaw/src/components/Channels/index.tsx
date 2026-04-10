@@ -981,12 +981,7 @@ export function Channels() {
                         onClick={async () => {
                           const docUrl = currentInfo?.docUrl;
                           if (docUrl) {
-                            try {
-                              const { open } = await import('@tauri-apps/plugin-shell');
-                              await open(docUrl);
-                            } catch {
-                              window.open(docUrl, '_blank');
-                            }
+                            window.open(docUrl, '_blank');
                           }
                         }}
                         className="btn-secondary flex items-center justify-center gap-2 text-sm px-4 py-2.5 text-blue-400 hover:text-blue-300 hover:border-blue-500/50"

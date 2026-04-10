@@ -102,14 +102,8 @@ function CustomInstallDialog({ onClose, onInstalled }: CustomInstallDialogProps)
     };
 
     const handleSelectFolder = async () => {
-        try {
-            const { open } = await import('@tauri-apps/plugin-shell');
-            // 使用简单的路径输入，因为 tauri v2 的 dialog 插件需要额外依赖
-            // 用户可以手动输入路径
-            void open;
-        } catch {
-            // 忽略
-        }
+        // 使用简单的路径输入，因为 tauri v2 的 dialog 插件需要额外依赖
+        // 用户可以手动输入路径
     };
 
     return (
