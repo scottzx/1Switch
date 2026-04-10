@@ -1,5 +1,46 @@
 ## noVNC: HTML VNC client library and application
 
+> **Note**: This is a sub-application integrated into iclaw-manager project.
+
+### iclaw-manager 集成说明
+
+本项目作为 iclaw-manager 的子应用引入，提供浏览器端的 VNC 远程桌面功能。
+
+#### 架构
+
+```
+浏览器 (noVNC)  ←WebSocket→  Proxy (websockify)  ←RFB→  VNC Server
+```
+
+#### 使用方式
+
+1. **启动 VNC Server**
+   ```bash
+   vncserver :1
+   ```
+
+2. **启动 WebSocket Proxy**
+   ```bash
+   # 方式1: 使用 noVNC 自带脚本
+   ./app/novnc/utils/novnc_proxy --vnc localhost:5901 --listen localhost:6081
+
+   # 方式2: 使用 websockify
+   websockify --web ./app/novnc 6081 localhost:5901
+   ```
+
+3. **访问 noVNC 页面**
+   - 完整版: `http://localhost:6081/vnc.html`
+   - 轻量版: `http://localhost:6081/vnc_lite.html`
+
+#### 待完善
+
+- [ ] 与 iclaw-manager 主应用路由集成
+- [ ] WebSocket Proxy 服务集成
+- [ ] VNC 连接管理界面
+- [ ] 连接配置持久化
+
+---
+
 [![Test Status](https://github.com/novnc/noVNC/workflows/Test/badge.svg)](https://github.com/novnc/noVNC/actions?query=workflow%3ATest)
 [![Lint Status](https://github.com/novnc/noVNC/workflows/Lint/badge.svg)](https://github.com/novnc/noVNC/actions?query=workflow%3ALint)
 
