@@ -31,5 +31,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# 执行真正的 openclaw
-exec openclaw-real "$@"
+# 用子进程方式执行（不用 exec，保留 trap 生效）
+openclaw-real "$@" &
+
+# 等待子进程结束
+wait $!

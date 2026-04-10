@@ -50,7 +50,8 @@
       "Bash(ps:*)",
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
