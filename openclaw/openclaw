@@ -1,6 +1,0 @@
-#!/bin/bash
-SCRIPT_DIR="/opt/iclaw/openclaw"
-NODE_DIR="$SCRIPT_DIR/node/node-v22.22.1-linux-arm64"
-OPENCLAW_DIR="$SCRIPT_DIR/openclaw-package"
-export PATH="$NODE_DIR/bin:$PATH"
-exec "$NODE_DIR/bin/node" "$OPENCLAW_DIR/openclaw.mjs" "$@"
