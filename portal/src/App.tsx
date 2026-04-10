@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ModuleSection from './components/ModuleSection';
+import { LanPopup } from './components/Network/LanPopup';
+import { WifiPopup } from './components/Network/WifiPopup';
+import { networkApi } from './services/api';
 
 interface Module {
   id: string;
@@ -188,6 +191,11 @@ function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  const [showLanPopup, setShowLanPopup] = useState(false);
+  const [showWifiPopup, setShowWifiPopup] = useState(false);
+  const [lanConnected, setLanConnected] = useState(false);
+  const [wifiConnected, setWifiConnected] = useState(false);
+
   useEffect(() => {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     if (isDark) {
@@ -196,6 +204,26 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    const loadNetworkStatus = async () => {
+      try {
+        const [interfaces, wifiStatus] = await Promise.all([
+          networkApi.interfaces(),
+          networkApi.wifiStatus()
+        ]);
+        const ethernetConnected = interfaces.some(i => i.type === 'ethernet' && i.state === 'up' && i.ip);
+        setLanConnected(ethernetConnected);
+        setWifiConnected(wifiStatus.connected);
+      } catch (e) {
+        // Silently fail
+      }
+    };
+
+    loadNetworkStatus();
+    const interval = setInterval(loadNetworkStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface-app">
@@ -214,6 +242,37 @@ function App() {
             <div className="flex items-center gap-3">
               <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
               <LanguageSwitcher />
+
+              {/* LAN */}
+              <button
+                onClick={() => setShowLanPopup(true)}
+                className="icon-button"
+                style={{ color: lanConnected ? '#22c55e' : 'var(--text-content-tertiary)' }}
+                title="LAN"
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="16" y="16" width="6" height="6" rx="1" />
+                  <rect x="2" y="16" width="6" height="6" rx="1" />
+                  <rect x="9" y="2" width="6" height="6" rx="1" />
+                  <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" />
+                  <path d="M12 12V8" />
+                </svg>
+              </button>
+
+              {/* Wi-Fi */}
+              <button
+                onClick={() => setShowWifiPopup(true)}
+                className="icon-button"
+                style={{ color: wifiConnected ? '#22c55e' : 'var(--text-content-tertiary)' }}
+                title="Wi-Fi"
+              >
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12.859a10 10 0 0 1 14 0" />
+                  <path d="M8.5 16.429a5 5 0 0 1 7 0" />
+                  <path d="M12 20h.01" />
+                </svg>
+              </button>
+
               <span className="text-2xs text-content-tertiary uppercase tracking-widest">
                 v0.1.0
               </span>
@@ -233,19 +292,11 @@ function App() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-edge mt-auto">
-        <div className="max-w-grid mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <span className="text-2xs text-content-tertiary">
-              {t('footer.brand')}
-            </span>
-            <span className="text-2xs text-content-tertiary">
-              {t('footer.tagline')}
-            </span>
-          </div>
-        </div>
-      </footer>
+      {/* LAN Popup */}
+      {showLanPopup && <LanPopup onClose={() => setShowLanPopup(false)} />}
+
+      {/* WiFi Popup */}
+      {showWifiPopup && <WifiPopup onClose={() => setShowWifiPopup(false)} />}
     </div>
   );
 }

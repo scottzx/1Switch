@@ -56,6 +56,29 @@ export default {
           DEFAULT: 'var(--border-primary)',
           secondary: 'var(--border-secondary)',
         },
+        // State colors for service status
+        state: {
+          running: {
+            DEFAULT: 'var(--state-running)',
+            bg: 'var(--state-running-bg)',
+            border: 'var(--state-running-border)',
+          },
+          stopped: {
+            DEFAULT: 'var(--state-stopped)',
+            bg: 'var(--state-stopped-bg)',
+            border: 'var(--state-stopped-border)',
+          },
+          warning: {
+            DEFAULT: 'var(--state-warning)',
+            bg: 'var(--state-warning-bg)',
+            border: 'var(--state-warning-border)',
+          },
+          diagnose: {
+            DEFAULT: 'var(--state-diagnose)',
+            bg: 'var(--state-diagnose-bg)',
+            border: 'var(--state-diagnose-border)',
+          },
+        },
       },
       fontFamily: {
         sans: [

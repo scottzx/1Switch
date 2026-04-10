@@ -45,7 +45,9 @@
       "Bash(systemctl disable:*)",
       "Bash(kill 412248)",
       "Bash(/tmp/admin-api-new)",
-      "Bash(systemctl status:*)"
+      "Bash(systemctl status:*)",
+      "Bash(pkill -f 'vite.*iclaw')",
+      "Bash(npx tailwindcss:*)"
     ]
   }
 }

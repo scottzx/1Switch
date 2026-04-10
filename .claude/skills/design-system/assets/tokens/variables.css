@@ -46,6 +46,23 @@
   /* === Grid System === */
   --grid-gap: 16px;
   --grid-max-width: 1200px;
+
+  /* === State Colors - Light Mode === */
+  --state-running: #5D8A5D;
+  --state-running-bg: rgba(93, 138, 93, 0.12);
+  --state-running-border: rgba(93, 138, 93, 0.3);
+
+  --state-stopped: #A65D5D;
+  --state-stopped-bg: rgba(166, 93, 93, 0.12);
+  --state-stopped-border: rgba(166, 93, 93, 0.3);
+
+  --state-warning: #A68A5D;
+  --state-warning-bg: rgba(166, 138, 93, 0.12);
+  --state-warning-border: rgba(166, 138, 93, 0.3);
+
+  --state-diagnose: #7D6DA8;
+  --state-diagnose-bg: rgba(125, 109, 168, 0.12);
+  --state-diagnose-border: rgba(125, 109, 168, 0.3);
 }
 
 .dark {
@@ -86,4 +103,21 @@
 
   /* === Selection - Dark Mode === */
   --selection-bg: rgba(196, 168, 114, 0.3);
+
+  /* === State Colors - Dark Mode === */
+  --state-running: #6B9E6B;
+  --state-running-bg: rgba(107, 158, 107, 0.15);
+  --state-running-border: rgba(107, 158, 107, 0.35);
+
+  --state-stopped: #B86B6B;
+  --state-stopped-bg: rgba(184, 107, 107, 0.15);
+  --state-stopped-border: rgba(184, 107, 107, 0.35);
+
+  --state-warning: #B89A6B;
+  --state-warning-bg: rgba(184, 154, 107, 0.15);
+  --state-warning-border: rgba(184, 154, 107, 0.35);
+
+  --state-diagnose: #9180B8;
+  --state-diagnose-bg: rgba(145, 128, 184, 0.15);
+  --state-diagnose-border: rgba(145, 128, 184, 0.35);
 }
