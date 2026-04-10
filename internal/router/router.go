@@ -11,10 +11,12 @@ func SetupRouter(r *gin.Engine) {
 	// 初始化服务
 	systemService := service.NewSystemService()
 	networkService := service.NewNetworkService()
+	ngrokService := service.GetNgrokService()
 
 	// 初始化处理器
 	systemHandler := handler.NewSystemHandler(systemService)
 	networkHandler := handler.NewNetworkHandler(networkService)
+	ngrokHandler := handler.NewNgrokHandler(ngrokService)
 
 	api := r.Group("/api")
 	{
@@ -158,6 +160,15 @@ func SetupRouter(r *gin.Engine) {
 		{
 			ota.GET("/check", handler.CheckOtaUpdate)
 			ota.GET("/download/:type", handler.DownloadOtaUpdate)
+		}
+
+		// Ngrok routes
+		ngrok := api.Group("/ngrok")
+		{
+			ngrok.GET("/check", ngrokHandler.GetStatus)
+			ngrok.POST("/start", ngrokHandler.Start)
+			ngrok.POST("/stop", ngrokHandler.Stop)
+			ngrok.POST("/install", ngrokHandler.Install)
 		}
 	}
 }

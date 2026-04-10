@@ -68,6 +68,25 @@ func main() {
 	service.InitSystemInfoCache()
 	router.SetupRouter(r)
 
+	// Serve ngrok app static files
+	ngrokStaticDir := "app/ngrok/dist"
+	if _, err := os.Stat(ngrokStaticDir); err == nil {
+		appGroup := r.Group("/app/ngrok")
+		appGroup.GET("", func(c *gin.Context) {
+			c.File(filepath.Join(ngrokStaticDir, "index.html"))
+		})
+		appGroup.GET("/*path", func(c *gin.Context) {
+			requestedPath := c.Param("path")
+			staticPath := filepath.Join(ngrokStaticDir, requestedPath)
+			if _, err := os.Stat(staticPath); err == nil {
+				c.File(staticPath)
+			} else {
+				c.File(filepath.Join(ngrokStaticDir, "index.html"))
+			}
+		})
+		log.Printf("Serving ngrok app from: %s", ngrokStaticDir)
+	}
+
 	// Serve static files from same directory as executable
 	if _, err := os.Stat(staticDir); err == nil {
 		r.GET("/", func(c *gin.Context) {
