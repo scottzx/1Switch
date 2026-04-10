@@ -1,0 +1,71 @@
+{
+  "header": {
+    "title": "iClaw Portal",
+    "subtitle": "OpenClaw Management Interface"
+  },
+  "footer": {
+    "brand": "OpenClaw Portal",
+    "tagline": "Good design is as little design as possible."
+  },
+  "theme": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  },
+  "module": {
+    "soon": "Soon",
+    "external": "External",
+    "internal": "Internal"
+  },
+  "sections": {
+    "aiApplications": "AI Applications",
+    "extendedApplications": "Extended Applications",
+    "aiConfiguration": "AI Configuration",
+    "systemFunctions": "System Functions"
+  },
+  "modules": {
+    "openClaude": {
+      "name": "OpenClaude",
+      "description": "AI Agent core service. Fixed port 18789."
+    },
+    "iclaw": {
+      "name": "iClaw",
+      "description": "OpenClaw device management and configuration console."
+    },
+    "claudeCode": {
+      "name": "Claude Code",
+      "description": "AI programming assistant for intelligent code generation."
+    },
+    "qingliu": {
+      "name": "QingLiu",
+      "description": "Enterprise no-code platform for rapid business application development."
+    },
+    "llmRouter": {
+      "name": "LLM Router",
+      "description": "Large language model routing and intelligent request distribution."
+    },
+    "skillhub": {
+      "name": "Skillhub",
+      "description": "AI skills center for management and configuration."
+    },
+    "toolshub": {
+      "name": "Toolshub",
+      "description": "AI tools center for extending capabilities."
+    },
+    "tailscale": {
+      "name": "Tailscale",
+      "description": "Network tunneling and mesh VPN for secure remote access."
+    },
+    "fileManager": {
+      "name": "File Manager",
+      "description": "Device file browser and editor. Fixed port 8081."
+    },
+    "terminal": {
+      "name": "Terminal",
+      "description": "Web-based terminal session management."
+    },
+    "ota": {
+      "name": "OTA Update",
+      "description": "Remote device firmware upgrade. Fixed port 8089."
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "header": {
+    "title": "iClaw Portal",
+    "subtitle": "OpenClaw 管理界面"
+  },
+  "footer": {
+    "brand": "OpenClaw Portal",
+    "tagline": "好的设计就是尽可能少的设计。"
+  },
+  "theme": {
+    "switchToLight": "切换到浅色模式",
+    "switchToDark": "切换到深色模式"
+  },
+  "module": {
+    "soon": "即将上线",
+    "external": "外部",
+    "internal": "内部"
+  },
+  "sections": {
+    "aiApplications": "AI 应用",
+    "extendedApplications": "扩展应用",
+    "aiConfiguration": "AI 配置",
+    "systemFunctions": "系统功能"
+  },
+  "modules": {
+    "openClaude": {
+      "name": "OpenClaude",
+      "description": "AI Agent 核心服务，固定端口 18789。"
+    },
+    "iclaw": {
+      "name": "iClaw",
+      "description": "OpenClaw 设备管理与配置控制台。"
+    },
+    "claudeCode": {
+      "name": "Claude Code",
+      "description": "AI 编程助手，智能代码生成。"
+    },
+    "qingliu": {
+      "name": "QingLiu",
+      "description": "企业级无代码平台，快速开发业务应用。"
+    },
+    "llmRouter": {
+      "name": "LLM Router",
+      "description": "大语言模型路由与智能请求分发。"
+    },
+    "skillhub": {
+      "name": "Skillhub",
+      "description": "AI 技能中心，技能管理与配置。"
+    },
+    "toolshub": {
+      "name": "Toolshub",
+      "description": "AI 工具中心，扩展系统能力。"
+    },
+    "tailscale": {
+      "name": "Tailscale",
+      "description": "网络隧道与 Mesh VPN，安全远程访问。"
+    },
+    "fileManager": {
+      "name": "File Manager",
+      "description": "设备文件浏览器与编辑器，固定端口 8081。"
+    },
+    "terminal": {
+      "name": "Terminal",
+      "description": "基于 Web 的终端会话管理。"
+    },
+    "ota": {
+      "name": "OTA Update",
+      "description": "远程设备固件升级，固定端口 8089。"
+    }
+  }
+}

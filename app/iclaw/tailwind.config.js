@@ -8,21 +8,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        // OpenClaw 品牌色
-        claw: {
-          50: '#fef3f2',
-          100: '#fee4e2',
-          200: '#ffccc7',
-          300: '#ffa8a0',
-          400: '#ff7a6b',
-          500: '#f94d3a',  // 主色 - 龙虾红
-          600: '#e63024',
-          700: '#c1241a',
-          800: '#a02119',
-          900: '#84221c',
-          950: '#480d09',
+        // Neutral palette - Dieter Rams inspired warm/cool neutrals
+        neutral: {
+          50:  '#FAFAF8',
+          100: '#F5F5F3',
+          200: '#EFEFED',
+          300: '#E8E8E5',
+          400: '#D8D8D5',
+          500: '#C4C4C0',
+          600: '#A0A09C',
+          700: '#6B6B6B',
+          800: '#3D3D3D',
+          900: '#1A1A1A',
+          950: '#141414',
         },
-        // 语义化颜色 - 引用 CSS 变量
+        // Warm brass accent (Braun reference)
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          muted: 'var(--accent-muted)',
+          foreground: '#FFFFFF',
+        },
+        // Semantic surface colors (map to CSS variables)
         surface: {
           app: 'var(--bg-app)',
           sidebar: 'var(--bg-sidebar)',
@@ -33,32 +40,25 @@ export default {
           overlay: 'var(--bg-overlay)',
           code: 'var(--bg-code)',
         },
+        // Semantic text colors
         content: {
           primary: 'var(--text-primary)',
           secondary: 'var(--text-secondary)',
           tertiary: 'var(--text-tertiary)',
           inverse: 'var(--text-inverse)',
         },
+        // Border colors
         edge: {
           DEFAULT: 'var(--border-primary)',
           secondary: 'var(--border-secondary)',
         },
-        // 深色主题背景（保留兼容）
-        dark: {
-          900: '#0a0a0b',
-          800: '#111113',
-          700: '#1a1a1d',
-          600: '#242428',
-          500: '#2e2e33',
-          400: '#3d3d44',
+        // Status colors (for functional indicators only)
+        status: {
+          error: '#DC2626',
+          warning: '#D97706',
+          success: '#16A34A',
+          info: '#2563EB',
         },
-        // 强调色
-        accent: {
-          cyan: '#22d3ee',
-          purple: '#a78bfa',
-          green: '#4ade80',
-          amber: '#fbbf24',
-        }
       },
       fontFamily: {
         sans: [

@@ -1,112 +1,113 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import ModuleSection from './components/ModuleSection';
 
 interface Module {
   id: string;
-  name: string;
-  description: string;
+  nameKey: string;
+  descriptionKey: string;
   type: 'link' | 'route' | 'external';
   url?: string;
   status: 'available' | 'coming-soon';
 }
 
-const sections: { title: string; modules: Module[] }[] = [
+const sections: { titleKey: string; modules: Module[] }[] = [
   {
-    title: 'AI Applications',
+    titleKey: 'sections.aiApplications',
     modules: [
       {
         id: 'open-claude',
-        name: 'OpenClaude',
-        description: 'AI Agent core service. Fixed port 18789.',
+        nameKey: 'modules.openClaude.name',
+        descriptionKey: 'modules.openClaude.description',
         type: 'external',
         url: 'http://localhost:18789',
         status: 'available',
       },
       {
         id: 'iclaw',
-        name: 'iClaw',
-        description: 'OpenClaw device management and configuration console.',
+        nameKey: 'modules.iclaw.name',
+        descriptionKey: 'modules.iclaw.description',
         type: 'route',
         url: '/app/iclaw/',
         status: 'available',
       },
       {
         id: 'claude-code',
-        name: 'Claude Code',
-        description: 'AI programming assistant for intelligent code generation.',
+        nameKey: 'modules.claudeCode.name',
+        descriptionKey: 'modules.claudeCode.description',
         type: 'route',
         status: 'coming-soon',
       },
     ],
   },
   {
-    title: 'Extended Applications',
+    titleKey: 'sections.extendedApplications',
     modules: [
       {
         id: 'qingliu',
-        name: 'QingLiu',
-        description: 'Enterprise no-code platform for rapid business application development.',
+        nameKey: 'modules.qingliu.name',
+        descriptionKey: 'modules.qingliu.description',
         type: 'route',
         status: 'coming-soon',
       },
     ],
   },
   {
-    title: 'AI Configuration',
+    titleKey: 'sections.aiConfiguration',
     modules: [
       {
         id: 'llm-router',
-        name: 'LLM Router',
-        description: 'Large language model routing and intelligent request distribution.',
+        nameKey: 'modules.llmRouter.name',
+        descriptionKey: 'modules.llmRouter.description',
         type: 'route',
         status: 'coming-soon',
       },
       {
         id: 'skillhub',
-        name: 'Skillhub',
-        description: 'AI skills center for management and configuration.',
+        nameKey: 'modules.skillhub.name',
+        descriptionKey: 'modules.skillhub.description',
         type: 'route',
         status: 'coming-soon',
       },
       {
         id: 'toolshub',
-        name: 'Toolshub',
-        description: 'AI tools center for extending capabilities.',
+        nameKey: 'modules.toolshub.name',
+        descriptionKey: 'modules.toolshub.description',
         type: 'route',
         status: 'coming-soon',
       },
     ],
   },
   {
-    title: 'System Functions',
+    titleKey: 'sections.systemFunctions',
     modules: [
       {
         id: 'tailscale',
-        name: 'Tailscale',
-        description: 'Network tunneling and mesh VPN for secure remote access.',
+        nameKey: 'modules.tailscale.name',
+        descriptionKey: 'modules.tailscale.description',
         type: 'route',
         status: 'coming-soon',
       },
       {
         id: 'file-manager',
-        name: 'File Manager',
-        description: 'Device file browser and editor. Fixed port 8081.',
+        nameKey: 'modules.fileManager.name',
+        descriptionKey: 'modules.fileManager.description',
         type: 'external',
         url: 'http://localhost:8081',
         status: 'available',
       },
       {
         id: 'terminal',
-        name: 'Terminal',
-        description: 'Web-based terminal session management.',
+        nameKey: 'modules.terminal.name',
+        descriptionKey: 'modules.terminal.description',
         type: 'route',
         url: '/app/terminal/',
         status: 'available',
       },
       {
         id: 'ota',
-        name: 'OTA Update',
-        description: 'Remote device firmware upgrade. Fixed port 8089.',
+        nameKey: 'modules.ota.name',
+        descriptionKey: 'modules.ota.description',
         type: 'external',
         url: 'http://localhost:8089',
         status: 'available',
@@ -116,11 +117,12 @@ const sections: { title: string; modules: Module[] }[] = [
 ];
 
 function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
+  const { t } = useTranslation();
   return (
     <button
       onClick={onToggle}
       className="w-8 h-8 flex items-center justify-center rounded text-content-secondary hover:text-content-primary hover:bg-surface-elevated transition-colors"
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
     >
       {isDark ? (
         /* Sun icon */
@@ -138,7 +140,48 @@ function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => vo
   );
 }
 
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1 px-2 py-1.5 rounded text-content-secondary hover:text-content-primary hover:bg-surface-elevated transition-colors text-xs"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+        </svg>
+        {i18n.language?.startsWith('zh') ? '中文' : 'EN'}
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 bg-surface-card border border-edge rounded shadow-lg py-1 z-50 min-w-[80px]">
+          <button
+            onClick={() => changeLanguage('zh')}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-surface-elevated transition-colors text-content-primary"
+          >
+            中文
+          </button>
+          <button
+            onClick={() => changeLanguage('en')}
+            className="w-full px-3 py-1.5 text-left text-xs hover:bg-surface-elevated transition-colors text-content-primary"
+          >
+            English
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
+  const { t } = useTranslation();
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('theme');
     if (stored) return stored === 'dark';
@@ -162,14 +205,15 @@ function App() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-medium text-content-primary tracking-tight">
-                iClaw Portal
+                {t('header.title')}
               </h1>
               <p className="text-xs text-content-tertiary mt-0.5">
-                OpenClaw Management Interface
+                {t('header.subtitle')}
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
+              <LanguageSwitcher />
               <span className="text-2xs text-content-tertiary uppercase tracking-widest">
                 v0.1.0
               </span>
@@ -182,8 +226,8 @@ function App() {
       <main className="max-w-grid mx-auto px-6 py-8">
         <div className="grid grid-cols-12 gap-6">
           {sections.map((section) => (
-            <div key={section.title} className="col-span-12">
-              <ModuleSection title={section.title} modules={section.modules} />
+            <div key={section.titleKey} className="col-span-12">
+              <ModuleSection titleKey={section.titleKey} modules={section.modules} />
             </div>
           ))}
         </div>
@@ -194,10 +238,10 @@ function App() {
         <div className="max-w-grid mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <span className="text-2xs text-content-tertiary">
-              OpenClaw Portal
+              {t('footer.brand')}
             </span>
             <span className="text-2xs text-content-tertiary">
-              Good design is as little design as possible.
+              {t('footer.tagline')}
             </span>
           </div>
         </div>

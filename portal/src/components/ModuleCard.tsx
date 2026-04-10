@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next';
+
 interface Module {
   id: string;
-  name: string;
-  description: string;
+  nameKey: string;
+  descriptionKey: string;
   type: 'link' | 'route' | 'external';
   url?: string;
   status: 'available' | 'coming-soon';
@@ -14,6 +16,7 @@ interface ModuleCardProps {
 }
 
 export default function ModuleCard({ module }: ModuleCardProps) {
+  const { t } = useTranslation();
   const isAvailable = module.status === 'available';
 
   const handleClick = () => {
@@ -43,7 +46,7 @@ export default function ModuleCard({ module }: ModuleCardProps) {
           text-sm font-medium tracking-wide uppercase
           ${isAvailable ? 'text-content-primary' : 'text-content-tertiary'}
         `}>
-          {module.name}
+          {t(module.nameKey)}
         </h3>
 
         {/* Status indicator */}
@@ -51,21 +54,21 @@ export default function ModuleCard({ module }: ModuleCardProps) {
           <div className="w-2 h-2 rounded-full bg-accent mt-1 flex-shrink-0" />
         ) : (
           <span className="text-2xs font-medium text-content-tertiary uppercase tracking-wider">
-            Soon
+            {t('module.soon')}
           </span>
         )}
       </div>
 
       {/* Description */}
       <p className="text-xs text-content-secondary leading-relaxed flex-grow">
-        {module.description}
+        {t(module.descriptionKey)}
       </p>
 
       {/* Footer: type indicator */}
       {isAvailable && (
         <div className="mt-4 pt-3 border-t border-edge-secondary flex items-center justify-between">
           <span className="text-2xs text-content-tertiary uppercase tracking-wider">
-            {module.type === 'external' ? 'External' : 'Internal'}
+            {t(module.type === 'external' ? 'module.external' : 'module.internal')}
           </span>
           <svg
             className="w-3 h-3 text-content-tertiary"

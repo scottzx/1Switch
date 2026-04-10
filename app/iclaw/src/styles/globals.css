@@ -54,20 +54,20 @@ button:disabled {
 /* 动画工具类 */
 @layer utilities {
   .animate-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.2s ease-out;
   }
-  
+
   .slide-in-right {
-    animation: slideInRight 0.3s ease-out;
+    animation: slideInRight 0.2s ease-out;
   }
-  
+
   .slide-in-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.2s ease-out;
   }
-  
+
   @keyframes slideInRight {
     from {
-      transform: translateX(20px);
+      transform: translateX(10px);
       opacity: 0;
     }
     to {
@@ -75,18 +75,15 @@ button:disabled {
       opacity: 1;
     }
   }
-  
-  /* 发光脉冲 */
-  .glow-pulse {
-    animation: glowPulse 2s ease-in-out infinite;
-  }
-  
-  @keyframes glowPulse {
-    0%, 100% {
-      box-shadow: 0 0 5px rgba(249, 77, 58, 0.4);
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(4px);
+      opacity: 0;
     }
-    50% {
-      box-shadow: 0 0 20px rgba(249, 77, 58, 0.6);
+    to {
+      transform: translateY(0);
+      opacity: 1;
     }
   }
 }
@@ -156,9 +153,9 @@ button:disabled {
   }
 }
 
-/* 渐变背景 */
+/* 渐变背景 - subtle */
 .bg-gradient-radial {
-  background: radial-gradient(ellipse at top, var(--gradient-radial) 0%, transparent 50%);
+  background: radial-gradient(ellipse at top, var(--bg-elevated) 0%, transparent 70%);
 }
 
 /* 图标按钮 */
@@ -181,30 +178,32 @@ button:disabled {
   color: var(--text-tertiary);
 }
 .input-base:focus {
-  @apply border-claw-500 ring-1 ring-claw-500/50;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-muted);
 }
 
 /* 按钮通用样式 */
 .btn-primary {
-  @apply px-6 py-3 rounded-lg font-medium;
-  @apply bg-claw-500 text-white;
-  @apply hover:bg-claw-600 active:bg-claw-700;
-  @apply transition-all duration-200;
-  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply px-6 py-3 rounded font-medium transition-all duration-150;
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
 }
 
 .btn-secondary {
-  @apply px-6 py-3 rounded-lg font-medium transition-all duration-200;
-  background: var(--bg-elevated);
+  @apply px-6 py-3 rounded font-medium transition-all duration-150;
+  background: transparent;
   color: var(--text-primary);
   border: 1px solid var(--border-primary);
 }
 .btn-secondary:hover {
-  background: var(--bg-card-hover);
+  background: var(--bg-elevated);
 }
 
 .btn-ghost {
-  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  @apply px-4 py-2 rounded font-medium transition-all duration-150;
   color: var(--text-secondary);
 }
 .btn-ghost:hover {

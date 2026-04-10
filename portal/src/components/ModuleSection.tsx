@@ -1,9 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import ModuleCard from './ModuleCard';
 
 interface Module {
   id: string;
-  name: string;
-  description: string;
+  nameKey: string;
+  descriptionKey: string;
   type: 'link' | 'route' | 'external';
   url?: string;
   status: 'available' | 'coming-soon';
@@ -11,17 +12,19 @@ interface Module {
 }
 
 interface ModuleSectionProps {
-  title: string;
+  titleKey: string;
   modules: Module[];
 }
 
-export default function ModuleSection({ title, modules }: ModuleSectionProps) {
+export default function ModuleSection({ titleKey, modules }: ModuleSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <section className="mb-12">
       {/* Section Header - Dieter Rams: typography-driven hierarchy */}
       <div className="mb-6 pb-3 border-b border-edge">
         <h2 className="text-xs font-medium text-content-tertiary uppercase tracking-widest">
-          {title}
+          {t(titleKey)}
         </h2>
       </div>
 
