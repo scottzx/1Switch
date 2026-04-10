@@ -1,0 +1,35 @@
+{
+  "header": {
+    "title": "FRP",
+    "subtitle": "FRP 客户端管理器"
+  },
+  "status": {
+    "label": "状态",
+    "connected": "已连接",
+    "disconnected": "未连接"
+  },
+  "connection": {
+    "label": "连接信息",
+    "server": "服务器",
+    "remotePort": "远程端口",
+    "localPort": "本地端口",
+    "token": "访问密码",
+    "sshCommand": "SSH 命令"
+  },
+  "actions": {
+    "label": "操作",
+    "connect": "连接",
+    "disconnect": "断开",
+    "connecting": "连接中...",
+    "disconnecting": "断开中..."
+  },
+  "form": {
+    "localPort": "本地端口",
+    "localPortPlaceholder": "例如：22"
+  },
+  "error": {
+    "label": "错误"
+  },
+  "refresh": "刷新状态",
+  "copySuccess": "已复制"
+}

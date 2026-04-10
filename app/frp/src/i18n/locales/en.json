@@ -1,0 +1,35 @@
+{
+  "header": {
+    "title": "FRP",
+    "subtitle": "FRP Client Manager"
+  },
+  "status": {
+    "label": "Status",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
+  },
+  "connection": {
+    "label": "Connection Info",
+    "server": "Server",
+    "remotePort": "Remote Port",
+    "localPort": "Local Port",
+    "token": "Access Password",
+    "sshCommand": "SSH Command"
+  },
+  "actions": {
+    "label": "Actions",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "disconnecting": "Disconnecting..."
+  },
+  "form": {
+    "localPort": "Local Port",
+    "localPortPlaceholder": "e.g.: 22"
+  },
+  "error": {
+    "label": "Error"
+  },
+  "refresh": "Refresh status",
+  "copySuccess": "Copied"
+}
