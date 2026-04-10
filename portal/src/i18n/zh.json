@@ -34,7 +34,7 @@
     },
     "claudeCode": {
       "name": "Claude Code",
-      "description": "AI 编程助手，智能代码生成。"
+      "description": "AI 编程助手，请在终端输入 claude 打开。端口 7681"
     },
     "qingliu": {
       "name": "QingLiu",

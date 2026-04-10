@@ -34,7 +34,7 @@
     },
     "claudeCode": {
       "name": "Claude Code",
-      "description": "AI programming assistant for intelligent code generation."
+      "description": "AI programming assistant. Open via terminal with claude command. Port 7681."
     },
     "qingliu": {
       "name": "QingLiu",
