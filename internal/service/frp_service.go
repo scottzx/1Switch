@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"syscall"
 	"sync"
 
 	"iclaw-admin-api/internal/model"
@@ -15,10 +17,11 @@ import (
 // FrpService FRP 服务
 type FrpService struct {
 	mu        sync.Mutex
-	pid       int
-	config    *model.FrpConnectRequest
 	allocatedPorts map[int]bool // 记录已分配的端口
 }
+
+// 连接状态文件路径
+const frpStatusFile = "/var/lib/iclaw/frp_status.json"
 
 var frpInstance *FrpService
 var frpOnce sync.Once
@@ -31,6 +34,44 @@ func GetFrpService() *FrpService {
 		}
 	})
 	return frpInstance
+}
+
+// saveStatus 保存连接状态到文件
+func (s *FrpService) saveStatus(info *model.FrpStatus) error {
+	// 确保目录存在
+	os.MkdirAll("/var/lib/iclaw", 0755)
+	data, err := json.Marshal(info)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(frpStatusFile, data, 0644)
+}
+
+// loadStatus 从文件加载连接状态
+func (s *FrpService) loadStatus() *model.FrpStatus {
+	data, err := os.ReadFile(frpStatusFile)
+	if err != nil {
+		return nil
+	}
+	var status model.FrpStatus
+	if err := json.Unmarshal(data, &status); err != nil {
+		return nil
+	}
+	return &status
+}
+
+// clearStatus 清除连接状态
+func (s *FrpService) clearStatus() {
+	os.Remove(frpStatusFile)
+}
+
+// GetSerial 获取设备序列号
+func (s *FrpService) GetSerial(ctx context.Context) string {
+	data, err := os.ReadFile("/var/lib/iclaw/serial")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
 }
 
 // allocatePort 分配一个可用端口 (从 20000 开始)
@@ -97,17 +138,24 @@ func (s *FrpService) GetStatus(ctx context.Context) *model.FrpStatus {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	status := &model.FrpStatus{
+	// 先检查 frpc 进程是否在运行 (使用 "frpc " 带空格避免匹配 pgrep 自身)
+	cmd := exec.CommandContext(ctx, "pgrep", "-f", "frpc ")
+	running := cmd.Run() == nil
+
+	// 如果进程在运行，返回保存的状态信息
+	if running {
+		if saved := s.loadStatus(); saved != nil {
+			saved.Installed = s.CheckInstalled(ctx)
+			saved.Connected = true
+			return saved
+		}
+	}
+
+	// 否则返回基础状态
+	return &model.FrpStatus{
 		Installed: s.CheckInstalled(ctx),
+		Connected: running,
 	}
-
-	// 检查 frpc 是否在运行
-	cmd := exec.CommandContext(ctx, "pgrep", "-f", "frpc")
-	if err := cmd.Run(); err == nil {
-		status.Connected = true
-	}
-
-	return status
 }
 
 // Connect 连接到 FRP 服务器 (代理到远程 frps)
@@ -160,6 +208,55 @@ func (s *FrpService) Connect(ctx context.Context, req *model.FrpConnectRequest) 
 		}, fmt.Errorf(response.Error)
 	}
 
+	// 使用远程 API 返回的 server 地址启动本地 frpc
+	frpcConfig := fmt.Sprintf(`[common]
+server_addr = %s
+server_port = 7000
+token = %s
+
+[ssh]
+type = tcp
+local_ip = 127.0.0.1
+local_port = %d
+remote_port = %d
+`, response.Server, response.Token, req.LocalPort, response.Port)
+
+	// 写入临时配置文件
+	configFile := "/tmp/frpc.ini"
+	if err := os.WriteFile(configFile, []byte(frpcConfig), 0644); err != nil {
+		return &model.FrpConnectResponse{
+			Success: false,
+			Error:   fmt.Sprintf("failed to write config: %v", err),
+		}, err
+	}
+
+	// 启动本地 frpc (使用新的进程组，避免被父进程影响)
+	cmd = exec.CommandContext(ctx, "frpc", "-c", configFile)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true,
+	}
+	if err := cmd.Start(); err != nil {
+		return &model.FrpConnectResponse{
+			Success: false,
+			Error:   fmt.Sprintf("failed to start frpc: %v", err),
+		}, err
+	}
+	// 立即分离子进程，不等待其结束
+	go cmd.Wait()
+
+	// 保存连接状态
+	status := &model.FrpStatus{
+		Installed:  true,
+		Connected:  true,
+		Server:     response.Server,
+		RemotePort: response.Port,
+		LocalPort:  req.LocalPort,
+		Token:      response.Token,
+		Link:       response.Link,
+		Command:    response.Command,
+	}
+	s.saveStatus(status)
+
 	return &model.FrpConnectResponse{
 		Success:    true,
 		Server:     response.Server,
@@ -178,6 +275,9 @@ func (s *FrpService) Disconnect(ctx context.Context) error {
 
 	// 停止 frpc 进程
 	exec.CommandContext(ctx, "pkill", "-f", "frpc").Run()
+
+	// 清除保存的状态
+	s.clearStatus()
 
 	return nil
 }

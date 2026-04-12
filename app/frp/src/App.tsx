@@ -15,6 +15,12 @@ function App() {
 
   useEffect(() => {
     checkStatus();
+    // 获取设备序列号
+    frpApi.serial().then(res => {
+      if (res.data.serial) {
+        setSerial(res.data.serial);
+      }
+    }).catch(console.error);
   }, []);
 
   const checkStatus = async () => {
