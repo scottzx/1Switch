@@ -14,6 +14,7 @@ interface QuickActionsProps {
   onStart: () => void;
   onStop: () => void;
   onRestart: () => void;
+  onDoctor: () => void;
 }
 
 export function QuickActions({
@@ -22,6 +23,7 @@ export function QuickActions({
   onStart,
   onStop,
   onRestart,
+  onDoctor,
 }: QuickActionsProps) {
   const { t } = useTranslation();
   const isRunning = status?.running || false;
@@ -114,6 +116,7 @@ export function QuickActions({
         </button>
 
         <button
+          onClick={onDoctor}
           disabled={loading}
           className={clsx(
             'flex flex-col items-center gap-3 p-4 rounded-xl transition-all',

@@ -18,6 +18,8 @@ import { FileBrowser } from './components/FileBrowser';
 import { TerminalPanel } from './components/TerminalPanel';
 import { appLogger } from './lib/logger';
 import { api } from './lib/tauri';
+import { execApi } from './services/api';
+import { useTerminalStore } from './stores/terminalStore';
 import { ThemeProvider } from './lib/ThemeContext';
 import { Download, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -117,21 +119,46 @@ function App() {
   const handleUpdate = async () => {
     setUpdating(true);
     setUpdateResult(null);
+
+    const { addTab, appendOutput, setStatus: setTabStatus } = useTerminalStore.getState();
+    const tabId = addTab('openclaw update', 'OpenClaw 更新');
+
     try {
-      const result = await api.updateOpenClaw();
-      setUpdateResult({ success: true, message: result });
-      await checkEnvironment();
-      setTimeout(() => {
-        setShowUpdateBanner(false);
-        setUpdateResult(null);
-      }, 3000);
-    } catch (e) {
-      setUpdateResult({
-        success: false,
-        message: t('app.updateError'),
-        error: String(e),
+      await new Promise<void>((resolve, reject) => {
+        const es = execApi.streamCommand(
+          'openclaw update',
+          (data) => appendOutput(tabId, data.content),
+          (data) => { if (data.status === 'running') setTabStatus(tabId, 'running'); },
+          (data) => {
+            setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            if (data.exitCode === 0) {
+              setUpdateResult({ success: true, message: '更新完成' });
+              checkEnvironment();
+              setTimeout(() => {
+                setShowUpdateBanner(false);
+                setUpdateResult(null);
+              }, 3000);
+            } else {
+              setUpdateResult({
+                success: false,
+                message: t('app.updateError'),
+                error: `Exit code: ${data.exitCode}`,
+              });
+            }
+            setUpdating(false);
+            resolve();
+          }
+        );
+        es.onerror = () => {
+          setTabStatus(tabId, 'error');
+          appendOutput(tabId, '[错误: SSE 连接失败]');
+          setUpdateResult({ success: false, message: t('app.updateError'), error: 'SSE 连接失败' });
+          setUpdating(false);
+          reject(new Error('SSE 连接失败'));
+        };
       });
-    } finally {
+    } catch (e) {
+      console.error('更新失败:', e);
       setUpdating(false);
     }
   };

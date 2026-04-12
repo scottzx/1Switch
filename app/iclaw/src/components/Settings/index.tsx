@@ -14,6 +14,8 @@ import {
   Download,
 } from 'lucide-react';
 import { api } from '../../lib/tauri';
+import { useTerminalStore } from '../../stores/terminalStore';
+import { execApi } from '../../services/api';
 
 interface InstallResult {
   success: boolean;
@@ -28,6 +30,7 @@ interface SettingsProps {
 export function Settings({ onEnvironmentChange }: SettingsProps) {
   const { t, i18n } = useTranslation();
   const [deviceIP, setDeviceIP] = useState<string>('');
+  const { addTab, appendOutput, setStatus: setTabStatus } = useTerminalStore();
 
   useEffect(() => {
     const fetchDeviceIP = async () => {
@@ -82,24 +85,40 @@ export function Settings({ onEnvironmentChange }: SettingsProps) {
   const handleUninstall = async () => {
     setUninstalling(true);
     setUninstallResult(null);
+
+    const tabId = addTab('openclaw uninstall', 'OpenClaw 卸载');
+
     try {
-      const result = await api.uninstallOpenClaw();
-      setUninstallResult({ success: true, message: result });
-      if (true) {
-        // 通知环境状态变化，触发重新检查
-        onEnvironmentChange?.();
-        // 卸载成功后关闭确认框
-        setTimeout(() => {
-          setShowUninstallConfirm(false);
-        }, 2000);
-      }
-    } catch (e) {
-      setUninstallResult({
-        success: false,
-        message: t('settings.uninstallError'),
-        error: String(e),
+      await new Promise<void>((resolve, reject) => {
+        const es = execApi.streamCommand(
+          'openclaw uninstall',
+          (data) => appendOutput(tabId, data.content),
+          (data) => { if (data.status === 'running') setTabStatus(tabId, 'running'); },
+          (data) => {
+            setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            if (data.exitCode === 0) {
+              setUninstallResult({ success: true, message: '卸载完成' });
+              onEnvironmentChange?.();
+              setTimeout(() => {
+                setShowUninstallConfirm(false);
+              }, 2000);
+            } else {
+              setUninstallResult({ success: false, message: '卸载失败', error: `Exit code: ${data.exitCode}` });
+            }
+            setUninstalling(false);
+            resolve();
+          }
+        );
+        es.onerror = () => {
+          setTabStatus(tabId, 'error');
+          appendOutput(tabId, '[错误: SSE 连接失败]');
+          setUninstallResult({ success: false, message: '卸载失败', error: 'SSE 连接失败' });
+          setUninstalling(false);
+          reject(new Error('SSE 连接失败'));
+        };
       });
-    } finally {
+    } catch (e) {
+      console.error('卸载失败:', e);
       setUninstalling(false);
     }
   };

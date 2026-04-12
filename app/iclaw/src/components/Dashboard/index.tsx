@@ -5,9 +5,11 @@ import { QuickActions } from './QuickActions';
 import { SystemInfo } from './SystemInfo';
 import { Setup } from '../Setup';
 import { api, ServiceStatus } from '../../lib/tauri';
+import { execApi } from '../../services/api';
 import { Terminal, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import clsx from 'clsx';
 import { EnvironmentStatus } from '../../App';
+import { useTerminalStore } from '../../stores/terminalStore';
 
 interface DashboardProps {
   envStatus: EnvironmentStatus | null;
@@ -22,6 +24,7 @@ export function Dashboard({ envStatus, onSetupComplete }: DashboardProps) {
   const [logsExpanded, setLogsExpanded] = useState(true);
   const [autoRefreshLogs, setAutoRefreshLogs] = useState(true);
   const logsContainerRef = useRef<HTMLDivElement>(null);
+  const { addTab, appendOutput, setStatus: setTabStatus } = useTerminalStore();
 
   const fetchStatus = async () => {
     try {
@@ -63,40 +66,115 @@ export function Dashboard({ envStatus, onSetupComplete }: DashboardProps) {
 
   const handleStart = async () => {
     setActionLoading(true);
+    const tabId = addTab('openclaw gateway start', 'Gateway start');
     try {
-      await api.startService();
-      await fetchStatus();
-      await fetchLogs();
+      await new Promise<void>((resolve, reject) => {
+        const es = execApi.streamCommand(
+          'openclaw gateway start',
+          (data) => appendOutput(tabId, data.content),
+          (data) => { if (data.status === 'running') setTabStatus(tabId, 'running'); },
+          (data) => {
+            setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            setActionLoading(false);
+            fetchStatus();
+            fetchLogs();
+            resolve();
+          }
+        );
+        es.onerror = () => {
+          setTabStatus(tabId, 'error');
+          appendOutput(tabId, '[错误: SSE 连接失败]');
+          setActionLoading(false);
+          reject(new Error('SSE 连接失败'));
+        };
+      });
     } catch (e) {
       console.error('启动失败:', e);
-    } finally {
       setActionLoading(false);
     }
   };
 
   const handleStop = async () => {
     setActionLoading(true);
+    const tabId = addTab('openclaw gateway stop', 'Gateway stop');
     try {
-      await api.stopService();
-      await fetchStatus();
-      await fetchLogs();
+      await new Promise<void>((resolve, reject) => {
+        const es = execApi.streamCommand(
+          'openclaw gateway stop',
+          (data) => appendOutput(tabId, data.content),
+          (data) => { if (data.status === 'running') setTabStatus(tabId, 'running'); },
+          (data) => {
+            setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            setActionLoading(false);
+            fetchStatus();
+            fetchLogs();
+            resolve();
+          }
+        );
+        es.onerror = () => {
+          setTabStatus(tabId, 'error');
+          appendOutput(tabId, '[错误: SSE 连接失败]');
+          setActionLoading(false);
+          reject(new Error('SSE 连接失败'));
+        };
+      });
     } catch (e) {
       console.error('停止失败:', e);
-    } finally {
       setActionLoading(false);
     }
   };
 
   const handleRestart = async () => {
     setActionLoading(true);
+    const tabId = addTab('openclaw gateway restart', 'Gateway restart');
     try {
-      await api.restartService();
-      await fetchStatus();
-      await fetchLogs();
+      await new Promise<void>((resolve, reject) => {
+        const es = execApi.streamCommand(
+          'openclaw gateway restart',
+          (data) => appendOutput(tabId, data.content),
+          (data) => { if (data.status === 'running') setTabStatus(tabId, 'running'); },
+          (data) => {
+            setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            setActionLoading(false);
+            fetchStatus();
+            fetchLogs();
+            resolve();
+          }
+        );
+        es.onerror = () => {
+          setTabStatus(tabId, 'error');
+          appendOutput(tabId, '[错误: SSE 连接失败]');
+          setActionLoading(false);
+          reject(new Error('SSE 连接失败'));
+        };
+      });
     } catch (e) {
       console.error('重启失败:', e);
-    } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDoctor = async () => {
+    const tabId = addTab('openclaw doctor', '诊断');
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const es = execApi.streamCommand(
+          'openclaw doctor',
+          (data) => appendOutput(tabId, data.content),
+          (data) => { if (data.status === 'running') setTabStatus(tabId, 'running'); },
+          (data) => {
+            setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            resolve();
+          }
+        );
+        es.onerror = () => {
+          setTabStatus(tabId, 'error');
+          appendOutput(tabId, '[错误: SSE 连接失败]');
+          reject(new Error('SSE 连接失败'));
+        };
+      });
+    } catch (e) {
+      console.error('诊断失败:', e);
     }
   };
 
@@ -151,6 +229,7 @@ export function Dashboard({ envStatus, onSetupComplete }: DashboardProps) {
             onStart={handleStart}
             onStop={handleStop}
             onRestart={handleRestart}
+            onDoctor={handleDoctor}
           />
         </motion.div>
 

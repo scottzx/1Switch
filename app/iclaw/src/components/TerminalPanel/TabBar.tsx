@@ -11,50 +11,35 @@ export function TabBar() {
   }
 
   return (
-    <div className="bg-gray-900 border-t border-gray-700">
-      {/* 标签栏头部 */}
-      <div className="flex items-center justify-between px-4 py-1 bg-gray-800">
-        <div className="flex items-center gap-2">
-          <Terminal size={14} className="text-gray-400" />
-          <span className="text-xs text-gray-400 font-medium">
-            终端 ({tabs.length})
-          </span>
-        </div>
-        <button
-          onClick={toggleExpanded}
-          className="p-1 hover:bg-gray-700 rounded transition-colors"
-          title={isExpanded ? '收起' : '展开'}
-        >
-          {isExpanded ? (
-            <ChevronDown size={16} className="text-gray-400" />
-          ) : (
-            <ChevronUp size={16} className="text-gray-400" />
-          )}
-        </button>
-      </div>
-
+    <div style={{ backgroundColor: 'var(--terminal-header-bg)' }}>
       {/* 标签列表 */}
       {isExpanded && (
-        <div className="flex items-center gap-1 px-2 py-1 overflow-x-auto bg-gray-900">
+        <div
+          className="flex items-center gap-1 px-2 py-1 overflow-x-auto"
+          style={{ backgroundColor: 'var(--terminal-bg)' }}
+        >
           {tabs.map((tab) => (
             <div
               key={tab.id}
-              className={clsx(
-                'flex items-center gap-2 px-3 py-1 rounded text-sm cursor-pointer transition-colors group',
-                activeTabId === tab.id
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-gray-300'
-              )}
+              className="flex items-center gap-2 px-3 py-1 rounded text-sm cursor-pointer transition-colors group"
+              style={{
+                backgroundColor: activeTabId === tab.id ? 'var(--bg-elevated)' : 'transparent',
+                color: activeTabId === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+              }}
               onClick={() => setActiveTab(tab.id)}
             >
               <span
-                className={clsx(
-                  'w-2 h-2 rounded-full',
-                  tab.status === 'running' && 'bg-blue-500 animate-pulse',
-                  tab.status === 'done' && 'bg-green-500',
-                  tab.status === 'error' && 'bg-red-500',
-                  tab.status === 'idle' && 'bg-gray-500'
-                )}
+                className={tab.status === 'running' ? 'animate-pulse' : ''}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor:
+                    tab.status === 'running' ? 'var(--terminal-running)' :
+                    tab.status === 'done' ? 'var(--terminal-running)' :
+                    tab.status === 'error' ? 'var(--terminal-error)' :
+                    'var(--text-tertiary)',
+                }}
               />
               <span className="truncate max-w-[120px]">{tab.title}</span>
               <button
@@ -62,9 +47,10 @@ export function TabBar() {
                   e.stopPropagation();
                   removeTab(tab.id);
                 }}
-                className="p-0.5 hover:bg-gray-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ backgroundColor: 'transparent' }}
               >
-                <X size={12} />
+                <X size={12} style={{ color: 'var(--text-tertiary)' }} />
               </button>
             </div>
           ))}
