@@ -81,3 +81,9 @@ type DeviceInfoRequest struct {
 	Serial   string `json:"serial"`
 	IP       string `json:"ip"`
 }
+
+// ProfileSaveRequest 档案保存请求
+type ProfileSaveRequest struct {
+	Content   string `json:"content" binding:"required"`
+	Workspace string `json:"workspace,omitempty"`
+}

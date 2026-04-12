@@ -62,6 +62,10 @@ const commandMap: Record<string, (args?: Record<string, unknown>) => Promise<unk
   delete_agent: (args) => api.deleteAgent(args?.agentId as string),
   set_default_agent: (args) => api.setDefaultAgent(args?.agentId as string),
 
+  // Profile
+  get_identity: (args) => api.getIdentity(args?.workspace as string | undefined),
+  save_identity: (args) => api.saveIdentity(args?.content as string, args?.workspace as string | undefined),
+
   // Skills
   get_skills_list: () => api.getSkills(),
   get_skills: () => api.getSkills(),

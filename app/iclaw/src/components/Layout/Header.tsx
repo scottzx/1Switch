@@ -14,8 +14,8 @@ interface HeaderProps {
 
 const pageTitles: Record<PageType, { title: string; description: string }> = {
   dashboard: { title: '概览', description: '服务状态、日志与快捷操作' },
+  profile: { title: '龙虾档案', description: '编辑 AI 助手身份档案' },
   ai: { title: '模型配置', description: '配置 AI 提供商和模型' },
-  agents: { title: '数字员工', description: '管理虚拟员工、角色分工与渠道绑定' },
   channels: { title: '消息渠道', description: '配置 Telegram、Discord、飞书等' },
   skills: { title: '技能管理', description: '管理内置、官方、社区与自定义技能' },
   testing: { title: '测试诊断', description: '系统诊断与问题排查' },

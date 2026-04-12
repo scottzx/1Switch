@@ -6,9 +6,9 @@ import { Sidebar, MobileSidebar } from './components/Layout/Sidebar';
 import { Header } from './components/Layout/Header';
 import { Dashboard } from './components/Dashboard';
 import { AIConfig } from './components/AIConfig';
+import { Profile } from './components/Profile';
 import { Channels } from './components/Channels';
 import { Skills } from './components/Skills';
-import { Agents } from './components/Agents';
 import { Settings } from './components/Settings';
 import { Security } from './components/Security';
 import { Testing } from './components/Testing';
@@ -23,9 +23,9 @@ import { useTerminalStore } from './stores/terminalStore';
 import { ThemeProvider } from './lib/ThemeContext';
 import { Download, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
-export type PageType = 'dashboard' | 'ai' | 'agents' | 'channels' | 'skills' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser';
+export type PageType = 'dashboard' | 'profile' | 'ai' | 'channels' | 'skills' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser';
 
-const PAGE_TYPE_KEYS: PageType[] = ['dashboard', 'ai', 'agents', 'channels', 'skills', 'testing', 'logs', 'security', 'settings', 'terminal', 'filebrowser'];
+const PAGE_TYPE_KEYS: PageType[] = ['dashboard', 'profile', 'ai', 'channels', 'skills', 'testing', 'logs', 'security', 'settings', 'terminal', 'filebrowser'];
 
 export interface EnvironmentStatus {
   node_installed: boolean;
@@ -209,8 +209,8 @@ function App() {
 
     const pages: Record<PageType, JSX.Element> = {
       dashboard: <Dashboard envStatus={envStatus} onSetupComplete={handleSetupComplete} />,
+      profile: <Profile />,
       ai: <AIConfig />,
-      agents: <Agents />,
       channels: <Channels />,
       skills: <Skills />,
       testing: <Testing />,

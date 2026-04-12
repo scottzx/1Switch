@@ -99,6 +99,13 @@ func SetupRouter(r *gin.Engine) {
 			ai.DELETE("/model/:id", handler.RemoveAvailableModel)
 		}
 
+		// Profile routes
+		profile := api.Group("/profile")
+		{
+			profile.GET("/identity", handler.GetIdentity)
+			profile.POST("/identity", handler.SaveIdentity)
+		}
+
 		// Channels routes (placeholder)
 		channels := api.Group("/channels")
 		{

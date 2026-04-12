@@ -471,6 +471,17 @@ export const api = {
     return response.data.message;
   },
 
+  // Profile
+  getIdentity: async (workspace?: string): Promise<string> => {
+    const params = workspace ? `?workspace=${encodeURIComponent(workspace)}` : '';
+    const response = await apiClient.get<{ content: string }>(`/api/profile/identity${params}`);
+    return response.data.content || '';
+  },
+
+  saveIdentity: async (content: string, workspace?: string): Promise<void> => {
+    await apiClient.post<MessageResponse>('/api/profile/identity', { content, workspace });
+  },
+
   // Skills
   getSkills: async (): Promise<unknown[]> => {
     const response = await apiClient.get<unknown[]>('/api/skills');
