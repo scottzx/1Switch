@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 # release.sh - 本地编译并发布 OTA 版本
+# 构建所有前端 APP 并打包
 # 用法: ./release.sh [version]
-# 示例: ./release.sh v2026.3.23-9
+# 示例: ./release.sh v2026.4.12
 #
 
 set -e
@@ -29,12 +30,12 @@ error(){ echo -e "${RED}[$(date '+%H:%M:%S')] ERROR:${NC} $1" >&2; exit 1; }
 # 检查参数
 if [ -z "$1" ]; then
     echo "用法: $0 <version>"
-    echo "示例: $0 v2026.3.23-9"
+    echo "示例: $0 v2026.4.12"
     exit 1
 fi
 
 VERSION="$1"
-ADMIN_API_VERSION="$VERSION"  # 保留 v 前缀
+ADMIN_API_VERSION="$VERSION"
 
 log "==> 开始发布 $VERSION"
 
@@ -49,30 +50,62 @@ fi
 # 创建构建目录
 mkdir -p "$BUILD_DIR/$VERSION"
 
-# ========== 1. 构建前端 ==========
-log "==> [1/5] 构建前端..."
-cd "$PROJECT_DIR"
+# ========== 1. 构建所有前端 ==========
+log "==> [1/5] 构建所有前端..."
 
 # 清理旧构建
 rm -rf dist/
 rm -f dist.zip
+mkdir -p dist
 
-# 安装依赖
-npm ci --silent 2>/dev/null || npm install --silent 2>/dev/null
-
-# 构建
+# 构建 portal
+log "    构建 portal..."
+cd "$PROJECT_DIR/portal"
+rm -rf dist/
+npm install --silent 2>/dev/null || true
 npm run build
+cp -r dist/* "$PROJECT_DIR/dist/"
 
-# 注入版本号
-sed -i '' "s/{{VERSION}}/${VERSION}/g" dist/index.html
-log "    前端版本: $(grep -o 'data-version="[^"]*"' dist/index.html)"
+# 构建 iclaw
+log "    构建 iclaw..."
+cd "$PROJECT_DIR/app/iclaw"
+rm -rf dist/
+npm install --silent 2>/dev/null || true
+npm run build
+mkdir -p "$PROJECT_DIR/dist/app/iclaw"
+cp -r dist/* "$PROJECT_DIR/dist/app/iclaw/"
+
+# 构建 frp
+log "    构建 frp..."
+cd "$PROJECT_DIR/app/frp"
+rm -rf dist/
+npm install --silent 2>/dev/null || true
+npm run build
+mkdir -p "$PROJECT_DIR/dist/app/frp"
+cp -r dist/* "$PROJECT_DIR/dist/app/frp/"
+
+# 构建 novnc (noVNC 是静态应用，直接复制文件)
+log "    构建 novnc..."
+cd "$PROJECT_DIR/app/novnc"
+mkdir -p "$PROJECT_DIR/dist/app/novnc"
+cp -r app core lib vendor vnc.html vnc_lite.html defaults.json mandatory.json "$PROJECT_DIR/dist/app/novnc/"
+
+cd "$PROJECT_DIR"
+
+# 注入版本号到 portal/index.html
+if [ -f "$PROJECT_DIR/dist/index.html" ]; then
+    sed -i '' "s/{{VERSION}}/${VERSION}/g" "$PROJECT_DIR/dist/index.html"
+    log "    前端版本: $(grep -o 'data-version="[^"]*"' "$PROJECT_DIR/dist/index.html")"
+fi
 
 # 打包
-cd dist
+cd "$PROJECT_DIR/dist"
 zip -r ../dist.zip .
 cd ..
 
 log "    dist.zip 大小: $(du -sh dist.zip | cut -f1)"
+log "    dist.zip 结构:"
+unzip -l dist.zip | head -20
 
 # ========== 2. 构建 admin-api ==========
 log "==> [2/5] 构建 admin-api (Linux ARM64)..."
@@ -86,10 +119,6 @@ GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o admin-api ./cmd/admin-api
 
 log "    admin-api 大小: $(du -sh admin-api | cut -f1)"
 file admin-api
-
-# 同时执行本地编译脚本
-log "==> [2.5/5] 执行本地编译..."
-./scripts/build-linux-arm64.sh
 
 # ========== 3. 复制到构建目录 ==========
 log "==> [3/5] 准备发布文件..."

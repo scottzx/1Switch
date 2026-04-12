@@ -12,7 +12,7 @@ import (
 	"iclaw-admin-api/internal/service"
 )
 
-const Version = "v2026.3.23-9"
+const Version = "v2026.4.12-4"
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
@@ -25,9 +25,9 @@ func main() {
 		port = "8080"
 	}
 
-	portalStaticDir := "portal/dist"
-	iclawStaticDir := "app/iclaw/dist"
-	terminalStaticDir := "app/terminal/dist"
+	portalStaticDir := "."
+	iclawStaticDir := "app/iclaw"
+	terminalStaticDir := "app/terminal"
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -64,7 +64,7 @@ func main() {
 	}
 
 	// Serve FRP app static files
-	frpStaticDir := "app/frp/dist"
+	frpStaticDir := "app/frp"
 	if _, err := os.Stat(frpStaticDir); err == nil {
 		appGroup := r.Group("/app/frp")
 		appGroup.GET("", func(c *gin.Context) {
