@@ -242,18 +242,12 @@ function App() {
     }
   }, [isDark]);
 
-  // 获取设备 IP 并构建所有模块
+  // 获取当前页面的 host（从前端获取，不从后端）
   useEffect(() => {
-    const loadDeviceIp = async () => {
-      try {
-        const ip = await systemApi.getDeviceIp();
-        setSections(buildAllSections(ip));
-      } catch (e) {
-        // 使用默认值
-        setSections(buildAllSections('localhost'));
-      }
-    };
-    loadDeviceIp();
+    const host = window.location.hostname;
+    const port = window.location.port;
+    console.log('当前页面 Host:', host, 'Port:', port);
+    setSections(buildAllSections(host));
   }, []);
 
   useEffect(() => {

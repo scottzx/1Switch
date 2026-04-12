@@ -20,17 +20,18 @@ interface ModuleCardProps {
 // 硬编码域名保持不变，本地服务使用 window.location.origin（用户实际访问的 IP）
 function buildDisplayUrl(module: Module): string {
   if (module.type === 'route') {
-    return `${window.location.origin}${module.url}`;
+    // 内部服务使用 8080 端口
+    return `http://${window.location.hostname}:8080${module.url}`;
   }
-  // external: 硬编码域名（如 xfusion, clawhub）保持不变
+  // external: 检查 URL 是否有明确端口，有则保持不变
   try {
     const u = new URL(module.url!);
-    const isDomain = u.hostname.includes('.') && !u.hostname.includes('localhost');
-    if (isDomain) {
+    // 如果 URL 已经有端口号（如 localhost:18789），保持原样
+    if (u.port) {
       return module.url!;
     }
-    // 本地服务（无域名）使用前端 origin
-    return `${window.location.origin}:${u.port}${u.pathname}`;
+    // 其他 external URL 保持不变
+    return module.url!;
   } catch {
     return module.url ?? '';
   }
