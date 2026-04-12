@@ -210,6 +210,14 @@ export interface WifiStatus {
   ip?: string;
 }
 
+// Profile file types
+export interface ProfileFile {
+  name: string;
+  chineseName: string;
+  description: string;
+  exists: boolean;
+}
+
 // System monitoring API (from admin-ui)
 export const systemApi = {
   info: async (): Promise<SystemInfo> => {
@@ -471,7 +479,24 @@ export const api = {
     return response.data.message;
   },
 
-  // Profile
+  // Profile - 档案文件
+  getProfileFiles: async (workspace?: string): Promise<ProfileFile[]> => {
+    const params = workspace ? `?workspace=${encodeURIComponent(workspace)}` : '';
+    const response = await apiClient.get<{ files: ProfileFile[] }>(`/api/profile/files${params}`);
+    return response.data.files;
+  },
+
+  getProfileFile: async (fileName: string, workspace?: string): Promise<{ content: string; exists: boolean }> => {
+    const params = workspace ? `?workspace=${encodeURIComponent(workspace)}` : '';
+    const response = await apiClient.get<{ content: string; exists: boolean }>(`/api/profile/files/${fileName}${params}`);
+    return response.data;
+  },
+
+  saveProfileFile: async (fileName: string, content: string, workspace?: string): Promise<void> => {
+    await apiClient.post<MessageResponse>(`/api/profile/files/${fileName}`, { content, workspace });
+  },
+
+  // Legacy Profile APIs (for backward compatibility)
   getIdentity: async (workspace?: string): Promise<string> => {
     const params = workspace ? `?workspace=${encodeURIComponent(workspace)}` : '';
     const response = await apiClient.get<{ content: string }>(`/api/profile/identity${params}`);

@@ -10,6 +10,10 @@ interface AppState {
   systemInfo: SystemInfo | null;
   setSystemInfo: (info: SystemInfo | null) => void;
 
+  // 设备 Host（从 window.location 获取）
+  deviceHost: string;
+  setDeviceHost: (host: string) => void;
+
   // UI 状态
   loading: boolean;
   setLoading: (loading: boolean) => void;
@@ -41,6 +45,10 @@ export const useAppStore = create<AppState>((set) => ({
   // 系统信息
   systemInfo: null,
   setSystemInfo: (info) => set({ systemInfo: info }),
+
+  // 设备 Host（从 window.location 获取）
+  deviceHost: window.location.hostname || 'localhost',
+  setDeviceHost: (host) => set({ deviceHost: host }),
 
   // UI 状态
   loading: false,

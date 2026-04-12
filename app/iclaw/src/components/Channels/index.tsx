@@ -884,14 +884,14 @@ export function Channels() {
         {/* 配置弹窗 */}
         <AnimatePresence>
           {showModal && currentChannel && currentInfo && (
-            <>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               {/* 背景遮罩 */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowModal(false)}
-                className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-40 p-4"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               />
 
               {/* 弹窗内容 */}
@@ -900,7 +900,7 @@ export function Channels() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ duration: 0.2 }}
-                className="w-full max-w-2xl max-h-[85vh] bg-surface-card rounded-2xl border border-edge shadow-2xl z-50 overflow-hidden flex flex-col"
+                className="relative w-full max-w-2xl max-h-[85vh] bg-surface-card rounded-2xl border border-edge shadow-2xl overflow-hidden flex flex-col"
               >
                 {/* 弹窗头部 */}
                 <div className="flex items-center gap-4 p-6 border-b border-edge shrink-0">

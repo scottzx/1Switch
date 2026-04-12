@@ -60,7 +60,7 @@ var OfficialProviders = []model.OfficialProvider{
 		DefaultBaseURL: strPtr("https://llm.azopenai.com/v1"),
 		APIType:        "openai-completions",
 		SuggestedModels: []model.SuggestedModel{
-			{ID: "glm-5", Name: "GLM-5", Recommended: true, ContextWindow: uintPtr(128000), MaxTokens: uintPtr(8192)},
+			{ID: "glm-5", Name: "glm-5", Recommended: true, ContextWindow: uintPtr(128000), MaxTokens: uintPtr(8192)},
 		},
 		RequiresAPIKey: true,
 		DocsURL:        nil,

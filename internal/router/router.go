@@ -102,6 +102,9 @@ func SetupRouter(r *gin.Engine) {
 		// Profile routes
 		profile := api.Group("/profile")
 		{
+			profile.GET("/files", handler.GetProfileFiles)
+			profile.GET("/files/:name", handler.GetProfileFile)
+			profile.POST("/files/:name", handler.SaveProfileFile)
 			profile.GET("/identity", handler.GetIdentity)
 			profile.POST("/identity", handler.SaveIdentity)
 		}

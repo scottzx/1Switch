@@ -33,7 +33,7 @@ export function Header({ currentPage }: HeaderProps) {
   const description = t(`header.${currentPage}.description`, { defaultValue: fallback.description });
   const [opening, setOpening] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  const { openSidebar } = useAppStore();
+  const { openSidebar, deviceHost } = useAppStore();
   const [showLanPopup, setShowLanPopup] = useState(false);
   const [showWifiPopup, setShowWifiPopup] = useState(false);
   const [lanConnected, setLanConnected] = useState(false);
@@ -42,14 +42,9 @@ export function Header({ currentPage }: HeaderProps) {
   const handleOpenDashboard = async () => {
     setOpening(true);
     try {
-      // 获取设备 IP 和 token
-      const [ipResponse, tokenResponse] = await Promise.all([
-        fetch('/api/system/device-ip'),
-        fetch('/api/gateway/token')
-      ]);
-      const ipData = await ipResponse.json();
+      const tokenResponse = await fetch('/api/gateway/token');
       const tokenData = await tokenResponse.json();
-      const dashboardUrl = `http://${ipData.ip}:18789?token=${tokenData.token}`;
+      const dashboardUrl = `http://${deviceHost}:18789?token=${tokenData.token}`;
       window.open(dashboardUrl, '_blank');
     } catch (e) {
       console.error('打开 Dashboard 失败:', e);

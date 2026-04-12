@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   User,
@@ -17,6 +17,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { api } from '../../lib/tauri';
+import { useAppStore } from '../../stores/appStore';
 import { useTerminalStore } from '../../stores/terminalStore';
 import { execApi } from '../../services/api';
 
@@ -226,20 +227,7 @@ function SecuritySettings() {
 
 // 高级设置内容
 function AdvancedSettings() {
-  const [deviceIP, setDeviceIP] = useState<string>('');
-
-  useEffect(() => {
-    const fetchDeviceIP = async () => {
-      try {
-        const response = await fetch('/api/system/device-ip');
-        const data = await response.json();
-        setDeviceIP(data.ip);
-      } catch {
-        // ignore
-      }
-    };
-    fetchDeviceIP();
-  }, []);
+  const deviceHost = useAppStore((state) => state.deviceHost);
 
   const openConfigDir = async () => {
     try {
@@ -247,7 +235,7 @@ function AdvancedSettings() {
       const configDir = info.config_dir || '~/.openclaw';
       // 替换 ~ 为空，因为 file manager 使用的绝对路径
       const path = configDir.replace(/^~/, '');
-      window.location.href = `http://${deviceIP}:8081${path}`;
+      window.location.href = `http://${deviceHost}:8081${path}`;
     } catch (e) {
       console.error('获取配置目录失败:', e);
     }
@@ -257,8 +245,7 @@ function AdvancedSettings() {
     <div className="space-y-4">
       <button
         onClick={openConfigDir}
-        disabled={!deviceIP}
-        className="w-full flex items-center gap-3 p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors text-left disabled:opacity-50"
+        className="w-full flex items-center gap-3 p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors text-left"
       >
         <FolderOpen size={18} className="text-content-secondary" />
         <div className="flex-1">
@@ -272,27 +259,13 @@ function AdvancedSettings() {
 
 // OTA 更新组件
 function OtaUpdate() {
-  const [deviceIP, setDeviceIP] = useState<string>('');
-
-  useEffect(() => {
-    const fetchDeviceIP = async () => {
-      try {
-        const response = await fetch('/api/system/device-ip');
-        const data = await response.json();
-        setDeviceIP(data.ip);
-      } catch {
-        // ignore
-      }
-    };
-    fetchDeviceIP();
-  }, []);
+  const deviceHost = useAppStore((state) => state.deviceHost);
 
   return (
     <div className="space-y-4">
       <button
-        onClick={() => deviceIP && (window.location.href = `http://${deviceIP}:8089`)}
-        disabled={!deviceIP}
-        className="w-full flex items-center gap-3 p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors text-left disabled:opacity-50"
+        onClick={() => window.location.href = `http://${deviceHost}:8089`}
+        className="w-full flex items-center gap-3 p-4 bg-surface-elevated rounded-lg hover:bg-surface-elevated transition-colors text-left"
       >
         <Download size={18} className="text-green-400" />
         <div className="flex-1">

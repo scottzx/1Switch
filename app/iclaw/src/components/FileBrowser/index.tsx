@@ -1,43 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Folder, RefreshCw, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { Folder } from 'lucide-react';
+import { useAppStore } from '../../stores/appStore';
 
 export function FileBrowser() {
-  const [deviceIP, setDeviceIP] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchDeviceIP = async () => {
-      try {
-        const response = await fetch('/api/system/device-ip');
-        const data = await response.json();
-        setDeviceIP(data.ip);
-      } catch (e) {
-        setError('无法获取设备IP');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDeviceIP();
-  }, []);
-
-  const fileBrowserUrl = deviceIP ? `http://${deviceIP}:8081` : '';
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 animate-spin text-claw-500" />
-      </div>
-    );
-  }
-
-  if (error || !fileBrowserUrl) {
-    return (
-      <div className="h-full flex items-center justify-center text-content-secondary">
-        <p>{error || '无法加载文件浏览器'}</p>
-      </div>
-    );
-  }
+  const deviceHost = useAppStore((state) => state.deviceHost);
+  const fileBrowserUrl = `http://${deviceHost}:8081`;
 
   return (
     <div className="h-full flex flex-col">
