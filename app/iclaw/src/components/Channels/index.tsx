@@ -40,10 +40,12 @@ import {
   Volume2,
   Globe,
   Zap,
+  Copy,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../../lib/tauri';
 import { invoke } from '../../lib/invoke-shim';
+import { execApi } from '../../services/api';
 
 interface FeishuPluginStatus {
   installed: boolean;
@@ -461,18 +463,54 @@ export function Channels() {
     });
   };
 
-  // 检查飞书插件状态
-  const checkFeishuPlugin = async () => {
+  // 检查飞书插件状态 - 使用 SSE 实时获取
+  const checkFeishuPlugin = () => {
     setFeishuPluginLoading(true);
-    try {
-      const status = await invoke<FeishuPluginStatus>('check_feishu_plugin');
-      setFeishuPluginStatus(status);
-    } catch (e) {
-      console.error('检查飞书插件失败:', e);
+    setFeishuPluginStatus(null); // 清空状态以显示加载中
+
+    let output = '';
+    const eventSource = execApi.streamCommand(
+      'openclaw plugins list',
+      (event) => {
+        // 收集输出
+        output += event.content;
+      },
+      (status) => {
+        // 命令完成时解析输出
+        if (status.status === 'done') {
+          // 解析输出查找 feishu 插件
+          const lines = output.split('\n');
+          let found = false;
+          for (const line of lines) {
+            if (line.toLowerCase().includes('feishu') || line.toLowerCase().includes('@openclaw/feishu')) {
+              // 尝试解析版本信息
+              const versionMatch = line.match(/v?(\d+\.\d+\.\d+)/);
+              setFeishuPluginStatus({
+                installed: true,
+                version: versionMatch ? versionMatch[1] : null,
+                plugin_name: '@openclaw/feishu',
+              });
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            setFeishuPluginStatus({ installed: false, version: null, plugin_name: null });
+          }
+          setFeishuPluginLoading(false);
+        }
+      }
+    );
+
+    // 错误处理
+    eventSource.onerror = () => {
+      console.error('SSE 连接错误');
       setFeishuPluginStatus({ installed: false, version: null, plugin_name: null });
-    } finally {
       setFeishuPluginLoading(false);
-    }
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
   };
 
   // 安装飞书插件
@@ -482,7 +520,7 @@ export function Channels() {
       const result = await invoke<string>('install_feishu_plugin');
       alert(result);
       // 刷新插件状态
-      await checkFeishuPlugin();
+      checkFeishuPlugin();
     } catch (e) {
       alert(t('setup.installFailed', { error: e }));
     } finally {
@@ -490,18 +528,49 @@ export function Channels() {
     }
   };
 
-  // 检查 QQ Bot 插件状态
-  const checkQQBotPlugin = async () => {
+  // 检查 QQ Bot 插件状态 - 使用 SSE 实时获取
+  const checkQQBotPlugin = () => {
     setQqbotPluginLoading(true);
-    try {
-      const status = await invoke<QQBotPluginStatus>('check_qqbot_plugin');
-      setQqbotPluginStatus(status);
-    } catch (e) {
-      console.error('检查 QQ Bot 插件失败:', e);
+    setQqbotPluginStatus(null);
+
+    let output = '';
+    const eventSource = execApi.streamCommand(
+      'openclaw plugins list',
+      (event) => {
+        output += event.content;
+      },
+      (status) => {
+        if (status.status === 'done') {
+          const lines = output.split('\n');
+          let found = false;
+          for (const line of lines) {
+            if (line.toLowerCase().includes('qqbot') || line.toLowerCase().includes('@sliverp/qqbot')) {
+              const versionMatch = line.match(/v?(\d+\.\d+\.\d+)/);
+              setQqbotPluginStatus({
+                installed: true,
+                version: versionMatch ? versionMatch[1] : null,
+                plugin_name: '@sliverp/qqbot',
+              });
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            setQqbotPluginStatus({ installed: false, version: null, plugin_name: null });
+          }
+          setQqbotPluginLoading(false);
+        }
+      }
+    );
+
+    eventSource.onerror = () => {
+      console.error('SSE 连接错误');
       setQqbotPluginStatus({ installed: false, version: null, plugin_name: null });
-    } finally {
       setQqbotPluginLoading(false);
-    }
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
   };
 
   // 安装 QQ Bot 插件
@@ -511,7 +580,7 @@ export function Channels() {
       const result = await invoke<string>('install_qqbot_plugin');
       alert(result);
       // 刷新插件状态
-      await checkQQBotPlugin();
+      checkQQBotPlugin();
     } catch (e) {
       alert('安装失败: ' + e);
     } finally {
@@ -1043,6 +1112,103 @@ export function Channels() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* WeChat 扫码登录说明 */}
+                    {currentChannel.channel_type === 'wechat' && (
+                      <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
+                        <div className="flex items-start gap-3 mb-4">
+                          <QrCode size={24} className="text-blue-400 mt-0.5" />
+                          <div>
+                            <p className="text-content-primary font-medium">微信配置说明</p>
+                            <p className="text-xs text-content-secondary mt-1">
+                              通过二维码登录的 Tencent iLink Bot 插件；仅支持私聊
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">1.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">安装插件</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw plugins install "@tencent-weixin/openclaw-weixin"
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw plugins install "@tencent-weixin/openclaw-weixin"')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">2.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">启用插件</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw config set plugins.entries.openclaw-weixin.enabled true
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw config set plugins.entries.openclaw-weixin.enabled true')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">3.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">扫码登录</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw channels login --channel openclaw-weixin
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw channels login --channel openclaw-weixin')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">4.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">重启网关</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw gateway restart
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw gateway restart')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-content-tertiary mt-4">
+                          扫码后授权凭证会自动保存本地。详情参考：<a href="https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">npm 文档</a>
+                        </p>
                       </div>
                     )}
 

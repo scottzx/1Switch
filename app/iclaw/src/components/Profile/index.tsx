@@ -8,7 +8,6 @@ import {
     CheckCircle,
     XCircle,
     FileText,
-    ChevronDown,
     RefreshCw,
     File,
     BookOpen,
@@ -31,33 +30,23 @@ interface AgentInfo {
     isDefault: boolean;
 }
 
-// 档案文件定义（固定列表，无需从 API 获取）
+// 档案文件定义
 interface ProfileFile {
     name: string;
     chineseName: string;
     description: string;
+    icon: React.ReactNode;
 }
 
 const profileFiles: ProfileFile[] = [
-    { name: 'IDENTITY.md', chineseName: '身份档案', description: '龙虾的名字、形象、emoji 和头像' },
-    { name: 'SOUL.md', chineseName: '灵魂契约', description: '核心价值观、行为准则和个性风格' },
-    { name: 'TOOLS.md', chineseName: '工具备注', description: '本地工具配置：相机、SSH、TTS 等' },
-    { name: 'AGENTS.md', chineseName: '工作手册', description: '工作空间规则、内存管理、群聊礼仪' },
-    { name: 'USER.md', chineseName: '用户资料', description: '用户信息、时区偏好、上下文' },
-    { name: 'BOOTSTRAP.md', chineseName: '初始化向导', description: '首次启动引导（配置完成后会自动删除）' },
-    { name: 'HEARTBEAT.md', chineseName: '心跳任务', description: '周期性后台检查任务' },
+    { name: 'IDENTITY.md', chineseName: '身份档案', description: '名字、形象、emoji', icon: <Sparkles size={18} className="text-purple-400" /> },
+    { name: 'SOUL.md', chineseName: '灵魂契约', description: '价值观、行为准则', icon: <BookOpen size={18} className="text-blue-400" /> },
+    { name: 'TOOLS.md', chineseName: '工具备注', description: '相机、SSH、TTS', icon: <Wrench size={18} className="text-green-400" /> },
+    { name: 'AGENTS.md', chineseName: '工作手册', description: '空间规则、群聊礼仪', icon: <File size={18} className="text-orange-400" /> },
+    { name: 'USER.md', chineseName: '用户资料', description: '用户信息、时区', icon: <Users size={18} className="text-pink-400" /> },
+    { name: 'BOOTSTRAP.md', chineseName: '初始化向导', description: '首次启动引导', icon: <Rocket size={18} className="text-yellow-400" /> },
+    { name: 'HEARTBEAT.md', chineseName: '心跳任务', description: '周期性后台检查', icon: <Heart size={18} className="text-red-400" /> },
 ];
-
-// 档案文件图标映射
-const fileIcons: Record<string, React.ReactNode> = {
-    'IDENTITY.md': <Sparkles size={16} className="text-purple-400" />,
-    'SOUL.md': <BookOpen size={16} className="text-blue-400" />,
-    'TOOLS.md': <Wrench size={16} className="text-green-400" />,
-    'AGENTS.md': <File size={16} className="text-orange-400" />,
-    'USER.md': <Users size={16} className="text-pink-400" />,
-    'BOOTSTRAP.md': <Rocket size={16} className="text-yellow-400" />,
-    'HEARTBEAT.md': <Heart size={16} className="text-red-400" />,
-};
 
 export function Profile() {
     const [content, setContent] = useState('');
@@ -68,8 +57,7 @@ export function Profile() {
     const [agents, setAgents] = useState<AgentInfo[]>([]);
     const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
     const [showAgentDropdown, setShowAgentDropdown] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<ProfileFile | null>(null);
-    const [showFileDropdown, setShowFileDropdown] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<ProfileFile>(profileFiles[0]);
 
     const fetchAgents = useCallback(async () => {
         try {
@@ -103,20 +91,13 @@ export function Profile() {
     }, []);
 
     useEffect(() => {
-        if (selectedAgent && !selectedFile) {
-            // 默认选择第一个文件
-            setSelectedFile(profileFiles[0]);
-        }
-    }, [selectedAgent, selectedFile]);
-
-    useEffect(() => {
-        if (selectedFile) {
+        if (selectedAgent) {
             fetchProfileFile(selectedFile.name);
         }
-    }, [selectedFile, fetchProfileFile]);
+    }, [selectedAgent, selectedFile, fetchProfileFile]);
 
     const handleSave = async () => {
-        if (!selectedAgent || !selectedFile) return;
+        if (!selectedAgent) return;
         setSaving(true);
         setActionResult(null);
         try {
@@ -129,19 +110,6 @@ export function Profile() {
         }
     };
 
-    const handleAgentSelect = (agent: AgentInfo) => {
-        setSelectedAgent(agent);
-        setShowAgentDropdown(false);
-        setActionResult(null);
-        setSelectedFile(null);
-    };
-
-    const handleFileSelect = (file: ProfileFile) => {
-        setSelectedFile(file);
-        setShowFileDropdown(false);
-        setActionResult(null);
-    };
-
     if (loading && !selectedAgent) {
         return (
             <div className="h-full flex items-center justify-center">
@@ -151,133 +119,154 @@ export function Profile() {
     }
 
     return (
-        <div className="h-full overflow-y-auto scroll-container pr-2">
-            <div className="max-w-4xl">
-                {/* 头部 */}
-                <div className="flex items-center justify-between mb-6">
+        <div className="h-full flex">
+            {/* 左侧档案导航 */}
+            <div className="w-56 flex-shrink-0 bg-surface-card border-r border-edge flex flex-col">
+                {/* 导航标题 */}
+                <div className="p-4 border-b border-edge">
+                    <h3 className="text-sm font-medium text-content-primary">档案文件</h3>
+                    <p className="text-xs text-content-tertiary mt-1">选择要编辑的档案</p>
+                </div>
+
+                {/* 龙虾选择 */}
+                <div className="p-3 border-b border-edge">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowAgentDropdown(!showAgentDropdown)}
+                            className="w-full flex items-center gap-2 px-3 py-2 bg-surface-elevated border border-edge rounded-lg hover:border-claw-500 transition-colors"
+                        >
+                            {selectedAgent ? (
+                                <>
+                                    <span className="text-base">{selectedAgent.emoji}</span>
+                                    <span className="text-sm text-content-primary flex-1 truncate text-left">{selectedAgent.name}</span>
+                                </>
+                            ) : (
+                                <span className="text-sm text-content-secondary">选择龙虾</span>
+                            )}
+                        </button>
+
+                        <AnimatePresence>
+                            {showAgentDropdown && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -4 }}
+                                    className="absolute top-full left-0 right-0 mt-1 bg-surface-card border border-edge rounded-lg shadow-xl z-50 overflow-hidden"
+                                >
+                                    <div className="p-1 max-h-64 overflow-y-auto">
+                                        {agents.map((agent) => (
+                                            <button
+                                                key={agent.id}
+                                                onClick={() => {
+                                                    setSelectedAgent(agent);
+                                                    setShowAgentDropdown(false);
+                                                    setActionResult(null);
+                                                }}
+                                                className={clsx(
+                                                    'w-full flex items-center gap-2 p-2 rounded-md transition-colors text-left',
+                                                    selectedAgent?.id === agent.id
+                                                        ? 'bg-claw-500/20 text-content-primary'
+                                                        : 'hover:bg-surface-elevated text-content-secondary'
+                                                )}
+                                            >
+                                                <span className="text-lg">{agent.emoji}</span>
+                                                <span className="text-sm flex-1 truncate">{agent.name}</span>
+                                                {agent.isDefault && (
+                                                    <span className="text-xs px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400">默认</span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="border-t border-edge p-1">
+                                        <button
+                                            onClick={() => { fetchAgents(); setShowAgentDropdown(false); }}
+                                            className="w-full flex items-center justify-center gap-1 p-2 text-xs text-content-secondary hover:text-content-primary rounded hover:bg-surface-elevated"
+                                        >
+                                            <RefreshCw size={12} />
+                                            刷新
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+
+                {/* 文件列表 */}
+                <div className="flex-1 overflow-y-auto p-2">
+                    {profileFiles.map((file) => (
+                        <button
+                            key={file.name}
+                            onClick={() => {
+                                setSelectedFile(file);
+                                setActionResult(null);
+                            }}
+                            className={clsx(
+                                'w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left mb-1',
+                                selectedFile?.name === file.name
+                                    ? 'bg-claw-500/20 border border-claw-500/30'
+                                    : 'hover:bg-surface-elevated border border-transparent'
+                            )}
+                        >
+                            <span className="flex-shrink-0">{file.icon}</span>
+                            <div className="flex-1 min-w-0">
+                                <p className={clsx(
+                                    'text-sm font-medium truncate',
+                                    selectedFile?.name === file.name ? 'text-content-primary' : 'text-content-secondary'
+                                )}>
+                                    {file.chineseName}
+                                </p>
+                                <p className="text-xs text-content-tertiary truncate">{file.description}</p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* 右侧内容区 */}
+            <div className="flex-1 flex flex-col min-w-0">
+                {/* 顶部操作栏 */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-edge bg-surface-card">
                     <div>
-                        <h2 className="text-xl font-semibold text-content-primary">龙虾档案</h2>
-                        <p className="text-sm text-content-secondary">编辑 AI 助手档案配置</p>
+                        <h2 className="text-lg font-semibold text-content-primary flex items-center gap-2">
+                            {selectedFile.icon}
+                            {selectedFile.chineseName}
+                        </h2>
+                        <p className="text-xs text-content-tertiary mt-0.5">{selectedAgent?.workspace}/{selectedFile.name}</p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* 龙虾选择下拉 */}
-                        <div className="relative">
+                        {/* Tab 切换 */}
+                        <div className="flex gap-1 bg-surface-elevated rounded-lg p-1 border border-edge">
                             <button
-                                onClick={() => setShowAgentDropdown(!showAgentDropdown)}
-                                className="flex items-center gap-2 px-4 py-2 bg-surface-card border border-edge rounded-lg hover:border-claw-500 transition-colors"
+                                onClick={() => setActiveTab('edit')}
+                                className={clsx(
+                                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                                    activeTab === 'edit'
+                                        ? 'bg-claw-500/20 text-claw-400'
+                                        : 'text-content-secondary hover:text-content-primary'
+                                )}
                             >
-                                {selectedAgent ? (
-                                    <>
-                                        <span className="text-lg">{selectedAgent.emoji}</span>
-                                        <span className="text-sm text-content-primary">{selectedAgent.name}</span>
-                                    </>
-                                ) : (
-                                    <span className="text-sm text-content-secondary">选择龙虾</span>
-                                )}
-                                <ChevronDown size={16} className="text-content-secondary" />
+                                <Edit3 size={14} />
+                                编辑
                             </button>
-
-                            <AnimatePresence>
-                                {showAgentDropdown && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -8 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -8 }}
-                                        className="absolute right-0 top-full mt-2 w-64 bg-surface-card border border-edge rounded-xl shadow-xl z-50 overflow-hidden"
-                                    >
-                                        <div className="p-2">
-                                            {agents.map((agent) => (
-                                                <button
-                                                    key={agent.id}
-                                                    onClick={() => handleAgentSelect(agent)}
-                                                    className={clsx(
-                                                        'w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left',
-                                                        selectedAgent?.id === agent.id
-                                                            ? 'bg-claw-500/20 text-content-primary'
-                                                            : 'hover:bg-surface-elevated text-content-secondary'
-                                                    )}
-                                                >
-                                                    <span className="text-xl">{agent.emoji}</span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium truncate">{agent.name}</p>
-                                                        <p className="text-xs text-content-tertiary truncate">{agent.workspace}</p>
-                                                    </div>
-                                                    {agent.isDefault && (
-                                                        <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400">默认</span>
-                                                    )}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div className="border-t border-edge p-2">
-                                            <button
-                                                onClick={() => { fetchAgents(); setShowAgentDropdown(false); }}
-                                                className="w-full flex items-center justify-center gap-2 p-2 text-sm text-content-secondary hover:text-content-primary rounded-lg hover:bg-surface-elevated transition-colors"
-                                            >
-                                                <RefreshCw size={14} />
-                                                刷新列表
-                                            </button>
-                                        </div>
-                                    </motion.div>
+                            <button
+                                onClick={() => setActiveTab('preview')}
+                                className={clsx(
+                                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                                    activeTab === 'preview'
+                                        ? 'bg-claw-500/20 text-claw-400'
+                                        : 'text-content-secondary hover:text-content-primary'
                                 )}
-                            </AnimatePresence>
+                            >
+                                <Eye size={14} />
+                                预览
+                            </button>
                         </div>
-
-                        {/* 档案文件选择下拉 */}
-                        {selectedAgent && (
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowFileDropdown(!showFileDropdown)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-surface-card border border-edge rounded-lg hover:border-claw-500 transition-colors"
-                                >
-                                    {selectedFile ? (
-                                        <>
-                                            {fileIcons[selectedFile.name]}
-                                            <span className="text-sm text-content-primary">{selectedFile.chineseName}</span>
-                                        </>
-                                    ) : (
-                                        <span className="text-sm text-content-secondary">选择档案</span>
-                                    )}
-                                    <ChevronDown size={16} className="text-content-secondary" />
-                                </button>
-
-                                <AnimatePresence>
-                                    {showFileDropdown && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -8 }}
-                                            className="absolute right-0 top-full mt-2 w-72 bg-surface-card border border-edge rounded-xl shadow-xl z-50 overflow-hidden"
-                                        >
-                                            <div className="p-2">
-                                                {profileFiles.map((file) => (
-                                                    <button
-                                                        key={file.name}
-                                                        onClick={() => handleFileSelect(file)}
-                                                        className={clsx(
-                                                            'w-full flex items-start gap-3 p-3 rounded-lg transition-colors text-left',
-                                                            selectedFile?.name === file.name
-                                                                ? 'bg-claw-500/20 text-content-primary'
-                                                                : 'hover:bg-surface-elevated text-content-secondary'
-                                                        )}
-                                                    >
-                                                        <span className="mt-0.5">{fileIcons[file.name]}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-medium text-content-primary">{file.chineseName}</p>
-                                                            <p className="text-xs text-content-tertiary mt-0.5">{file.description}</p>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        )}
 
                         <button
                             onClick={handleSave}
-                            disabled={saving || !selectedAgent || !selectedFile}
+                            disabled={saving || !selectedAgent}
                             className="btn-primary flex items-center gap-2"
                         >
                             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -286,84 +275,59 @@ export function Profile() {
                     </div>
                 </div>
 
-                {/* Tab 切换 */}
-                <div className="flex gap-1 mb-4 bg-surface-card rounded-lg p-1 border border-edge w-fit">
-                    <button
-                        onClick={() => setActiveTab('edit')}
-                        className={clsx(
-                            'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
-                            activeTab === 'edit'
-                                ? 'bg-claw-500/20 text-claw-400'
-                                : 'text-content-secondary hover:text-content-primary'
-                        )}
-                    >
-                        <Edit3 size={16} />
-                        编辑
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('preview')}
-                        className={clsx(
-                            'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
-                            activeTab === 'preview'
-                                ? 'bg-claw-500/20 text-claw-400'
-                                : 'text-content-secondary hover:text-content-primary'
-                        )}
-                    >
-                        <Eye size={16} />
-                        预览
-                    </button>
-                </div>
-
                 {/* 内容区 */}
-                <div className="bg-surface-card rounded-2xl border border-edge overflow-hidden">
-                    <AnimatePresence mode="wait">
-                        {activeTab === 'edit' ? (
-                            <motion.div
-                                key="edit"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                {loading ? (
-                                    <div className="h-96 flex items-center justify-center">
-                                        <Loader2 className="w-8 h-8 animate-spin text-claw-500" />
-                                    </div>
-                                ) : (
-                                    <textarea
-                                        value={content}
-                                        onChange={(e) => setContent(e.target.value)}
-                                        placeholder="选择左侧档案文件开始编辑..."
-                                        className="w-full h-96 p-5 bg-transparent text-content-primary resize-none focus:outline-none font-mono text-sm leading-relaxed"
-                                        spellCheck={false}
-                                    />
-                                )}
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="preview"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="p-5 min-h-96"
-                            >
-                                {loading ? (
-                                    <div className="h-96 flex items-center justify-center">
-                                        <Loader2 className="w-8 h-8 animate-spin text-claw-500" />
-                                    </div>
-                                ) : content ? (
-                                    <pre className="whitespace-pre-wrap text-content-primary text-sm leading-relaxed font-mono">
-                                        {content}
-                                    </pre>
-                                ) : (
-                                    <div className="h-96 flex flex-col items-center justify-center text-content-tertiary">
-                                        <FileText size={48} className="mb-4 opacity-50" />
-                                        <p>暂无档案内容</p>
-                                        <p className="text-xs mt-1">切换到编辑模式创建档案</p>
-                                    </div>
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                <div className="flex-1 overflow-hidden p-6">
+                    <div className="h-full bg-surface-card rounded-2xl border border-edge overflow-hidden">
+                        <AnimatePresence mode="wait">
+                            {activeTab === 'edit' ? (
+                                <motion.div
+                                    key="edit"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="h-full"
+                                >
+                                    {loading ? (
+                                        <div className="h-full flex items-center justify-center">
+                                            <Loader2 className="w-8 h-8 animate-spin text-claw-500" />
+                                        </div>
+                                    ) : (
+                                        <textarea
+                                            value={content}
+                                            onChange={(e) => setContent(e.target.value)}
+                                            placeholder="选择左侧档案文件开始编辑..."
+                                            className="w-full h-full p-5 bg-transparent text-content-primary resize-none focus:outline-none font-mono text-sm leading-relaxed"
+                                            spellCheck={false}
+                                        />
+                                    )}
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="preview"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="h-full overflow-y-auto p-5"
+                                >
+                                    {loading ? (
+                                        <div className="h-full flex items-center justify-center">
+                                            <Loader2 className="w-8 h-8 animate-spin text-claw-500" />
+                                        </div>
+                                    ) : content ? (
+                                        <pre className="whitespace-pre-wrap text-content-primary text-sm leading-relaxed font-mono">
+                                            {content}
+                                        </pre>
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-content-tertiary">
+                                            <FileText size={48} className="mb-4 opacity-50" />
+                                            <p>暂无档案内容</p>
+                                            <p className="text-xs mt-1">切换到编辑模式创建档案</p>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* 操作结果 */}
@@ -374,7 +338,7 @@ export function Profile() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             className={clsx(
-                                'mt-4 p-3 rounded-lg border flex items-center gap-2',
+                                'mx-6 mb-4 p-3 rounded-lg border flex items-center gap-2',
                                 actionResult.success
                                     ? 'bg-green-500/10 border-green-500/30 text-green-400'
                                     : 'bg-red-500/10 border-red-500/30 text-red-400'
@@ -385,20 +349,6 @@ export function Profile() {
                         </motion.div>
                     )}
                 </AnimatePresence>
-
-                {/* 档案说明 */}
-                {selectedFile && (
-                    <div className="mt-6 p-4 bg-surface-card rounded-xl border border-edge">
-                        <div className="flex items-start gap-3">
-                            <FileText size={16} className="text-claw-400 mt-0.5 flex-shrink-0" />
-                            <div className="text-sm text-content-secondary">
-                                <p className="font-medium text-content-primary mb-1">{selectedFile.chineseName}</p>
-                                <p className="font-mono text-xs text-content-tertiary mb-2">{selectedAgent?.workspace}/{selectedFile.name}</p>
-                                <p>{selectedFile.description}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
