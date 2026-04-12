@@ -18,6 +18,7 @@ func SetupRouter(r *gin.Engine) {
 	networkHandler := handler.NewNetworkHandler(networkService)
 	frpHandler := handler.NewFrpHandler(frpService)
 	sessionHandler := handler.NewSessionHandler()
+	execHandler := handler.NewExecHandler()
 
 	api := r.Group("/api")
 	{
@@ -179,6 +180,13 @@ func SetupRouter(r *gin.Engine) {
 			terminal.POST("/sessions", sessionHandler.CreateSession)
 			terminal.DELETE("/sessions/:name", sessionHandler.DeleteSession)
 			terminal.GET("/sessions/default", sessionHandler.GetDefaultSession)
+		}
+
+		// Exec routes (SSE command execution)
+		exec := api.Group("/exec")
+		{
+			exec.GET("/stream", execHandler.StreamCommand)
+			exec.POST("/kill", execHandler.KillCommand)
 		}
 	}
 }

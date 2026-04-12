@@ -15,6 +15,7 @@ import { Testing } from './components/Testing';
 import { Logs } from './components/Logs';
 import { Terminal } from './components/Terminal';
 import { FileBrowser } from './components/FileBrowser';
+import { TerminalPanel } from './components/TerminalPanel';
 import { appLogger } from './lib/logger';
 import { api } from './lib/tauri';
 import { ThemeProvider } from './lib/ThemeContext';
@@ -306,8 +307,11 @@ function App() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header currentPage={currentPage} />
 
-          <main className="flex-1 overflow-hidden p-6">
-            {renderPage()}
+          <main className="flex-1 overflow-hidden p-6 pb-0 flex flex-col">
+            <div className="flex-1 overflow-hidden">
+              {renderPage()}
+            </div>
+            <TerminalPanel />
           </main>
         </div>
       </div>

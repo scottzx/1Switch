@@ -129,3 +129,72 @@ func ExecuteCommand(name string, args ...string) (string, error) {
 
 	return out.String(), nil
 }
+
+// OutputCallback 是命令输出回调函数类型
+type OutputCallback func(line string, isStderr bool)
+
+// ExecuteCommandWithCallback 执行命令并实时回调输出
+func ExecuteCommandWithCallback(cmdStr string, callback OutputCallback) error {
+	cmd := exec.Command("bash", "-c", cmdStr)
+
+	// 创建管道捕获 stdout
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	// 创建管道捕获 stderr
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
+	// 启动命令
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	// 使用 goroutine 实时读取 stdout
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := stdout.Read(buf)
+			if n > 0 {
+				line := string(buf[:n])
+				lines := strings.Split(strings.TrimRight(line, "\n"), "\n")
+				for _, l := range lines {
+					if l != "" {
+						callback(l, false)
+					}
+				}
+			}
+			if err != nil {
+				break
+			}
+		}
+	}()
+
+	// 使用 goroutine 实时读取 stderr
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := stderr.Read(buf)
+			if n > 0 {
+				line := string(buf[:n])
+				lines := strings.Split(strings.TrimRight(line, "\n"), "\n")
+				for _, l := range lines {
+					if l != "" {
+						callback(l, true)
+					}
+				}
+			}
+			if err != nil {
+				break
+			}
+		}
+	}()
+
+	// 等待命令完成
+	err = cmd.Wait()
+	return err
+}

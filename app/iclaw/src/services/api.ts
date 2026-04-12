@@ -572,4 +572,87 @@ export const api = {
   },
 };
 
+// Exec API - SSE command execution
+export interface SSEOutputEvent {
+  type: 'stdout' | 'stderr';
+  content: string;
+}
+
+export interface SSEStatusEvent {
+  status: 'running' | 'done';
+  pid?: number;
+  exitCode?: number;
+}
+
+export interface SSEEvent {
+  event: string;
+  data: string;
+}
+
+export const execApi = {
+  /**
+   * 创建 SSE 连接来流式执行命令
+   * @param cmd 要执行的命令 (start/stop/restart)
+   * @param onOutput 收到输出时的回调
+   * @param onStatus 收到状态更新时的回调
+   * @param onDone 命令完成时的回调
+   * @returns EventSource 实例，需要手动关闭
+   */
+  streamCommand: (
+    cmd: string,
+    onOutput?: (event: SSEOutputEvent) => void,
+    onStatus?: (event: SSEStatusEvent) => void,
+    onDone?: (event: SSEStatusEvent) => void
+  ): EventSource => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+    const url = `${apiBaseUrl}/api/exec/stream?cmd=${encodeURIComponent(cmd)}`;
+    const eventSource = new EventSource(url);
+
+    eventSource.addEventListener('output', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        onOutput?.(data);
+      } catch {
+        // 如果不是 JSON，直接作为文本处理
+        onOutput?.({ type: 'stdout', content: e.data });
+      }
+    });
+
+    eventSource.addEventListener('status', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        onStatus?.(data);
+      } catch {
+        // ignore
+      }
+    });
+
+    eventSource.addEventListener('done', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        onDone?.(data);
+      } catch {
+        // ignore
+      }
+      eventSource.close();
+    });
+
+    eventSource.onerror = (e) => {
+      console.error('SSE error:', e);
+      eventSource.close();
+    };
+
+    return eventSource;
+  },
+
+  /**
+   * 终止正在执行的命令
+   */
+  killCommand: async (id?: string): Promise<void> => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+    const url = id ? `${apiBaseUrl}/api/exec/kill?id=${id}` : `${apiBaseUrl}/api/exec/kill`;
+    await apiClient.post(url);
+  },
+};
+
 export default api;
