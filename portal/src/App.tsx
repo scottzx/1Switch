@@ -142,6 +142,14 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
           url: `http://${deviceIp}:8089`, // 动态获取 IP
           status: 'available',
         },
+        {
+          id: 'frp',
+          nameKey: 'modules.frp.name',
+          descriptionKey: 'modules.frp.description',
+          type: 'route',
+          url: '/app/frp/',
+          status: 'available',
+        },
       ],
     },
   ];
@@ -223,7 +231,6 @@ function App() {
   const [showWifiPopup, setShowWifiPopup] = useState(false);
   const [lanConnected, setLanConnected] = useState(false);
   const [wifiConnected, setWifiConnected] = useState(false);
-  const [deviceIp, setDeviceIp] = useState<string>('');
   const [sections, setSections] = useState<{ titleKey: string; modules: Module[] }[]>([]);
 
   useEffect(() => {
@@ -240,7 +247,6 @@ function App() {
     const loadDeviceIp = async () => {
       try {
         const ip = await systemApi.getDeviceIp();
-        setDeviceIp(ip);
         setSections(buildAllSections(ip));
       } catch (e) {
         // 使用默认值
@@ -274,17 +280,17 @@ function App() {
     <div className="min-h-screen bg-surface-app">
       {/* Header */}
       <header className="border-b border-edge">
-        <div className="max-w-grid mx-auto px-6 py-5">
+        <div className="max-w-grid mx-auto px-4 py-3 sm:px-6 sm:py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-medium text-content-primary tracking-tight">
+              <h1 className="text-lg sm:text-xl font-medium text-content-primary tracking-tight">
                 {t('header.title')}
               </h1>
-              <p className="text-xs text-content-tertiary mt-0.5">
+              <p className="text-2xs sm:text-xs text-content-tertiary mt-0.5">
                 {t('header.subtitle')}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3">
               <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
               <LanguageSwitcher />
 
@@ -318,7 +324,7 @@ function App() {
                 </svg>
               </button>
 
-              <span className="text-2xs text-content-tertiary uppercase tracking-widest">
+              <span className="hidden sm:inline text-2xs text-content-tertiary uppercase tracking-widest">
                 v0.1.0
               </span>
             </div>
@@ -327,8 +333,8 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-grid mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-6">
+      <main className="max-w-grid mx-auto px-4 py-6 sm:px-6 sm:py-8">
+        <div className="grid grid-cols-12 gap-4 sm:gap-6">
           {sections.map((section) => (
             <div key={section.titleKey} className="col-span-12">
               <ModuleSection titleKey={section.titleKey} modules={section.modules} />

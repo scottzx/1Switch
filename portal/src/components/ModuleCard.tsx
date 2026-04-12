@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { systemApi } from '../services/api';
 
 interface Module {
   id: string;
@@ -17,21 +16,21 @@ interface ModuleCardProps {
   gridArea?: string;
 }
 
-// Build the display URL for the module
-function buildDisplayUrl(module: Module, deviceIp: string): string {
+// 根据前端实际访问的 origin 构建显示 URL
+// 硬编码域名保持不变，本地服务使用 window.location.origin（用户实际访问的 IP）
+function buildDisplayUrl(module: Module): string {
   if (module.type === 'route') {
     return `${window.location.origin}${module.url}`;
   }
-  // external: 硬编码域名（如 xfusion, clawhub）保持不变，本地服务替换 IP
+  // external: 硬编码域名（如 xfusion, clawhub）保持不变
   try {
     const u = new URL(module.url!);
-    // 如果 URL 包含域名（非 IP、非 localhost），保持不变
     const isDomain = u.hostname.includes('.') && !u.hostname.includes('localhost');
     if (isDomain) {
       return module.url!;
     }
-    // 否则是本地服务，替换为设备 IP
-    return `http://${deviceIp}:${u.port}${u.pathname}`;
+    // 本地服务（无域名）使用前端 origin
+    return `${window.location.origin}:${u.port}${u.pathname}`;
   } catch {
     return module.url ?? '';
   }
@@ -40,16 +39,9 @@ function buildDisplayUrl(module: Module, deviceIp: string): string {
 export default function ModuleCard({ module }: ModuleCardProps) {
   const { t } = useTranslation();
   const isAvailable = module.status === 'available';
-  const [deviceIp, setDeviceIp] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (!isAvailable) return;
-    systemApi.getDeviceIp().then(ip => setDeviceIp(ip)).catch(() => setDeviceIp(''));
-  }, [isAvailable]);
-
-  const isLoading = deviceIp === null;
-  const displayUrl = isLoading ? '' : buildDisplayUrl(module, deviceIp ?? '');
+  const displayUrl = isAvailable ? buildDisplayUrl(module) : '';
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -70,10 +62,9 @@ export default function ModuleCard({ module }: ModuleCardProps) {
   };
 
   const handleCardClick = () => {
-    if (!isAvailable || isLoading) return;
-    if (module.type === 'external' && module.url) {
-      window.open(module.url, '_blank', 'noopener,noreferrer');
-    }
+    if (!isAvailable || !displayUrl) return;
+    // 所有类型都新开 tab：external 直接跳转，route 用 origin 拼接
+    window.open(displayUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -81,7 +72,7 @@ export default function ModuleCard({ module }: ModuleCardProps) {
       className={`
         relative flex flex-col h-full
         bg-surface-card border border-edge
-        rounded px-5 py-5
+        rounded px-3 py-3 sm:px-5 sm:py-5
         transition-all duration-150
         ${isAvailable ? 'hover:shadow-card-hover' : 'opacity-50 cursor-not-allowed'}
       `}
@@ -89,41 +80,41 @@ export default function ModuleCard({ module }: ModuleCardProps) {
       {/* Clickable area: name + description */}
       <div
         className="flex-1 cursor-pointer"
-        onClick={isAvailable && !isLoading ? handleCardClick : undefined}
+        onClick={isAvailable ? handleCardClick : undefined}
       >
         {/* Header row: name + status */}
-        <div className="flex items-start justify-between mb-3">
-          <h3 className={`text-sm font-medium tracking-wide uppercase ${isAvailable ? 'text-content-primary' : 'text-content-tertiary'}`}>
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+          <h3 className={`text-[13px] sm:text-sm font-medium tracking-wide uppercase ${isAvailable ? 'text-content-primary' : 'text-content-tertiary'}`}>
             {t(module.nameKey)}
           </h3>
 
           {/* Status indicator */}
           {isAvailable ? (
-            <div className="w-2 h-2 rounded-full bg-accent mt-1 flex-shrink-0" />
+            <div className="w-2 h-2 rounded-full bg-accent mt-0.5 sm:mt-1 flex-shrink-0" />
           ) : (
-            <span className="text-2xs font-medium text-content-tertiary uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-content-tertiary uppercase tracking-wider">
               {t('module.soon')}
             </span>
           )}
         </div>
 
-        {/* Description */}
-        <p className="text-xs text-content-secondary leading-relaxed">
+        {/* Description - line clamp 3 lines on mobile, unclamped on desktop */}
+        <p className="text-[11px] sm:text-xs text-content-secondary leading-relaxed line-clamp-3 sm:line-clamp-none">
           {t(module.descriptionKey)}
         </p>
       </div>
 
       {/* Footer: address + copy button */}
       {isAvailable && (
-        <div className="mt-4 pt-3 border-t border-edge-secondary flex items-center justify-between gap-2">
-          <span className="text-content-tertiary truncate flex-1 min-w-0" style={{ fontSize: '10px' }} title={displayUrl}>
-            {isLoading ? '...' : displayUrl}
+        <div className="flex mt-4 pt-3 border-t border-edge-secondary items-center justify-between gap-2">
+          <span className="text-content-tertiary truncate flex-1 min-w-0 text-[10px]" title={displayUrl}>
+            {displayUrl}
           </span>
           <button
             onClick={handleCopy}
-            disabled={isLoading || !displayUrl}
+            disabled={!displayUrl}
             className="flex-shrink-0 p-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-content-tertiary hover:bg-surface-elevated"
-            title={isLoading ? 'Loading...' : 'Copy address'}
+            title="Copy address"
           >
             {copied ? (
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

@@ -87,6 +87,10 @@
     "ota": {
       "name": "OTA Update",
       "description": "远程设备固件升级，固定端口 8089。"
+    },
+    "frp": {
+      "name": "远程协助",
+      "description": "FRP 内网穿透，支持 TCP/UDP 隧道。"
     }
   }
 }

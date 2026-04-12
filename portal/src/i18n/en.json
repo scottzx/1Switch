@@ -87,6 +87,10 @@
     "ota": {
       "name": "OTA Update",
       "description": "Remote device firmware upgrade. Fixed port 8089."
+    },
+    "frp": {
+      "name": "Remote Assistance",
+      "description": "FRP reverse proxy for TCP/UDP tunneling."
     }
   }
 }

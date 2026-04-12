@@ -29,7 +29,7 @@ export default function ModuleSection({ titleKey, modules }: ModuleSectionProps)
       </div>
 
       {/* Module Grid - 6 columns on desktop */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {modules.map((module) => (
           <ModuleCard key={module.id} module={module} />
         ))}
