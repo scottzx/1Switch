@@ -24,11 +24,19 @@
     "disconnecting": "Disconnecting..."
   },
   "form": {
+    "serial": "Device Serial",
+    "serialPlaceholder": "Enter device serial",
     "localPort": "Local Port",
     "localPortPlaceholder": "e.g.: 22"
   },
   "error": {
     "label": "Error"
+  },
+  "install": {
+    "title": "Installation",
+    "description": "FRP client (frpc) is not installed. Please install it first.",
+    "button": "Install FRPC",
+    "installing": "Installing..."
   },
   "refresh": "Refresh status",
   "copySuccess": "Copied"

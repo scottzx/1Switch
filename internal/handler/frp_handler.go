@@ -64,3 +64,18 @@ func (h *FrpHandler) Disconnect(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
+
+// Install 安装 frpc
+// @Summary 安装 frpc
+// @Tags FRP
+// @Produce json
+// @Success 200 {object} model.FrpInstallResult
+// @Router /api/frp/install [post]
+func (h *FrpHandler) Install(c *gin.Context) {
+	result := h.svc.Install(c.Request.Context())
+	if !result.Success {
+		c.JSON(http.StatusInternalServerError, result)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}

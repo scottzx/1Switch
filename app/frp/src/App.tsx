@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { frpApi, FrpStatus } from './services/api';
 import './styles/index.css';
 
-type Status = 'idle' | 'checking' | 'connecting' | 'disconnecting';
+type Status = 'idle' | 'checking' | 'connecting' | 'disconnecting' | 'installing';
 
 function App() {
   const { t } = useTranslation();
   const [frpStatus, setFrpStatus] = useState<FrpStatus | null>(null);
   const [status, setStatus] = useState<Status>('idle');
+  const [serial, setSerial] = useState('');
   const [localPort, setLocalPort] = useState('22');
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -31,17 +32,21 @@ function App() {
   const connect = async () => {
     setStatus('connecting');
     try {
-      const res = await frpApi.connect({ local_port: parseInt(localPort) });
+      const res = await frpApi.connect({
+        serial: serial,
+        local_port: parseInt(localPort),
+      });
       if (res.data.success) {
         setFrpStatus({
+          installed: true,
           connected: true,
           server: res.data.server || null,
-          remote_port: res.data.remote_port || null,
+          remote_port: res.data.remote_port || res.data.port || null,
           local_port: res.data.local_port || null,
           token: res.data.token || null,
           link: res.data.link || null,
           command: res.data.command || null,
-          error: null,
+          error: res.data.message || null,
         });
       }
     } catch (e) {
@@ -56,6 +61,7 @@ function App() {
     try {
       await frpApi.disconnect();
       setFrpStatus({
+        installed: frpStatus?.installed || false,
         connected: false,
         server: null,
         remote_port: null,
@@ -72,8 +78,34 @@ function App() {
     }
   };
 
+  const installFrpc = async () => {
+    setStatus('installing');
+    try {
+      const res = await frpApi.install();
+      if (res.data.success) {
+        await checkStatus();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setStatus('idle');
+    }
+  };
+
   const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for non-HTTPS environments
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
   };
@@ -107,9 +139,34 @@ function App() {
             </div>
           </div>
 
-          {/* Connection Form */}
-          {!frpStatus?.connected && (
+          {/* Install Section */}
+          {!frpStatus?.installed && (
             <div className="grid gap-4">
+              <div className="text-xs text-gray-400 uppercase tracking-widest">{t('install.title')}</div>
+              <div className="h-px bg-gray-200" />
+              <p className="text-sm text-gray-600">{t('install.description')}</p>
+              <button
+                onClick={installFrpc}
+                disabled={isLoading}
+                className="h-10 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:bg-gray-400 transition-colors"
+              >
+                {status === 'installing' ? t('install.installing') : t('install.button')}
+              </button>
+            </div>
+          )}
+
+          {/* Connection Form */}
+          {frpStatus?.installed && !frpStatus?.connected && (
+            <div className="grid gap-4">
+              <div className="text-xs text-gray-400 uppercase tracking-widest">{t('form.serial')}</div>
+              <div className="h-px bg-gray-200" />
+              <input
+                type="text"
+                value={serial}
+                onChange={(e) => setSerial(e.target.value)}
+                placeholder={t('form.serialPlaceholder')}
+                className="h-10 px-3 border border-gray-300 text-sm focus:outline-none focus:border-gray-500"
+              />
               <div className="text-xs text-gray-400 uppercase tracking-widest">{t('form.localPort')}</div>
               <div className="h-px bg-gray-200" />
               <input

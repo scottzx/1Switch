@@ -5,6 +5,7 @@ const api = axios.create({
 });
 
 export interface FrpStatus {
+  installed: boolean;
   connected: boolean;
   server: string | null;
   remote_port: number | null;
@@ -16,20 +17,26 @@ export interface FrpStatus {
 }
 
 export interface FrpConnectRequest {
-  server?: string;
-  server_port?: number;
-  token?: string;
+  serial: string;
   local_port: number;
 }
 
 export interface FrpConnectResponse {
   success: boolean;
   server?: string;
+  port?: number;
   remote_port?: number;
   local_port?: number;
   token?: string;
   link?: string;
   command?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface FrpInstallResult {
+  success: boolean;
+  message?: string;
   error?: string;
 }
 
@@ -37,4 +44,5 @@ export const frpApi = {
   status: () => api.get<FrpStatus>('/frp/status'),
   connect: (data: FrpConnectRequest) => api.post<FrpConnectResponse>('/frp/connect', data),
   disconnect: () => api.post<{ success: boolean }>('/frp/disconnect'),
+  install: () => api.post<FrpInstallResult>('/frp/install'),
 };

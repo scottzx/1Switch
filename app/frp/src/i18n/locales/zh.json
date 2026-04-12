@@ -24,11 +24,19 @@
     "disconnecting": "断开中..."
   },
   "form": {
+    "serial": "设备序列号",
+    "serialPlaceholder": "输入设备序列号",
     "localPort": "本地端口",
     "localPortPlaceholder": "例如：22"
   },
   "error": {
     "label": "错误"
+  },
+  "install": {
+    "title": "安装",
+    "description": "FRP 客户端 (frpc) 未安装，需要先安装才能使用",
+    "button": "安装 FRPC",
+    "installing": "安装中..."
   },
   "refresh": "刷新状态",
   "copySuccess": "已复制"
