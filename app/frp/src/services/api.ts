@@ -42,6 +42,7 @@ export interface FrpInstallResult {
 
 export const frpApi = {
   status: () => api.get<FrpStatus>('/frp/status'),
+  serial: () => api.get<{ serial: string }>('/frp/serial'),
   connect: (data: FrpConnectRequest) => api.post<FrpConnectResponse>('/frp/connect', data),
   disconnect: () => api.post<{ success: boolean }>('/frp/disconnect'),
   install: () => api.post<FrpInstallResult>('/frp/install'),

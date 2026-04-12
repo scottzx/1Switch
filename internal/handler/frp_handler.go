@@ -29,6 +29,17 @@ func (h *FrpHandler) GetStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, status)
 }
 
+// GetSerial 获取设备序列号
+// @Summary 获取设备序列号
+// @Tags FRP
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /api/frp/serial [get]
+func (h *FrpHandler) GetSerial(c *gin.Context) {
+	serial := h.svc.GetSerial(c.Request.Context())
+	c.JSON(http.StatusOK, gin.H{"serial": serial})
+}
+
 // Connect 连接到 FRP 服务器
 // @Summary 连接 FRP 服务器
 // @Tags FRP
