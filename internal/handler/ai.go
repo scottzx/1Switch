@@ -53,6 +53,18 @@ var OfficialProviders = []model.OfficialProvider{
 		RequiresAPIKey: true,
 		DocsURL:        strPtr("https://platform.deepseek.com/docs"),
 	},
+	{
+		ID:             "xfusion",
+		Name:           "XFUSION",
+		Icon:           "",
+		DefaultBaseURL: strPtr("https://llm.azopenai.com/v1"),
+		APIType:        "openai-completions",
+		SuggestedModels: []model.SuggestedModel{
+			{ID: "glm-5", Name: "GLM-5", Recommended: true, ContextWindow: uintPtr(128000), MaxTokens: uintPtr(8192)},
+		},
+		RequiresAPIKey: true,
+		DocsURL:        nil,
+	},
 }
 
 func strPtr(s string) *string { return &s }
