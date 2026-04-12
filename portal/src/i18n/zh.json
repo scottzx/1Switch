@@ -77,15 +77,15 @@
       "description": "网络隧道与 Mesh VPN，安全远程访问。"
     },
     "fileManager": {
-      "name": "File Manager",
+      "name": "文件管理器",
       "description": "设备文件浏览器与编辑器，固定端口 8081。"
     },
     "terminal": {
-      "name": "Terminal",
+      "name": "终端",
       "description": "基于 Web 的终端会话管理。固定端口 7681"
     },
     "ota": {
-      "name": "OTA Update",
+      "name": "OTA 升级",
       "description": "远程设备固件升级，固定端口 8089。"
     },
     "frp": {
