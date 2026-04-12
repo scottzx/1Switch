@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import ModuleSection from './components/ModuleSection';
 import { LanPopup } from './components/Network/LanPopup';
 import { WifiPopup } from './components/Network/WifiPopup';
-import { networkApi, systemApi } from './services/api';
+import { networkApi } from './services/api';
 
 interface Module {
   id: string;

@@ -2,8 +2,7 @@
 #
 # release.sh - 本地编译并发布 OTA 版本
 # 构建所有前端 APP 并打包
-# 用法: ./release.sh [version]
-# 示例: ./release.sh v2026.4.12
+# 版本号统一从 portal/package.json 读取
 #
 
 set -e
@@ -27,14 +26,17 @@ log()  { echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $1"; }
 warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')] WARNING:${NC} $1"; }
 error(){ echo -e "${RED}[$(date '+%H:%M:%S')] ERROR:${NC} $1" >&2; exit 1; }
 
-# 检查参数
-if [ -z "$1" ]; then
-    echo "用法: $0 <version>"
-    echo "示例: $0 v2026.4.12"
-    exit 1
+# 切换到项目目录
+cd "$PROJECT_DIR"
+
+# 从 portal/package.json 读取版本号
+if [ -f "$PROJECT_DIR/portal/package.json" ]; then
+    VERSION=$(grep '"version"' "$PROJECT_DIR/portal/package.json" | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+    log "==> 从 portal/package.json 读取版本: $VERSION"
+else
+    error "找不到 portal/package.json"
 fi
 
-VERSION="$1"
 ADMIN_API_VERSION="$VERSION"
 
 log "==> 开始发布 $VERSION"
