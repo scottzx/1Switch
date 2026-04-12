@@ -942,7 +942,7 @@ export function Channels() {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {secondaryChannels.map((channel) => renderChannelCard(channel, false))}
                 </div>
               </motion.div>
@@ -953,7 +953,7 @@ export function Channels() {
         {/* 配置弹窗 */}
         <AnimatePresence>
           {showModal && currentChannel && currentInfo && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
               {/* 背景遮罩 */}
               <motion.div
                 initial={{ opacity: 0 }}
@@ -963,16 +963,21 @@ export function Channels() {
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               />
 
-              {/* 弹窗内容 */}
+              {/* 抽屉内容 */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ duration: 0.2 }}
-                className="relative w-full max-w-2xl max-h-[85vh] bg-surface-card rounded-2xl border border-edge shadow-2xl overflow-hidden flex flex-col"
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="relative w-full max-h-[85vh] bg-surface-card rounded-t-2xl border-t border-x border-edge shadow-2xl overflow-hidden flex flex-col"
               >
+                {/* 抽屉手柄 */}
+                <div className="flex justify-center pt-3 pb-2 shrink-0">
+                  <div className="w-10 h-1 bg-content-tertiary/30 rounded-full" />
+                </div>
+
                 {/* 弹窗头部 */}
-                <div className="flex items-center gap-4 p-6 border-b border-edge shrink-0">
+                <div className="flex items-center gap-4 px-6 pb-4 border-b border-edge shrink-0">
                   <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center bg-surface-elevated', currentInfo.color)}>
                     {currentInfo.icon}
                   </div>
@@ -995,123 +1000,177 @@ export function Channels() {
                 {/* 弹窗内容区 */}
                 <div className="flex-1 overflow-y-auto p-6">
                   <div className="space-y-4">
-                    {/* 飞书插件状态提示 */}
+                    {/* 飞书配置说明 */}
                     {currentChannel.channel_type === 'feishu' && (
-                      <div className="mb-4">
-                        {feishuPluginLoading ? (
-                          <div className="p-4 bg-surface-elevated rounded-xl border border-edge flex items-center gap-3">
-                            <Loader2 size={20} className="animate-spin text-content-secondary" />
-                            <span className="text-content-secondary">正在检查飞书插件状态...</span>
+                      <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
+                        <div className="flex items-start gap-3 mb-4">
+                          <MessagesSquare size={24} className="text-blue-400 mt-0.5" />
+                          <div>
+                            <p className="text-content-primary font-medium">飞书配置说明</p>
+                            <p className="text-xs text-content-secondary mt-1">
+                              通过 WebSocket 连接的 Feishu/Lark 机器人，无需暴露公共 webhook URL
+                            </p>
                           </div>
-                        ) : feishuPluginStatus?.installed ? (
-                          <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/30 flex items-center gap-3">
-                            <Package size={20} className="text-green-400" />
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">1.</span>
                             <div className="flex-1">
-                              <p className="text-green-400 font-medium">飞书插件已安装</p>
-                              <p className="text-xs text-content-secondary mt-0.5">
-                                {feishuPluginStatus.plugin_name || '@openclaw/feishu'}
-                                {feishuPluginStatus.version && ` v${feishuPluginStatus.version}`}
-                              </p>
+                              <p className="text-xs text-content-secondary">创建飞书应用</p>
+                              <p className="text-xs text-content-tertiary mt-0.5">打开 <a href="https://open.feishu.cn/app" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">飞书开放平台</a> 创建企业自建应用</p>
                             </div>
-                            <CheckCircle size={16} className="text-green-400" />
                           </div>
-                        ) : (
-                          <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-                            <div className="flex items-start gap-3">
-                              <AlertTriangle size={20} className="text-amber-400 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="text-amber-400 font-medium">需要安装飞书插件</p>
-                                <p className="text-xs text-content-secondary mt-1">
-                                  飞书渠道需要先安装 @openclaw/feishu 插件才能使用。
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  <button
-                                    onClick={handleInstallFeishuPlugin}
-                                    disabled={feishuPluginInstalling}
-                                    className="btn-primary flex items-center gap-2 text-sm py-2"
-                                  >
-                                    {feishuPluginInstalling ? (
-                                      <Loader2 size={14} className="animate-spin" />
-                                    ) : (
-                                      <Download size={14} />
-                                    )}
-                                    {feishuPluginInstalling ? t('channels.feishu.installing') : t('channels.feishu.installPlugin')}
-                                  </button>
-                                  <button
-                                    onClick={checkFeishuPlugin}
-                                    disabled={feishuPluginLoading}
-                                    className="btn-secondary flex items-center gap-2 text-sm py-2"
-                                  >
-                                    {t('channels.feishu.refreshStatus')}
-                                  </button>
-                                </div>
-                                <p className="text-xs text-content-tertiary mt-2">
-                                  或手动执行: <code className="px-1.5 py-0.5 bg-surface-elevated rounded text-content-secondary">openclaw plugins install @openclaw/feishu</code>
-                                </p>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">2.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">配置权限</p>
+                              <p className="text-xs text-content-tertiary mt-0.5">在权限管理中添加批量权限 JSON</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">3.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">开启机器人能力</p>
+                              <p className="text-xs text-content-tertiary mt-0.5">在应用能力中添加机器人，设置机器人名称</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">4.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">配置事件订阅</p>
+                              <p className="text-xs text-content-tertiary mt-0.5">选择「使用长连接接收事件」(WebSocket)，添加事件: im.message.receive_v1</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">5.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">发布应用并添加频道</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw channels add
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw channels add')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
                               </div>
                             </div>
                           </div>
-                        )}
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">6.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">启动网关</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw gateway
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw gateway')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-blue-400 font-medium w-5">7.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">审批配对（如需要）</p>
+                              <p className="text-xs text-content-tertiary mt-0.5">默认机器人会回复配对码，运行 <code className="px-1 py-0.5 bg-surface-elevated rounded text-xs">openclaw pairing approve feishu &lt;CODE&gt;</code> 审批</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-content-tertiary mt-4">
+                          详情参考：<a href="https://docs.openclaw.ai/zh-CN/channels/feishu" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">官方文档</a>
+                        </p>
                       </div>
                     )}
 
-                    {/* QQ Bot 插件状态提示 */}
+                    {/* QQ Bot 配置说明 */}
                     {currentChannel.channel_type === 'qqbot' && (
-                      <div className="mb-4">
-                        {qqbotPluginLoading ? (
-                          <div className="p-4 bg-surface-elevated rounded-xl border border-edge flex items-center gap-3">
-                            <Loader2 size={20} className="animate-spin text-content-secondary" />
-                            <span className="text-content-secondary">正在检查 QQ Bot 插件状态...</span>
+                      <div className="p-4 bg-sky-500/10 rounded-xl border border-sky-500/30">
+                        <div className="flex items-start gap-3 mb-4">
+                          <MessageSquare size={24} className="text-sky-400 mt-0.5" />
+                          <div>
+                            <p className="text-content-primary font-medium">QQ Bot 配置说明</p>
+                            <p className="text-xs text-content-secondary mt-1">
+                              QQ Bot API；支持私聊、群聊和富媒体
+                            </p>
                           </div>
-                        ) : qqbotPluginStatus?.installed ? (
-                          <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/30 flex items-center gap-3">
-                            <Package size={20} className="text-green-400" />
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-sky-400 font-medium w-5">1.</span>
                             <div className="flex-1">
-                              <p className="text-green-400 font-medium">QQ Bot 插件已安装</p>
-                              <p className="text-xs text-content-secondary mt-0.5">
-                                {qqbotPluginStatus.plugin_name || '@sliverp/qqbot'}
-                                {qqbotPluginStatus.version && ` v${qqbotPluginStatus.version}`}
-                              </p>
+                              <p className="text-xs text-content-secondary">前往 QQ 开放平台创建机器人</p>
+                              <p className="text-xs text-content-tertiary mt-0.5">打开 <a href="https://q.qq.com" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">q.qq.com</a> 创建应用并开启机器人能力</p>
                             </div>
-                            <CheckCircle size={16} className="text-green-400" />
                           </div>
-                        ) : (
-                          <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-                            <div className="flex items-start gap-3">
-                              <AlertTriangle size={20} className="text-amber-400 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="text-amber-400 font-medium">需要安装 QQ Bot 插件</p>
-                                <p className="text-xs text-content-secondary mt-1">
-                                  QQ 渠道需要先安装 @sliverp/qqbot 插件才能使用。
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  <button
-                                    onClick={handleInstallQQBotPlugin}
-                                    disabled={qqbotPluginInstalling}
-                                    className="btn-primary flex items-center gap-2 text-sm py-2"
-                                  >
-                                    {qqbotPluginInstalling ? (
-                                      <Loader2 size={14} className="animate-spin" />
-                                    ) : (
-                                      <Download size={14} />
-                                    )}
-                                    {qqbotPluginInstalling ? '安装中...' : '一键安装插件'}
-                                  </button>
-                                  <button
-                                    onClick={checkQQBotPlugin}
-                                    disabled={qqbotPluginLoading}
-                                    className="btn-secondary flex items-center gap-2 text-sm py-2"
-                                  >
-                                    刷新状态
-                                  </button>
-                                </div>
-                                <p className="text-xs text-content-tertiary mt-2">
-                                  或手动执行: <code className="px-1.5 py-0.5 bg-surface-elevated rounded text-content-secondary">openclaw plugins install @sliverp/qqbot@latest</code>
-                                </p>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-sky-400 font-medium w-5">2.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">获取 AppID 和 AppSecret</p>
+                              <p className="text-xs text-content-tertiary mt-0.5">在机器人设置页面查找凭证，AppSecret 只会显示一次，请妥善保存</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-sky-400 font-medium w-5">3.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">添加频道</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw channels add --channel qqbot --token "AppID:AppSecret"
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw channels add --channel qqbot --token "AppID:AppSecret"')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
                               </div>
                             </div>
                           </div>
-                        )}
+
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-sky-400 font-medium w-5">4.</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-content-secondary">重启网关</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 px-2 py-1.5 bg-surface-elevated rounded text-content-secondary text-xs font-mono">
+                                  openclaw gateway restart
+                                </code>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText('openclaw gateway restart')}
+                                  className="p-1.5 rounded hover:bg-surface-elevated text-content-tertiary hover:text-content-primary transition-colors"
+                                  title="复制命令"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-content-tertiary mt-4">
+                          详情参考：<a href="https://docs.openclaw.ai/channels/qqbot" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">官方文档</a>
+                        </p>
                       </div>
                     )}
 
@@ -1213,7 +1272,7 @@ export function Channels() {
                     )}
 
                     {/* 配置字段 */}
-                    {currentInfo.fields.length > 0 ? (
+                    {currentInfo.fields.length > 0 && (
                       currentInfo.fields.map((field) => (
                         <div key={field.key}>
                           <label className="block text-sm text-content-secondary mb-2">
@@ -1275,7 +1334,7 @@ export function Channels() {
                             />
                           )}
                         </div>
-                      ))
+                      )))
                     }
 
                     {/* WhatsApp 特殊处理：扫码登录按钮 */}

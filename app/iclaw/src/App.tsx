@@ -168,26 +168,13 @@ function App() {
     checkEnvironment();
   }, [checkEnvironment]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      checkUpdate();
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [checkUpdate]);
-
-  useEffect(() => {
-    const fetchServiceStatus = async () => {
-      try {
-        const status = await api.getServiceStatus();
-        setServiceStatus({ running: status.running, pid: status.pid, port: status.port });
-      } catch {
-        // 静默处理轮询错误
-      }
-    };
-    fetchServiceStatus();
-    const interval = setInterval(fetchServiceStatus, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  // 暂时禁用自动检查更新（接口超时）
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     checkUpdate();
+  //   }, 2000);
+  //   return () => clearTimeout(timer);
+  // }, [checkUpdate]);
 
   const handleSetupComplete = useCallback(() => {
     appLogger.info('安装向导完成');

@@ -48,11 +48,9 @@ export function Dashboard({ envStatus, onSetupComplete }: DashboardProps) {
     fetchStatus();
     fetchLogs();
 
-    const statusInterval = setInterval(fetchStatus, 3000);
     const logsInterval = autoRefreshLogs ? setInterval(fetchLogs, 2000) : null;
 
     return () => {
-      clearInterval(statusInterval);
       if (logsInterval) clearInterval(logsInterval);
     };
   }, [autoRefreshLogs]);

@@ -58,16 +58,7 @@ export function useService() {
     }
   }, [fetchStatus]);
 
-  // 自动刷新状态
-  useEffect(() => {
-    serviceLogger.debug('启动状态自动刷新');
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
-    return () => {
-      serviceLogger.debug('停止状态自动刷新');
-      clearInterval(interval);
-    };
-  }, [fetchStatus]);
+  // 移除自动轮询，保留手动调用 fetchStatus()
 
   return {
     status: serviceStatus,

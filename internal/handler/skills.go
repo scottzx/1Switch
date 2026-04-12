@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -21,6 +22,9 @@ var (
 )
 
 const skillsCacheTTL = 10 * time.Minute // 缓存 10 分钟
+
+// 本地缓存文件路径
+const skillsCacheFile = "/Users/scott/.openclaw/.skills_cache.json"
 
 // GetSkillsList 获取技能列表
 func GetSkillsList(c *gin.Context) {
@@ -43,10 +47,27 @@ func getSkillsFromCLI() []model.SkillDefinition {
 	}
 	skillsCacheMu.RUnlock()
 
-	// 缓存过期或为空，重新获取（使用 --json 标志）
+	// 缓存过期或为空，优先从本地缓存文件读取
+	if skills := loadSkillsFromCacheFile(); skills != nil {
+		skillsCacheMu.Lock()
+		skillsCache = skills
+		skillsCacheTime = time.Now()
+		skillsCacheMu.Unlock()
+		return skills
+	}
+
+	// 本地缓存也没有，执行 CLI 获取
 	cmd := exec.Command("openclaw", "skills", "list", "--json")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		// CLI 失败也尝试读本地缓存
+		if skills := loadSkillsFromCacheFile(); skills != nil {
+			skillsCacheMu.Lock()
+			skillsCache = skills
+			skillsCacheTime = time.Now()
+			skillsCacheMu.Unlock()
+			return skills
+		}
 		return nil
 	}
 
@@ -57,7 +78,65 @@ func getSkillsFromCLI() []model.SkillDefinition {
 	skillsCacheTime = time.Now()
 	skillsCacheMu.Unlock()
 
+	// 异步写入本地缓存文件
+	go saveSkillsToCacheFile(skills)
+
 	return skills
+}
+
+// loadSkillsFromCacheFile 从本地文件加载技能缓存
+func loadSkillsFromCacheFile() []model.SkillDefinition {
+	data, err := os.ReadFile(skillsCacheFile)
+	if err != nil {
+		return nil
+	}
+
+	// 先尝试直接解析为 SkillDefinition 数组（新格式）
+	var skills []model.SkillDefinition
+	if err := json.Unmarshal(data, &skills); err == nil && len(skills) > 0 {
+		// 验证新格式：检查是否有有效的 ID（computed field）
+		if len(skills[0].ID) > 0 {
+			return skills
+		}
+		// 否则是旧格式，需要转换
+	}
+
+	// 兼容旧格式：直接解析 openclaw JSON 输出
+	var jsonOut openclawJSONOutput
+	if err := json.Unmarshal(data, &jsonOut); err != nil {
+		return nil
+	}
+
+	result := make([]model.SkillDefinition, 0, len(jsonOut.Skills))
+	for _, s := range jsonOut.Skills {
+		skill := model.SkillDefinition{
+			ID:           strings.ToLower(strings.ReplaceAll(s.Name, " ", "-")),
+			Name:         s.Name,
+			Description:  s.Description,
+			Icon:         getSkillEmoji(s.Name),
+			Source:       mapSource(s.Source),
+			Installed:    s.Eligible,
+			Enabled:      s.Eligible && !s.Disabled,
+			ConfigFields: []model.SkillConfigField{},
+			ConfigValues: make(map[string]interface{}),
+			DocsURL:      nil,
+			Category:     strPtr(getCategory(s.Name)),
+		}
+		result = append(result, skill)
+	}
+	return result
+}
+
+// saveSkillsToCacheFile 保存技能列表到本地缓存文件
+func saveSkillsToCacheFile(skills []model.SkillDefinition) {
+	if skills == nil {
+		return
+	}
+	data, err := json.Marshal(skills)
+	if err != nil {
+		return
+	}
+	os.WriteFile(skillsCacheFile, data, 0644)
 }
 
 // invalidateSkillsCache 使技能缓存失效（安装/卸载/配置操作后调用）
