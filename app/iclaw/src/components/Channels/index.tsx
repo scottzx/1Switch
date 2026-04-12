@@ -1276,12 +1276,7 @@ export function Channels() {
                           )}
                         </div>
                       ))
-                    ) : (
-                      <div className="text-center py-8 text-content-tertiary">
-                        <p>该渠道暂无配置选项</p>
-                        <p className="text-xs mt-2">请参考官方文档进行配置</p>
-                      </div>
-                    )}
+                    }
 
                     {/* WhatsApp 特殊处理：扫码登录按钮 */}
                     {currentChannel.channel_type === 'whatsapp' && (

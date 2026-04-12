@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Loader2,
     Edit3,
-    Eye,
     Save,
+    X,
     CheckCircle,
     XCircle,
     FileText,
@@ -19,8 +19,6 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../../services/api';
-
-type TabMode = 'edit' | 'preview';
 
 interface AgentInfo {
     id: string;
@@ -52,12 +50,13 @@ export function Profile() {
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<TabMode>('edit');
     const [actionResult, setActionResult] = useState<{ success: boolean; message: string } | null>(null);
     const [agents, setAgents] = useState<AgentInfo[]>([]);
     const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
     const [showAgentDropdown, setShowAgentDropdown] = useState(false);
     const [selectedFile, setSelectedFile] = useState<ProfileFile>(profileFiles[0]);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editContent, setEditContent] = useState('');
 
     const fetchAgents = useCallback(async () => {
         try {
@@ -96,18 +95,30 @@ export function Profile() {
         }
     }, [selectedAgent, selectedFile, fetchProfileFile]);
 
+    const handleEdit = () => {
+        setEditContent(content);
+        setEditModalOpen(true);
+    };
+
     const handleSave = async () => {
         if (!selectedAgent) return;
         setSaving(true);
         setActionResult(null);
         try {
-            await api.saveProfileFile(selectedFile.name, content, selectedAgent.workspace);
+            await api.saveProfileFile(selectedFile.name, editContent, selectedAgent.workspace);
+            setContent(editContent);
+            setEditModalOpen(false);
             setActionResult({ success: true, message: `${selectedFile.chineseName} 已保存` });
         } catch (e) {
             setActionResult({ success: false, message: String(e) });
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleCancel = () => {
+        setEditModalOpen(false);
+        setEditContent('');
     };
 
     if (loading && !selectedAgent) {
@@ -125,7 +136,7 @@ export function Profile() {
                 {/* 导航标题 */}
                 <div className="p-4 border-b border-edge">
                     <h3 className="text-sm font-medium text-content-primary">档案文件</h3>
-                    <p className="text-xs text-content-tertiary mt-1">选择要编辑的档案</p>
+                    <p className="text-xs text-content-tertiary mt-1">选择要查看的档案</p>
                 </div>
 
                 {/* 龙虾选择 */}
@@ -235,98 +246,34 @@ export function Profile() {
                         <p className="text-xs text-content-tertiary mt-0.5">{selectedAgent?.workspace}/{selectedFile.name}</p>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        {/* Tab 切换 */}
-                        <div className="flex gap-1 bg-surface-elevated rounded-lg p-1 border border-edge">
-                            <button
-                                onClick={() => setActiveTab('edit')}
-                                className={clsx(
-                                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                                    activeTab === 'edit'
-                                        ? 'bg-claw-500/20 text-claw-400'
-                                        : 'text-content-secondary hover:text-content-primary'
-                                )}
-                            >
-                                <Edit3 size={14} />
-                                编辑
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('preview')}
-                                className={clsx(
-                                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                                    activeTab === 'preview'
-                                        ? 'bg-claw-500/20 text-claw-400'
-                                        : 'text-content-secondary hover:text-content-primary'
-                                )}
-                            >
-                                <Eye size={14} />
-                                预览
-                            </button>
-                        </div>
-
-                        <button
-                            onClick={handleSave}
-                            disabled={saving || !selectedAgent}
-                            className="btn-primary flex items-center gap-2"
-                        >
-                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                            {saving ? '保存中...' : '保存'}
-                        </button>
-                    </div>
+                    <button
+                        onClick={handleEdit}
+                        disabled={loading}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        <Edit3 size={16} />
+                        编辑
+                    </button>
                 </div>
 
-                {/* 内容区 */}
+                {/* 预览内容区 */}
                 <div className="flex-1 overflow-hidden p-6">
                     <div className="h-full bg-surface-card rounded-2xl border border-edge overflow-hidden">
-                        <AnimatePresence mode="wait">
-                            {activeTab === 'edit' ? (
-                                <motion.div
-                                    key="edit"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="h-full"
-                                >
-                                    {loading ? (
-                                        <div className="h-full flex items-center justify-center">
-                                            <Loader2 className="w-8 h-8 animate-spin text-claw-500" />
-                                        </div>
-                                    ) : (
-                                        <textarea
-                                            value={content}
-                                            onChange={(e) => setContent(e.target.value)}
-                                            placeholder="选择左侧档案文件开始编辑..."
-                                            className="w-full h-full p-5 bg-transparent text-content-primary resize-none focus:outline-none font-mono text-sm leading-relaxed"
-                                            spellCheck={false}
-                                        />
-                                    )}
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="preview"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="h-full overflow-y-auto p-5"
-                                >
-                                    {loading ? (
-                                        <div className="h-full flex items-center justify-center">
-                                            <Loader2 className="w-8 h-8 animate-spin text-claw-500" />
-                                        </div>
-                                    ) : content ? (
-                                        <pre className="whitespace-pre-wrap text-content-primary text-sm leading-relaxed font-mono">
-                                            {content}
-                                        </pre>
-                                    ) : (
-                                        <div className="h-full flex flex-col items-center justify-center text-content-tertiary">
-                                            <FileText size={48} className="mb-4 opacity-50" />
-                                            <p>暂无档案内容</p>
-                                            <p className="text-xs mt-1">切换到编辑模式创建档案</p>
-                                        </div>
-                                    )}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        {loading ? (
+                            <div className="h-full flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 animate-spin text-claw-500" />
+                            </div>
+                        ) : content ? (
+                            <pre className="h-full overflow-y-auto p-5 whitespace-pre-wrap text-content-primary text-sm leading-relaxed font-mono">
+                                {content}
+                            </pre>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-content-tertiary">
+                                <FileText size={48} className="mb-4 opacity-50" />
+                                <p>暂无档案内容</p>
+                                <p className="text-xs mt-1">点击上方"编辑"按钮创建档案</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -350,6 +297,73 @@ export function Profile() {
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* 编辑弹窗 */}
+            <AnimatePresence>
+                {editModalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6"
+                        onClick={handleCancel}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="w-full max-w-3xl h-[70vh] bg-surface-card rounded-2xl border border-edge shadow-2xl flex flex-col"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* 弹窗标题 */}
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-edge">
+                                <div className="flex items-center gap-3">
+                                    {selectedFile.icon}
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-content-primary">编辑 {selectedFile.chineseName}</h3>
+                                        <p className="text-xs text-content-tertiary">{selectedFile.name}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleCancel}
+                                    className="p-2 hover:bg-surface-elevated rounded-lg transition-colors text-content-secondary"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* 编辑内容 */}
+                            <div className="flex-1 overflow-hidden p-4">
+                                <textarea
+                                    value={editContent}
+                                    onChange={(e) => setEditContent(e.target.value)}
+                                    className="w-full h-full bg-surface-elevated rounded-xl p-4 text-content-primary resize-none focus:outline-none font-mono text-sm leading-relaxed border border-edge"
+                                    spellCheck={false}
+                                    autoFocus
+                                />
+                            </div>
+
+                            {/* 弹窗底部操作 */}
+                            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-edge">
+                                <button
+                                    onClick={handleCancel}
+                                    className="px-4 py-2 text-sm text-content-secondary hover:text-content-primary hover:bg-surface-elevated rounded-lg transition-colors"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="btn-primary flex items-center gap-2"
+                                >
+                                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                    {saving ? '保存中...' : '保存'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
