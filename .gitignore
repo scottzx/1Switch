@@ -35,6 +35,20 @@ npm-debug.log*
 # Tauri
 dist.zip
 macOS.pem
-.playwright-mcp
-app/iclaw/dev-dist
+.playwright-mcp/
+app/iclaw/dev-dist/
+
+# Claude
+.release/
+.claude/
+
+# App specific
+app/frp/.claude/
+app/ngrok/
+app/novnc/lib/
+
 __pycache__/
+
+# Generated files
+**/vite-env.d.ts
+**/package-lock.json
