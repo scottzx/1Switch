@@ -1274,7 +1274,7 @@ export function Channels() {
                   </div>
                 </div>
               </motion.div>
-            </>
+            </div>
           )}
         </AnimatePresence>
       </div>

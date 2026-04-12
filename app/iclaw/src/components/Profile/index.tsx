@@ -19,7 +19,7 @@ import {
     Sparkles,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { api, ProfileFile } from '../../services/api';
+import { api } from '../../services/api';
 
 type TabMode = 'edit' | 'preview';
 
@@ -30,6 +30,23 @@ interface AgentInfo {
     workspace: string;
     isDefault: boolean;
 }
+
+// 档案文件定义（固定列表，无需从 API 获取）
+interface ProfileFile {
+    name: string;
+    chineseName: string;
+    description: string;
+}
+
+const profileFiles: ProfileFile[] = [
+    { name: 'IDENTITY.md', chineseName: '身份档案', description: '龙虾的名字、形象、emoji 和头像' },
+    { name: 'SOUL.md', chineseName: '灵魂契约', description: '核心价值观、行为准则和个性风格' },
+    { name: 'TOOLS.md', chineseName: '工具备注', description: '本地工具配置：相机、SSH、TTS 等' },
+    { name: 'AGENTS.md', chineseName: '工作手册', description: '工作空间规则、内存管理、群聊礼仪' },
+    { name: 'USER.md', chineseName: '用户资料', description: '用户信息、时区偏好、上下文' },
+    { name: 'BOOTSTRAP.md', chineseName: '初始化向导', description: '首次启动引导（配置完成后会自动删除）' },
+    { name: 'HEARTBEAT.md', chineseName: '心跳任务', description: '周期性后台检查任务' },
+];
 
 // 档案文件图标映射
 const fileIcons: Record<string, React.ReactNode> = {
@@ -51,7 +68,6 @@ export function Profile() {
     const [agents, setAgents] = useState<AgentInfo[]>([]);
     const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
     const [showAgentDropdown, setShowAgentDropdown] = useState(false);
-    const [profileFiles, setProfileFiles] = useState<ProfileFile[]>([]);
     const [selectedFile, setSelectedFile] = useState<ProfileFile | null>(null);
     const [showFileDropdown, setShowFileDropdown] = useState(false);
 
@@ -65,21 +81,6 @@ export function Profile() {
             }
         } catch (e) {
             console.error('获取龙虾列表失败:', e);
-        }
-    }, [selectedAgent]);
-
-    const fetchProfileFiles = useCallback(async () => {
-        if (!selectedAgent) return;
-        try {
-            const files = await api.getProfileFiles(selectedAgent.workspace);
-            setProfileFiles(files);
-            // 默认选择第一个存在的文件，或者第一个文件
-            const firstExisting = files.find(f => f.exists) || files[0];
-            if (firstExisting) {
-                setSelectedFile(firstExisting);
-            }
-        } catch (e) {
-            console.error('获取档案文件列表失败:', e);
         }
     }, [selectedAgent]);
 
@@ -102,10 +103,11 @@ export function Profile() {
     }, []);
 
     useEffect(() => {
-        if (selectedAgent) {
-            fetchProfileFiles();
+        if (selectedAgent && !selectedFile) {
+            // 默认选择第一个文件
+            setSelectedFile(profileFiles[0]);
         }
-    }, [selectedAgent, fetchProfileFiles]);
+    }, [selectedAgent, selectedFile]);
 
     useEffect(() => {
         if (selectedFile) {
@@ -120,8 +122,6 @@ export function Profile() {
         try {
             await api.saveProfileFile(selectedFile.name, content, selectedAgent.workspace);
             setActionResult({ success: true, message: `${selectedFile.chineseName} 已保存` });
-            // 刷新文件列表
-            fetchProfileFiles();
         } catch (e) {
             setActionResult({ success: false, message: String(e) });
         } finally {
@@ -224,7 +224,7 @@ export function Profile() {
                         </div>
 
                         {/* 档案文件选择下拉 */}
-                        {selectedAgent && profileFiles.length > 0 && (
+                        {selectedAgent && (
                             <div className="relative">
                                 <button
                                     onClick={() => setShowFileDropdown(!showFileDropdown)}
@@ -263,12 +263,7 @@ export function Profile() {
                                                     >
                                                         <span className="mt-0.5">{fileIcons[file.name]}</span>
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="text-sm font-medium text-content-primary">{file.chineseName}</p>
-                                                                {!file.exists && (
-                                                                    <span className="text-xs px-1.5 py-0.5 rounded bg-gray-500/20 text-gray-400">未创建</span>
-                                                                )}
-                                                            </div>
+                                                            <p className="text-sm font-medium text-content-primary">{file.chineseName}</p>
                                                             <p className="text-xs text-content-tertiary mt-0.5">{file.description}</p>
                                                         </div>
                                                     </button>
