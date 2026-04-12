@@ -71,6 +71,7 @@ function App() {
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
+  const [refreshLoading, setRefreshLoading] = useState(false);
 
   useEffect(() => {
     const path = location.pathname.slice(1) as PageType;
@@ -102,19 +103,18 @@ function App() {
     }
   }, []);
 
-  const checkUpdate = useCallback(async () => {
-    appLogger.info('检查 OpenClaw 更新...');
+  const handleRefresh = useCallback(async () => {
+    setRefreshLoading(true);
     try {
-      const info = await api.checkUpdate() as UpdateInfo;
-      appLogger.info('更新检查结果', info);
-      setUpdateInfo(info);
-      if (info.update_available) {
-        setShowUpdateBanner(true);
-      }
+      await checkEnvironment();
+      const status = await api.getServiceStatus();
+      setServiceStatus({ running: status.running, pid: status.pid, port: status.port });
     } catch (e) {
-      appLogger.error('检查更新失败', e);
+      appLogger.error('刷新状态失败', e);
+    } finally {
+      setRefreshLoading(false);
     }
-  }, []);
+  }, [checkEnvironment]);
 
   const handleUpdate = async () => {
     setUpdating(true);
@@ -167,14 +167,6 @@ function App() {
     appLogger.info('🦞 App 组件已挂载');
     checkEnvironment();
   }, [checkEnvironment]);
-
-  // 暂时禁用自动检查更新（接口超时）
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     checkUpdate();
-  //   }, 2000);
-  //   return () => clearTimeout(timer);
-  // }, [checkUpdate]);
 
   const handleSetupComplete = useCallback(() => {
     appLogger.info('安装向导完成');
@@ -319,7 +311,7 @@ function App() {
         <MobileSidebar currentPage={currentPage} onNavigate={handleNavigate} serviceStatus={serviceStatus} />
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header currentPage={currentPage} />
+          <Header currentPage={currentPage} onRefresh={handleRefresh} refreshLoading={refreshLoading} />
 
           <main className="flex-1 overflow-hidden p-6 pb-0 flex flex-col">
             <div className="flex-1 overflow-hidden">

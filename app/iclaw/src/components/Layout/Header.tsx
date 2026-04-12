@@ -10,6 +10,8 @@ import { networkApi } from '../../services/api';
 
 interface HeaderProps {
   currentPage: PageType;
+  onRefresh: () => void;
+  refreshLoading?: boolean;
 }
 
 const pageTitles: Record<PageType, { title: string; description: string }> = {
@@ -26,7 +28,7 @@ const pageTitles: Record<PageType, { title: string; description: string }> = {
   filebrowser: { title: '文件管理', description: '文件浏览器' },
 };
 
-export function Header({ currentPage }: HeaderProps) {
+export function Header({ currentPage, onRefresh, refreshLoading }: HeaderProps) {
   const { t } = useTranslation();
   const fallback = pageTitles[currentPage];
   const title = t(`header.${currentPage}.title`, { defaultValue: fallback.title });
@@ -133,12 +135,13 @@ export function Header({ currentPage }: HeaderProps) {
           {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
         </button>
         <button
-          onClick={() => window.location.reload()}
+          onClick={onRefresh}
+          disabled={refreshLoading}
           className="icon-button"
           style={{ color: 'var(--text-secondary)' }}
-          title="刷新"
+          title="刷新状态"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} className={refreshLoading ? 'animate-spin' : ''} />
         </button>
         <button
           onClick={handleOpenDashboard}
