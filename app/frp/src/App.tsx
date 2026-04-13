@@ -6,7 +6,12 @@ import './styles/index.css';
 type Status = 'idle' | 'checking' | 'connecting' | 'disconnecting' | 'installing';
 
 function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'zh' ? 'en' : 'zh';
+    i18n.changeLanguage(newLang);
+  };
   const [frpStatus, setFrpStatus] = useState<FrpStatus | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [serial, setSerial] = useState('');
@@ -116,9 +121,17 @@ function App() {
     <div className="min-h-screen bg-white flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-2xl font-medium tracking-tight text-gray-900">{t('header.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">{t('header.subtitle')}</p>
+        <div className="mb-12 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-medium tracking-tight text-gray-900">{t('header.title')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t('header.subtitle')}</p>
+          </div>
+          <button
+            onClick={toggleLanguage}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {i18n.language === 'zh' ? 'EN' : '中文'}
+          </button>
         </div>
 
         {/* Main Content */}

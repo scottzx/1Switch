@@ -12,6 +12,8 @@ import { Skills } from './components/Skills';
 import { Settings } from './components/Settings';
 import { Security } from './components/Security';
 import { Testing } from './components/Testing';
+import { QingflowMcp } from './components/QingflowMcp';
+import { CallbackPage } from './components/QingflowMcp/CallbackPage';
 import { Logs } from './components/Logs';
 import { Terminal } from './components/Terminal';
 import { FileBrowser } from './components/FileBrowser';
@@ -23,9 +25,9 @@ import { useTerminalStore } from './stores/terminalStore';
 import { ThemeProvider } from './lib/ThemeContext';
 import { Download, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
-export type PageType = 'dashboard' | 'profile' | 'ai' | 'channels' | 'skills' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser';
+export type PageType = 'dashboard' | 'profile' | 'ai' | 'channels' | 'skills' | 'qingflow-mcp' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser';
 
-const PAGE_TYPE_KEYS: PageType[] = ['dashboard', 'profile', 'ai', 'channels', 'skills', 'testing', 'logs', 'security', 'settings', 'terminal', 'filebrowser'];
+const PAGE_TYPE_KEYS: PageType[] = ['dashboard', 'profile', 'ai', 'channels', 'skills', 'qingflow-mcp', 'testing', 'logs', 'security', 'settings', 'terminal', 'filebrowser'];
 
 export interface EnvironmentStatus {
   node_installed: boolean;
@@ -74,9 +76,16 @@ function App() {
   const [refreshLoading, setRefreshLoading] = useState(false);
 
   useEffect(() => {
-    const path = location.pathname.slice(1) as PageType;
-    if (PAGE_TYPE_KEYS.includes(path)) {
-      setCurrentPage(path);
+    const path = location.pathname.slice(1);
+
+    // Handle OAuth callback
+    if (path === 'qingflow-callback') {
+      // Render callback page without App layout
+      return;
+    }
+
+    if (PAGE_TYPE_KEYS.includes(path as PageType)) {
+      setCurrentPage(path as PageType);
     }
   }, [location.pathname]);
 
@@ -189,6 +198,11 @@ function App() {
   };
 
   const renderPage = () => {
+    // Handle OAuth callback page
+    if (location.pathname === '/qingflow-callback' || location.pathname === '/app/iclaw/qingflow-callback') {
+      return <CallbackPage />;
+    }
+
     const pageVariants = {
       initial: { opacity: 0, x: 20 },
       animate: { opacity: 1, x: 0 },
@@ -201,6 +215,7 @@ function App() {
       ai: <AIConfig />,
       channels: <Channels />,
       skills: <Skills />,
+      'qingflow-mcp': <QingflowMcp />,
       testing: <Testing />,
       logs: <Logs />,
       security: <Security />,

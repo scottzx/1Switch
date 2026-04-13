@@ -46,18 +46,18 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
         },
       ],
     },
-    {
-      titleKey: 'sections.extendedApplications',
-      modules: [
-        {
-          id: 'qingliu',
-          nameKey: 'modules.qingliu.name',
-          descriptionKey: 'modules.qingliu.description',
-          type: 'route',
-          status: 'coming-soon',
-        },
-      ],
-    },
+    // {
+    //   titleKey: 'sections.extendedApplications',
+    //   modules: [
+    //     {
+    //       id: 'qingliu',
+    //       nameKey: 'modules.qingliu.name',
+    //       descriptionKey: 'modules.qingliu.description',
+    //       type: 'route',
+    //       status: 'coming-soon',
+    //     },
+    //   ],
+    // },
     {
       titleKey: 'sections.aiEcosystem',
       modules: [
