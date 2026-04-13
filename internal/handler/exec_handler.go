@@ -172,6 +172,34 @@ func (h *ExecHandler) KillCommand(c *gin.Context) {
 	}
 }
 
+// Exec 同步执行命令并返回结果
+// POST /api/exec
+func (h *ExecHandler) Exec(c *gin.Context) {
+	var req struct {
+		Cmd string `json:"cmd"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cmd is required"})
+		return
+	}
+
+	cmd := exec.Command("bash", "-c", req.Cmd)
+	output, err := cmd.CombinedOutput()
+	exitCode := 0
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		} else {
+			exitCode = -1
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"output":   string(output),
+		"exitCode": exitCode,
+	})
+}
+
 // ExecCommand 执行指定命令并返回结果（用于 service start/stop/restart）
 // 这个函数会被现有的 service handler 调用
 func ExecuteCommandWithOutput(cmdStr string, outputChan chan string) error {

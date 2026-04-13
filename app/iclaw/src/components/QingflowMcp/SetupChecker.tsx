@@ -7,12 +7,6 @@ import { useTerminalStore } from '../../stores/terminalStore';
 const QINGFLOW_LOGIN_URL = 'https://openclaw-login.qingflow.com';
 const CALLBACK_URL = `${window.location.origin}/app/iclaw/qingflow-callback`;
 
-interface Workspace {
-  id: number;
-  name: string;
-  is_current?: boolean;
-}
-
 interface SetupStatus {
   pythonVenvInstalled: boolean | null;
   mcpInstalled: boolean | null;
@@ -20,14 +14,10 @@ interface SetupStatus {
   tokenInjected: boolean | null;
   userEmail: string | null;
   cliAuthenticated: boolean | null;
-  currentWorkspace: string | null;
   loading: boolean;
   installingPython: boolean;
   installingMcp: boolean;
-  authenticatingCli: boolean;
-  showWorkspaceSelector: boolean;
-  workspaces: Workspace[];
-  selectedWorkspaceId: number | null;
+  authenticating: boolean;
 }
 
 interface SetupCheckerProps {
@@ -42,67 +32,38 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     tokenInjected: null,
     userEmail: null,
     cliAuthenticated: null,
-    currentWorkspace: null,
     loading: false,
     installingPython: false,
     installingMcp: false,
-    authenticatingCli: false,
-    showWorkspaceSelector: false,
-    workspaces: [],
-    selectedWorkspaceId: null,
+    authenticating: false,
   });
 
   const { addTab, appendOutput, setStatus: setTabStatus } = useTerminalStore();
 
-  // 检测 Python venv 状态（检查 python3.12-venv 包是否安装）
-  const checkPythonVenv = async (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      let output = '';
-      let resolved = false;
-      const timeout = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve(output.includes('ii'));
-        }
-      }, 5000);
-      execApi.streamCommand(
-        'dpkg -l python3.12-venv 2>/dev/null | grep "^ii" || echo "NOT_INSTALLED"',
-        (data) => { output += data.content; },
-        () => {},
-        () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timeout);
-            resolve(output.includes('ii'));
-          }
-        }
-      );
-    });
-  };
+  // 一次性检测所有初始化状态 - 合并成一条命令，一次 exec 调用
+  const checkAllStatus = async () => {
+    const cmd = [
+      'dpkg -l python3.12-venv 2>/dev/null | grep "^ii" > /dev/null && echo VENV_OK || echo VENV_FAIL',
+      'which qingflow && echo MCP_OK || echo MCP_FAIL',
+      'qingflow --version 2>&1 | grep -oE "[0-9]+\\.[0-9]+\\.[0-9]+" | head -1',
+      'test -f ~/.qingflow-mcp/qingflow-token && echo TOKEN_OK || echo TOKEN_FAIL',
+    ].join('; ');
 
-  // 检测 MCP 安装状态
-  const checkMcpInstalled = async (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      let resolved = false;
-      const timeout = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve(false);
-        }
-      }, 5000);
-      execApi.streamCommand(
-        'which qingflow',
-        () => {},
-        () => {},
-        (data) => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timeout);
-            resolve(data.exitCode === 0);
-          }
-        }
-      );
-    });
+    try {
+      const result = await execApi.execCommand(cmd);
+      const lines = result.output.split('\n').filter(l => l.trim());
+
+      setStatus((prev) => ({
+        ...prev,
+        pythonVenvInstalled: lines.includes('VENV_OK'),
+        mcpInstalled: lines.includes('MCP_OK'),
+        mcpVersion: lines.find(l => /^\d+\.\d+\.\d+$/.test(l)) || null,
+        tokenInjected: lines.includes('TOKEN_OK'),
+        userEmail: lines.includes('TOKEN_OK') ? 'Token 已配置' : null,
+      }));
+    } catch (e) {
+      console.error('checkAllStatus failed:', e);
+    }
   };
 
   // 获取 MCP 版本
@@ -124,67 +85,8 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     });
   };
 
-  // 检测 Token 状态
-  const checkTokenInjected = async (): Promise<{ injected: boolean; email: string | null }> => {
-    return new Promise((resolve) => {
-      let outputContent = '';
-      execApi.streamCommand(
-        'cat ~/.openclaw/qingflow-token 2>/dev/null || echo ""',
-        (data) => {
-          outputContent += data.content;
-        },
-        () => {},
-        () => {
-          const token = outputContent.trim();
-          if (token) {
-            execApi.streamCommand(
-              'qingflow auth whoami --json 2>&1 || echo "{}"',
-              (userData) => {
-                try {
-                  const user = JSON.parse(userData.content);
-                  resolve({ injected: true, email: user.email || user.name || '已登录' });
-                } catch {
-                  resolve({ injected: true, email: '已登录' });
-                }
-              },
-              () => {},
-              () => {
-                resolve({ injected: true, email: 'Token 已配置' });
-              }
-            );
-          } else {
-            resolve({ injected: false, email: null });
-          }
-        }
-      );
-    });
-  };
-
-  // 初始化检测 - 各自独立更新状态
   useEffect(() => {
-    // 检测 Python venv
-    checkPythonVenv().then((installed) => {
-      setStatus((prev) => ({ ...prev, pythonVenvInstalled: installed }));
-    });
-
-    // 检测 MCP
-    checkMcpInstalled().then((installed) => {
-      setStatus((prev) => ({ ...prev, mcpInstalled: installed }));
-      if (installed) {
-        getMcpVersion().then((version) => {
-          setStatus((prev) => ({ ...prev, mcpVersion: version }));
-        });
-      }
-    });
-
-    // 检测 Token
-    checkTokenInjected().then((tokenStatus) => {
-      setStatus((prev) => ({
-        ...prev,
-        tokenInjected: tokenStatus.injected,
-        userEmail: tokenStatus.email,
-      }));
-    });
+    checkAllStatus();
   }, []);
 
   // 安装 Python venv
@@ -253,7 +155,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
   const handleOAuthToken = async (token: string) => {
     await new Promise<void>((resolve) => {
       execApi.streamCommand(
-        `mkdir -p ~/.openclaw && echo "${token}" > ~/.openclaw/qingflow-token`,
+        `mkdir -p ~/.qingflow-mcp && echo "${token}" > ~/.qingflow-mcp/qingflow-token`,
         () => {},
         () => {},
         () => {
@@ -289,82 +191,54 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
       () => {}
     );
 
-    // 显示工作区选择器
-    execApi.streamCommand(
-      'qingflow workspace list --json 2>&1 || echo "{}"',
-      (data) => {
-        try {
-          const result = JSON.parse(data.content);
-          const workspaces = (result.workspaces || []) as Workspace[];
-          if (workspaces.length > 0) {
-            setStatus((prev) => ({
-              ...prev,
-              showWorkspaceSelector: true,
-              workspaces: workspaces,
-              selectedWorkspaceId: workspaces.find((ws) => ws.is_current)?.id || workspaces[0].id,
-            }));
-          } else {
-            setStatus((prev) => ({ ...prev, cliAuthenticated: false }));
-          }
-        } catch {
-          setStatus((prev) => ({ ...prev, cliAuthenticated: false }));
-        }
-      },
-      () => {},
-      () => {
-        setStatus((prev) => ({ ...prev, cliAuthenticated: false }));
-      }
-    );
   };
 
-  // 选择工作区并认证
-  const handleWorkspaceSelect = (wsId: number) => {
-    const ws = status.workspaces.find((w) => w.id === wsId);
-    if (!ws) return;
+  // Step 4: CLI 认证
+  const handleAuthenticate = () => {
+    setStatus((prev) => ({ ...prev, authenticating: true }));
 
-    setStatus((prev) => ({ ...prev, selectedWorkspaceId: wsId, authenticatingCli: true }));
-
-    // 保存工作区 ID 到文件缓存
+    // 读取 token 并认证
     execApi.streamCommand(
-      `mkdir -p ~/.openclaw && echo "${wsId}" > ~/.openclaw/workspace-id`,
-      () => {},
-      () => {},
-      () => {}
-    );
-
-    // 读取 token 文件
-    execApi.streamCommand(
-      'cat ~/.openclaw/qingflow-token 2>/dev/null || echo ""',
+      'cat ~/.qingflow-mcp/qingflow-token 2>/dev/null || echo ""',
       (data) => {
         const token = data.content.trim();
         if (token) {
           execApi.streamCommand(
-            `qingflow auth use-token --token "${token}" --ws-id ${wsId} --json 2>&1 || echo "{}"`,
+            `qingflow auth use-token --token "${token}" --json 2>&1 || echo "{}"`,
             (authData) => {
               try {
                 JSON.parse(authData.content);
-                setStatus((prev) => ({
-                  ...prev,
-                  cliAuthenticated: true,
-                  currentWorkspace: ws.name,
-                  showWorkspaceSelector: false,
-                  authenticatingCli: false,
-                }));
+                // 保存缓存并完成
+                execApi.streamCommand(
+                  'mkdir -p ~/.qingflow-mcp && echo "OK" > ~/.qingflow-mcp/setup-complete',
+                  () => {},
+                  () => {},
+                  () => {
+                    setStatus((prev) => ({
+                      ...prev,
+                      cliAuthenticated: true,
+                      authenticating: false,
+                    }));
+                    onComplete();
+                  }
+                );
               } catch {
-                setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticatingCli: false }));
+                setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticating: false }));
               }
             },
             () => {},
             () => {
-              setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticatingCli: false }));
+              setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticating: false }));
             }
           );
         } else {
-          setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticatingCli: false }));
+          setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticating: false }));
         }
       },
       () => {},
-      () => {}
+      () => {
+        setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticating: false }));
+      }
     );
   };
 
@@ -398,8 +272,8 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     };
   }, []);
 
-  const { pythonVenvInstalled, mcpInstalled, mcpVersion, tokenInjected, userEmail, cliAuthenticated, currentWorkspace, installingPython, installingMcp } = status;
-  const canProceed = mcpInstalled && cliAuthenticated;
+  const { pythonVenvInstalled, mcpInstalled, mcpVersion, tokenInjected, userEmail, cliAuthenticated, installingPython, installingMcp, authenticating } = status;
+  const canProceed = cliAuthenticated;
 
   return (
     <div
@@ -554,80 +428,57 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
           )}
         </div>
 
-        {/* 工作区选择器 */}
-        {tokenInjected && status.showWorkspaceSelector && (
-          <div
-            className="p-4 rounded-lg"
-            style={{ backgroundColor: 'var(--bg-elevated)' }}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <RefreshCw size={18} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
-              <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  选择工作区
-                </p>
-                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  请选择要连接的工作区
-                </p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {status.workspaces.map((ws) => (
-                <button
-                  key={ws.id}
-                  onClick={() => handleWorkspaceSelect(ws.id)}
-                  disabled={status.authenticatingCli}
-                  className="w-full p-3 text-left text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center justify-between"
-                  style={{
-                    backgroundColor: status.selectedWorkspaceId === ws.id ? 'var(--accent-primary)' : 'var(--bg-card)',
-                    color: status.selectedWorkspaceId === ws.id ? 'white' : 'var(--text-primary)',
-                  }}
-                >
-                  <span>{ws.name}</span>
-                  {ws.is_current && <span className="text-xs opacity-70">当前</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Step 4: CLI 认证 */}
-        {!status.showWorkspaceSelector && (
-          <div
-            className="p-4 rounded-lg flex items-center justify-between"
-            style={{ backgroundColor: 'var(--bg-elevated)' }}
-          >
-            <div className="flex items-center gap-3">
-              {cliAuthenticated === null ? (
-                tokenInjected ? (
-                  <RefreshCw size={18} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
-                ) : (
-                  <XCircle size={18} style={{ color: 'var(--text-tertiary)' }} />
-                )
-              ) : cliAuthenticated ? (
-                <CheckCircle size={18} style={{ color: 'var(--text-success)' }} />
+        <div
+          className="p-4 rounded-lg"
+          style={{ backgroundColor: 'var(--bg-elevated)' }}
+        >
+          <div className="flex items-center gap-3">
+            {cliAuthenticated === null ? (
+              tokenInjected ? (
+                <RefreshCw size={18} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
               ) : (
                 <XCircle size={18} style={{ color: 'var(--text-tertiary)' }} />
-              )}
-              <div>
-                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  步骤 4：CLI 认证
-                </p>
-                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  {cliAuthenticated === null
-                    ? tokenInjected
-                      ? '认证中...'
-                      : '等待登录'
-                    : cliAuthenticated
-                      ? currentWorkspace
-                        ? `已认证：${currentWorkspace}`
-                        : '已认证'
-                      : '认证失败'}
-                </p>
-              </div>
+              )
+            ) : cliAuthenticated ? (
+              <CheckCircle size={18} style={{ color: 'var(--text-success)' }} />
+            ) : (
+              <XCircle size={18} style={{ color: 'var(--text-tertiary)' }} />
+            )}
+            <div className="flex-1">
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                步骤 4：CLI 认证
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                {cliAuthenticated === null
+                  ? tokenInjected
+                    ? '认证中...'
+                    : '等待登录'
+                  : cliAuthenticated
+                    ? '已认证'
+                    : '认证失败'}
+              </p>
             </div>
+
+            {tokenInjected && cliAuthenticated === null && (
+              <button
+                onClick={handleAuthenticate}
+                disabled={authenticating}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                style={{ backgroundColor: '#22c55e', color: 'white' }}
+              >
+                {authenticating ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    认证中...
+                  </>
+                ) : (
+                  '认证'
+                )}
+              </button>
+            )}
           </div>
-        )}
+        </div>
 
         {/* 提示信息 */}
         <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--bg-elevated)' }}>

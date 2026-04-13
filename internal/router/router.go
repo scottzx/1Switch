@@ -197,6 +197,7 @@ func SetupRouter(r *gin.Engine) {
 		{
 			exec.GET("/stream", execHandler.StreamCommand)
 			exec.POST("/kill", execHandler.KillCommand)
+			exec.POST("", execHandler.Exec)
 		}
 	}
 }

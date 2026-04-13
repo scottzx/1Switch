@@ -689,6 +689,18 @@ export const execApi = {
     const url = id ? `${apiBaseUrl}/api/exec/kill?id=${id}` : `${apiBaseUrl}/api/exec/kill`;
     await apiClient.post(url);
   },
+
+  /**
+   * 同步执行命令并返回结果（用于快速检测状态）
+   */
+  execCommand: async (cmd: string): Promise<{ output: string; exitCode: number }> => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+    const response = await apiClient.post<{ output: string; exitCode: number }>(
+      `${apiBaseUrl}/api/exec`,
+      { cmd }
+    );
+    return response.data;
+  },
 };
 
 export default api;

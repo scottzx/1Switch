@@ -21,12 +21,12 @@ export function QingflowMcp() {
     { id: 'analytics', label: '分析' },
   ];
 
-  // Setup 未完成，显示检测页面
+  // Setup 未完成，显示 SetupChecker（含 Step 1-4）
   if (!setupComplete) {
     return <SetupChecker onComplete={() => setSetupComplete(true)} />;
   }
 
-  // Setup 完成，显示主功能页面
+  // 主功能页面
   return (
     <div className="h-full flex flex-col">
       {/* Tab Navigation */}

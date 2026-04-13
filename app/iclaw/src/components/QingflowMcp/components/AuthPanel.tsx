@@ -6,7 +6,7 @@ import type { QingflowUser, QingflowWorkspace } from '../types';
 // OAuth 配置
 const QINGFLOW_LOGIN_URL = 'https://openclaw-login.qingflow.com';
 const CALLBACK_URL = `${window.location.origin}/app/iclaw/qingflow-callback`;
-const QINGFLOW_TOKEN_FILE = '~/.openclaw/qingflow-token';
+const QINGFLOW_TOKEN_FILE = '~/.qingflow-mcp/qingflow-token';
 
 interface AuthPanelProps {
   onAuthChange?: (isAuthenticated: boolean) => void;
@@ -42,7 +42,7 @@ export function AuthPanel({ onAuthChange }: AuthPanelProps) {
 
         try {
           // 保存 token 到文件
-          await qingflow.executeCommand(`mkdir -p ~/.openclaw && echo "${receivedToken}" > ~/.openclaw/qingflow-token`);
+          await qingflow.executeCommand(`mkdir -p ~/.qingflow-mcp && echo "${receivedToken}" > ~/.qingflow-mcp/qingflow-token`);
 
           // 使用 token 登录
           const result = await qingflow.authUseToken(receivedToken);
@@ -318,7 +318,7 @@ export function AuthPanel({ onAuthChange }: AuthPanelProps) {
           style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
         >
           <FileText size={14} />
-          使用 ~/.openclaw/qingflow-token 登录
+          使用 ~/.qingflow-mcp/qingflow-token 登录
         </button>
 
         {/* Browser OAuth login button */}
