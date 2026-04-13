@@ -422,7 +422,7 @@ export function RecordManager({ app, schema, onSchemaLoad }: RecordManagerProps)
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                      {record.fields.title || record.fields.name || `#${record.id}`}
+                      {(record.fields.title as string) || (record.fields.name as string) || `#${record.id}`}
                     </p>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
                       ID: {record.id}

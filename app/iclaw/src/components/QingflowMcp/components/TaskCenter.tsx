@@ -24,7 +24,7 @@ export function TaskCenter() {
   const qingflow = useQingflow();
   const [tasks, setTasks] = useState<QingflowTask[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [taskBox, setTaskBox] = useState<TaskBoxType>('todo');
   const [flowStatus, setFlowStatus] = useState('all');
   const [selectedTask, setSelectedTask] = useState<QingflowTask | null>(null);
