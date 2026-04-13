@@ -1,16 +1,6 @@
 import { useCallback } from 'react';
 import { execApi } from '../../../services/api';
 import type {
-  QingflowUser,
-  QingflowWorkspace,
-  QingflowApp,
-  QingflowView,
-  QingflowSchema,
-  QingflowRecord,
-  QingflowRecordList,
-  QingflowTask,
-  QingflowAnalyzeResult,
-  AnalysisDSL,
   TaskBoxType,
   FlowStatusType,
 } from '../types';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AuthPanel } from './components/AuthPanel';
+import { SetupChecker } from './SetupChecker';
 import { AppBrowser } from './components/AppBrowser';
 import { RecordManager } from './components/RecordManager';
 import { TaskCenter } from './components/TaskCenter';
@@ -9,7 +9,7 @@ import type { QingflowApp, QingflowSchema } from './types';
 type TabType = 'apps' | 'records' | 'tasks' | 'analytics';
 
 export function QingflowMcp() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [setupComplete, setSetupComplete] = useState(false);
   const [selectedApp, setSelectedApp] = useState<QingflowApp | null>(null);
   const [currentSchema, setCurrentSchema] = useState<QingflowSchema | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('apps');
@@ -21,58 +21,37 @@ export function QingflowMcp() {
     { id: 'analytics', label: '分析' },
   ];
 
+  // Setup 未完成，显示检测页面
+  if (!setupComplete) {
+    return <SetupChecker onComplete={() => setSetupComplete(true)} />;
+  }
+
+  // Setup 完成，显示主功能页面
   return (
     <div className="h-full flex flex-col">
-      {/* Auth Panel */}
-      <AuthPanel onAuthChange={setIsAuthenticated} />
-
       {/* Tab Navigation */}
-      {isAuthenticated && (
-        <div
-          className="mt-4 mx-4 flex items-center gap-1 p-1 rounded-lg"
-          style={{ backgroundColor: 'var(--bg-card)' }}
-        >
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="px-4 py-2 text-sm font-medium rounded-md transition-colors"
-              style={{
-                backgroundColor: activeTab === tab.id ? 'var(--bg-elevated)' : 'transparent',
-                color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <div
+        className="mx-4 flex items-center gap-1 p-1 rounded-lg"
+        style={{ backgroundColor: 'var(--bg-card)' }}
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+            style={{
+              backgroundColor: activeTab === tab.id ? 'var(--bg-elevated)' : 'transparent',
+              color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Content */}
       <div className="flex-1 overflow-hidden mt-4 mx-4 mb-4">
-        {!isAuthenticated ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="h-full flex items-center justify-center rounded-xl"
-            style={{ backgroundColor: 'var(--bg-card)' }}
-          >
-            <div className="text-center max-w-md px-6">
-              <div
-                className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl"
-                style={{ backgroundColor: 'var(--bg-elevated)' }}
-              >
-                🔗
-              </div>
-              <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                连接轻流工作区
-              </h3>
-              <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                请在上方完成认证连接，即可使用轻流MCP的各项功能，包括应用管理、记录操作、任务审批等。
-              </p>
-            </div>
-          </motion.div>
-        ) : activeTab === 'apps' ? (
+        {activeTab === 'apps' ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

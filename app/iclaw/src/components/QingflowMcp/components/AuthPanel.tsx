@@ -5,7 +5,7 @@ import type { QingflowUser, QingflowWorkspace } from '../types';
 
 // OAuth 配置
 const QINGFLOW_LOGIN_URL = 'https://openclaw-login.qingflow.com';
-const CALLBACK_URL = '/app/iclaw/qingflow-callback';
+const CALLBACK_URL = `${window.location.origin}/app/iclaw/qingflow-callback`;
 const QINGFLOW_TOKEN_FILE = '~/.openclaw/qingflow-token';
 
 interface AuthPanelProps {

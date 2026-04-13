@@ -8,7 +8,10 @@ export function CallbackPage() {
     const token = searchParams.get('token');
 
     if (token) {
-      // 通过 postMessage 发送给 opener（AuthPanel 会处理保存和登录）
+      // 1. 存储到 sessionStorage
+      sessionStorage.setItem('qingflow_oauth_token', token);
+
+      // 2. 通过 postMessage 发送给 opener（如果是在弹窗中）
       if (window.opener) {
         window.opener.postMessage({ type: 'QINGFLOW_TOKEN', token }, '*');
       }
