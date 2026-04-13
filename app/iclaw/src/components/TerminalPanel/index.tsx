@@ -5,9 +5,50 @@ import { Terminal, ChevronUp, ChevronDown, ChevronDown as DropdownIcon } from 'l
 import clsx from 'clsx';
 
 export function TerminalPanel() {
-  const { tabs, activeTabId, isExpanded, toggleExpanded, setActiveTab } = useTerminalStore();
+  const { tabs, activeTabId, isExpanded, toggleExpanded, setActiveTab, terminalHeight, setTerminalHeight } = useTerminalStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth > 768;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isDesktop || !isExpanded) return;
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  const resizeStartRef = useRef({ startY: 0, startHeight: 0 });
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    resizeStartRef.current = { startY: 0, startHeight: terminalHeight };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (resizeStartRef.current.startY === 0) {
+        resizeStartRef.current.startY = e.clientY;
+        resizeStartRef.current.startHeight = terminalHeight;
+      }
+      const deltaY = resizeStartRef.current.startY - e.clientY; // 反向：向上拖增加高度
+      const newHeight = resizeStartRef.current.startHeight + deltaY * 1.5;
+      setTerminalHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      resizeStartRef.current = { startY: 0, startHeight: 0 };
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, terminalHeight, setTerminalHeight]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
@@ -51,13 +92,23 @@ export function TerminalPanel() {
 
   return (
     <div
-      className="flex flex-col border-t"
+      ref={panelRef}
+      className="flex flex-col border-t relative"
       style={{
-        height: isExpanded ? '280px' : '44px',
+        height: isExpanded ? `${terminalHeight}px` : '44px',
         backgroundColor: 'var(--terminal-bg)',
         borderColor: 'var(--border-primary)',
       }}
     >
+      {/* 桌面端：可拖动调整高度 */}
+      {isDesktop && isExpanded && (
+        <div
+          className="absolute top-0 left-0 right-0 h-1 cursor-row-resize hover:bg-[var(--accent)]/30 active:bg-[var(--accent)]/50 transition-colors"
+          style={{ zIndex: 10 }}
+          onMouseDown={handleMouseDown}
+        />
+      )}
+
       {/* 标题栏 */}
       <div
         className="flex items-center justify-between px-4 py-2"
@@ -149,13 +200,20 @@ export function TerminalPanel() {
 
           <button
             onClick={toggleExpanded}
-            className="p-1 rounded transition-colors hover:bg-opacity-50"
-            style={{ backgroundColor: 'transparent' }}
+            className="flex items-center gap-1 px-2 py-1 rounded transition-colors"
+            style={{
+              backgroundColor: 'var(--bg-elevated)',
+              border: '1px solid var(--border-primary)',
+            }}
+            title={isExpanded ? '收起终端' : '展开终端'}
           >
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              {isExpanded ? '收起' : '展开'}
+            </span>
             {isExpanded ? (
-              <ChevronDown size={16} style={{ color: 'var(--text-tertiary)' }} />
+              <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />
             ) : (
-              <ChevronUp size={16} style={{ color: 'var(--text-tertiary)' }} />
+              <ChevronUp size={14} style={{ color: 'var(--text-tertiary)' }} />
             )}
           </button>
         </div>

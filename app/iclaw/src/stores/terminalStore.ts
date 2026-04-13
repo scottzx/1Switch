@@ -14,6 +14,7 @@ interface TerminalStore {
   tabs: TerminalTab[];
   activeTabId: string | null;
   isExpanded: boolean;
+  terminalHeight: number;
 
   // Actions
   addTab: (command: string, title?: string) => string;
@@ -24,6 +25,7 @@ interface TerminalStore {
   clearOutput: (id: string) => void;
   toggleExpanded: () => void;
   setExpanded: (expanded: boolean) => void;
+  setTerminalHeight: (height: number) => void;
 }
 
 let tabCounter = 0;
@@ -32,6 +34,7 @@ export const useTerminalStore = create<TerminalStore>((set) => ({
   tabs: [],
   activeTabId: null,
   isExpanded: true,
+  terminalHeight: 280,
 
   addTab: (command: string, title?: string) => {
     const id = `terminal-${Date.now()}-${++tabCounter}`;
@@ -108,5 +111,9 @@ export const useTerminalStore = create<TerminalStore>((set) => ({
 
   setExpanded: (expanded: boolean) => {
     set({ isExpanded: expanded });
+  },
+
+  setTerminalHeight: (height: number) => {
+    set({ terminalHeight: Math.max(120, Math.min(height, 600)) });
   },
 }));
