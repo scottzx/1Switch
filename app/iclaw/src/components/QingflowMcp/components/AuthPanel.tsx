@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { User, LogOut, RefreshCw, ChevronDown, Check, FileText, ExternalLink } from 'lucide-react';
 import useQingflow from '../hooks/useQingflow';
 import type { QingflowUser, QingflowWorkspace } from '../types';
@@ -68,8 +68,6 @@ export function AuthPanel({ onAuthChange }: AuthPanelProps) {
     const oauthUrl = `${QINGFLOW_LOGIN_URL}/?redirect_uri=${encodeURIComponent(CALLBACK_URL)}`;
     window.open(oauthUrl, 'qingflow_oauth', 'width=600,height=700');
   };
-
-  const checkAuthStatus = async () => {
 
   const checkAuthStatus = async () => {
     setLoading(true);
@@ -321,6 +319,17 @@ export function AuthPanel({ onAuthChange }: AuthPanelProps) {
         >
           <FileText size={14} />
           使用 ~/.openclaw/qingflow-token 登录
+        </button>
+
+        {/* Browser OAuth login button */}
+        <button
+          onClick={handleBrowserLogin}
+          disabled={loggingIn}
+          className="w-full mt-2 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
+        >
+          <ExternalLink size={14} />
+          {loggingIn ? '登录中...' : '浏览器登录'}
         </button>
 
         <button

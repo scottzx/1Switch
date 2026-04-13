@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { api } from '../../lib/tauri';
 
 export function CallbackPage() {
   const [searchParams] = useSearchParams();
@@ -9,16 +8,13 @@ export function CallbackPage() {
     const token = searchParams.get('token');
 
     if (token) {
-      // 1. 保存 token 到文件
-      api.saveQingflowToken(token).catch(console.error);
-
-      // 2. 通过 postMessage 发送给 opener
+      // 通过 postMessage 发送给 opener（AuthPanel 会处理保存和登录）
       if (window.opener) {
         window.opener.postMessage({ type: 'QINGFLOW_TOKEN', token }, '*');
       }
     }
 
-    // 3. 显示成功消息并关闭
+    // 显示成功消息并关闭
     const timer = setTimeout(() => window.close(), 3000);
     return () => clearTimeout(timer);
   }, [searchParams]);

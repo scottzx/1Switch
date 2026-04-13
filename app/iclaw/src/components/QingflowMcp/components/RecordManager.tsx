@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Trash2, Edit2, Table, Search } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Edit2, Table } from 'lucide-react';
 import useQingflow from '../hooks/useQingflow';
 import type { QingflowApp, QingflowView, QingflowSchema, QingflowRecord } from '../types';
 
@@ -174,7 +174,6 @@ export function RecordManager({ app, schema, onSchemaLoad }: RecordManagerProps)
     try {
       // Create a temp file with fields
       const fieldsJson = JSON.stringify(formData);
-      const tempFile = `/tmp/qingflow_fields_${Date.now()}.json`;
       // Note: In real implementation, we'd need to write this file via a service
       // For now, we'll use a simplified approach
 
