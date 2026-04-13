@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAppStore } from '../stores/appStore';
 import { api } from '../lib/tauri';
 import { serviceLogger } from '../lib/logger';

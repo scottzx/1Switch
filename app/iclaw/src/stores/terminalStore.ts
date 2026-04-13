@@ -28,7 +28,7 @@ interface TerminalStore {
 
 let tabCounter = 0;
 
-export const useTerminalStore = create<TerminalStore>((set, get) => ({
+export const useTerminalStore = create<TerminalStore>((set) => ({
   tabs: [],
   activeTabId: null,
   isExpanded: true,

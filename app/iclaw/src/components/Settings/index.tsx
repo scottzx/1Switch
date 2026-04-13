@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  User,
   Shield,
   Save,
   Loader2,
@@ -13,7 +12,6 @@ import {
   Globe,
   Download,
   ScrollText,
-  FileText,
   RefreshCw,
 } from 'lucide-react';
 import { api } from '../../lib/tauri';
@@ -140,57 +138,6 @@ function LanguageSettings() {
         >
           <option value="zh">中文</option>
           <option value="en">English</option>
-        </select>
-      </div>
-    </div>
-  );
-}
-
-// 身份配置内容
-function IdentitySettings() {
-  const { t } = useTranslation();
-  const [identity, setIdentity] = useState({
-    botName: 'Clawd',
-    userName: '主人',
-    timezone: 'Asia/Shanghai',
-  });
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm text-content-secondary mb-2">AI 助手名称</label>
-        <input
-          type="text"
-          value={identity.botName}
-          onChange={(e) => setIdentity({ ...identity, botName: e.target.value })}
-          placeholder="Clawd"
-          className="input-base w-full"
-        />
-      </div>
-      <div>
-        <label className="block text-sm text-content-secondary mb-2">你的称呼</label>
-        <input
-          type="text"
-          value={identity.userName}
-          onChange={(e) => setIdentity({ ...identity, userName: e.target.value })}
-          placeholder={t('settings.yourNamePlaceholder')}
-          className="input-base w-full"
-        />
-      </div>
-      <div>
-        <label className="block text-sm text-content-secondary mb-2">时区</label>
-        <select
-          value={identity.timezone}
-          onChange={(e) => setIdentity({ ...identity, timezone: e.target.value })}
-          className="input-base w-full"
-        >
-          <option value="Asia/Shanghai">Asia/Shanghai</option>
-          <option value="Asia/Hong_Kong">Asia/Hong_Kong</option>
-          <option value="Asia/Tokyo">Asia/Tokyo</option>
-          <option value="America/New_York">America/New_York</option>
-          <option value="America/Los_Angeles">America/Los_Angeles</option>
-          <option value="Europe/London">Europe/London</option>
-          <option value="UTC">UTC</option>
         </select>
       </div>
     </div>
@@ -405,10 +352,9 @@ function DangerZone({ onClose }: { onClose: () => void }) {
 }
 
 interface SettingsProps {
-  onEnvironmentChange?: () => void;
 }
 
-export function Settings({ onEnvironmentChange }: SettingsProps) {
+export function Settings({}: SettingsProps) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);

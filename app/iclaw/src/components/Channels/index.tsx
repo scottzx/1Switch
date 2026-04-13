@@ -10,14 +10,11 @@ import {
   CheckCircle,
   XCircle,
   Play,
-  Trash2,
-  ExternalLink,
   Copy,
   ChevronUp,
   Eye,
   EyeOff,
   Loader2,
-  Download,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../../lib/tauri';
@@ -92,10 +89,7 @@ export function Channels() {
 
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [clearing, setClearing] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [checkingPlugin, setCheckingPlugin] = useState(false);
   const [pluginInstalled, setPluginInstalled] = useState<boolean | null>(null);
   const [checkingQQPlugin, setCheckingQQPlugin] = useState(false);
@@ -125,16 +119,6 @@ export function Channels() {
         setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
       }
     );
-  };
-
-  // 安装飞书插件
-  const handleInstallFeishuPlugin = () => {
-    runCommand('openclaw plugins install @openclaw/feishu', '安装飞书插件');
-  };
-
-  // 运行网关
-  const handleStartGateway = () => {
-    runCommand('openclaw gateway start', '启动网关');
   };
 
   // 重启网关 - 使用后端 API
@@ -290,69 +274,9 @@ export function Channels() {
     setDrawerOpen(false);
     setSelectedChannel(null);
     setTestResult(null);
-    setShowClearConfirm(false);
     setFormData({});
     setSaveSuccessMsg(null);
     setQqPluginInstalled(null);
-  };
-
-  const handleShowClearConfirm = () => {
-    setShowClearConfirm(true);
-  };
-
-  const handleClearConfig = async () => {
-    if (!selectedChannel) return;
-    setShowClearConfirm(false);
-    setClearing(true);
-    try {
-      await api.clearChannelConfig(selectedChannel);
-
-      // 刷新渠道列表
-      const result = await api.getChannelsConfig();
-      const filtered = result.filter((c: ChannelConfig) =>
-        ['feishu', 'qqbot', 'wechat'].includes(c.channel_type)
-      );
-      setChannels(filtered);
-
-      setFormData({});
-      setTestResult({
-        success: true,
-        message: t('channels.configCleared', { name: channelInfo[selectedChannel]?.name || selectedChannel }),
-        error: null,
-      });
-    } catch (e) {
-      setTestResult({
-        success: false,
-        message: t('channels.clearFailed'),
-        error: String(e),
-      });
-    } finally {
-      setClearing(false);
-    }
-  };
-
-  const handleQuickTest = async () => {
-    if (!selectedChannel) return;
-
-    setTesting(true);
-    setTestResult(null);
-
-    try {
-      const result = await api.testChannel(selectedChannel);
-      setTestResult({
-        success: result.success,
-        message: result.message,
-        error: result.error || null,
-      });
-    } catch (e) {
-      setTestResult({
-        success: false,
-        message: t('channels.testFailed'),
-        error: String(e),
-      });
-    } finally {
-      setTesting(false);
-    }
   };
 
   const handleSave = async () => {

@@ -67,7 +67,7 @@ function App() {
   const [envStatus, setEnvStatus] = useState<EnvironmentStatus | null>(null);
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
 
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateInfo] = useState<UpdateInfo | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
@@ -96,6 +96,15 @@ function App() {
       };
       appLogger.info('环境检查完成', status);
       setEnvStatus(status);
+
+      // 同时获取服务状态
+      try {
+        const serviceStatus = await api.getServiceStatus();
+        setServiceStatus({ running: serviceStatus.running, pid: serviceStatus.pid, port: serviceStatus.port });
+      } catch (e) {
+        appLogger.warn('获取服务状态失败', e);
+      }
+
       setIsReady(true);
     } catch (e) {
       appLogger.error('环境检查失败', e);
@@ -195,7 +204,7 @@ function App() {
       testing: <Testing />,
       logs: <Logs />,
       security: <Security />,
-      settings: <Settings onEnvironmentChange={checkEnvironment} />,
+      settings: <Settings />,
       terminal: <Terminal />,
       filebrowser: <FileBrowser />,
     };

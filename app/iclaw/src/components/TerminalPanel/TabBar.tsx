@@ -1,9 +1,8 @@
-import { X, ChevronDown, ChevronUp, Terminal } from 'lucide-react';
-import clsx from 'clsx';
+import { X } from 'lucide-react';
 import { useTerminalStore } from '../../stores/terminalStore';
 
 export function TabBar() {
-  const { tabs, activeTabId, setActiveTab, removeTab, isExpanded, toggleExpanded } =
+  const { tabs, activeTabId, setActiveTab, removeTab, isExpanded } =
     useTerminalStore();
 
   if (tabs.length === 0) {

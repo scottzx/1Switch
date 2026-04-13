@@ -7,14 +7,12 @@ import {
     Check,
     Loader2,
     ChevronRight,
-    Star,
     Bot,
     Crown,
     CheckCircle,
     XCircle,
     AlertTriangle,
     Link,
-    Wrench,
     Settings2,
     ChevronDown,
     ChevronUp,
@@ -226,19 +224,6 @@ export function Agents() {
             setActionResult({ success: false, message: String(e) });
         } finally {
             setDeleting(false);
-        }
-    };
-
-    const handleSetDefault = async (agentId: string) => {
-        try {
-            await invoke<string>('set_default_agent', { agentId });
-            await fetchAgents();
-            if (form) {
-                const refreshed = agents.find(a => a.id === form.id);
-                if (refreshed) setForm({ ...refreshed, isDefault: refreshed.id === agentId });
-            }
-        } catch (e) {
-            console.error('设为默认失败:', e);
         }
     };
 

@@ -57,7 +57,10 @@
       "Read(//Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-deploy/tools/**)",
       "Read(//Users/scott/.openclaw/**)",
       "Bash(openclaw skills:*)",
-      "Bash(openclaw agents:*)"
+      "Bash(openclaw agents:*)",
+      "Bash(bash scripts/release.sh)",
+      "Bash(unzip -p dist.zip app/iclaw/assets/index-CVaSFJRL.js)",
+      "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/iclaw/.env*)"
     ]
   }
 }

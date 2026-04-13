@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useTerminalStore, type TerminalTab } from '../../stores/terminalStore';
 import clsx from 'clsx';
+import type { TerminalTab } from '../../stores/terminalStore';
 
 interface VirtualTerminalProps {
   tab: TerminalTab;
