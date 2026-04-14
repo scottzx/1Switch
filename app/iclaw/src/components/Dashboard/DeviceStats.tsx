@@ -32,7 +32,7 @@ function StatCard({
           <Icon size={20} className="text-white" />
         </div>
         <div>
-          <div className="text-2xl font-bold tabular-nums text-content-primary">
+          <div className="text-lg md:text-2xl font-bold tabular-nums text-content-primary">
             {value}
             {unit && (
               <span className="text-sm font-normal text-content-tertiary">{unit}</span>

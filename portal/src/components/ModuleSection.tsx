@@ -9,6 +9,7 @@ interface Module {
   url?: string;
   status: 'available' | 'coming-soon';
   badge?: string;
+  onClick?: () => void;
 }
 
 interface ModuleSectionProps {

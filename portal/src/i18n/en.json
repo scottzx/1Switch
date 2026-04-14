@@ -76,6 +76,10 @@
       "name": "Tailscale",
       "description": "Network tunneling and mesh VPN for secure remote access."
     },
+    "cronTask": {
+      "name": "Scheduled Tasks",
+      "description": "View and manage scheduled task execution status."
+    },
     "fileManager": {
       "name": "File Manager",
       "description": "Device file browser and editor. Fixed port 8081."

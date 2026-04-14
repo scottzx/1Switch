@@ -16,6 +16,17 @@ interface ModuleCardProps {
   gridArea?: string;
 }
 
+interface Module {
+  id: string;
+  nameKey: string;
+  descriptionKey: string;
+  type: 'link' | 'route' | 'external';
+  url?: string;
+  status: 'available' | 'coming-soon';
+  badge?: string;
+  onClick?: () => void;
+}
+
 // 根据前端实际访问的 origin 构建显示 URL
 // 硬编码域名保持不变，本地服务使用 window.location.origin（用户实际访问的 IP）
 function buildDisplayUrl(module: Module): string {
@@ -63,6 +74,10 @@ export default function ModuleCard({ module }: ModuleCardProps) {
   };
 
   const handleCardClick = () => {
+    if (module.onClick) {
+      module.onClick();
+      return;
+    }
     if (!isAvailable || !displayUrl) return;
     // 所有类型都新开 tab：external 直接跳转，route 用 origin 拼接
     window.open(displayUrl, '_blank', 'noopener,noreferrer');

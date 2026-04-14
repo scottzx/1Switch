@@ -76,6 +76,10 @@
       "name": "Tailscale",
       "description": "网络隧道与 Mesh VPN，安全远程访问。"
     },
+    "cronTask": {
+      "name": "定时任务",
+      "description": "查看和管理定时任务的执行状态。"
+    },
     "fileManager": {
       "name": "文件管理器",
       "description": "设备文件浏览器与编辑器，固定端口 8081。"

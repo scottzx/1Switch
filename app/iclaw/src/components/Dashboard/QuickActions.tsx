@@ -32,12 +32,12 @@ export function QuickActions({
     <div className="bg-surface-card rounded-2xl p-6 border border-edge">
       <h3 className="text-lg font-semibold text-content-primary mb-4">快捷操作</h3>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <button
           onClick={onStart}
           disabled={loading || isRunning}
           className={clsx(
-            'flex flex-col items-center gap-3 p-4 rounded-xl transition-all',
+            'flex flex-col items-center gap-2 p-3 rounded-xl transition-all',
             'border border-edge',
             isRunning
               ? 'bg-surface-elevated opacity-50 cursor-not-allowed'
@@ -46,12 +46,12 @@ export function QuickActions({
         >
           <div
             className={clsx(
-              'w-12 h-12 rounded-full flex items-center justify-center',
+              'w-10 h-10 rounded-full flex items-center justify-center',
               isRunning ? 'bg-surface-elevated' : 'bg-green-500/20'
             )}
           >
             <Play
-              size={20}
+              size={18}
               className={isRunning ? 'text-content-tertiary' : 'text-green-400'}
             />
           </div>
@@ -69,7 +69,7 @@ export function QuickActions({
           onClick={onStop}
           disabled={loading || !isRunning}
           className={clsx(
-            'flex flex-col items-center gap-3 p-4 rounded-xl transition-all',
+            'flex flex-col items-center gap-2 p-3 rounded-xl transition-all',
             'border border-edge',
             !isRunning
               ? 'bg-surface-elevated opacity-50 cursor-not-allowed'
@@ -78,12 +78,12 @@ export function QuickActions({
         >
           <div
             className={clsx(
-              'w-12 h-12 rounded-full flex items-center justify-center',
+              'w-10 h-10 rounded-full flex items-center justify-center',
               !isRunning ? 'bg-surface-elevated' : 'bg-red-500/20'
             )}
           >
             <Square
-              size={20}
+              size={18}
               className={!isRunning ? 'text-content-tertiary' : 'text-red-400'}
             />
           </div>
@@ -101,14 +101,14 @@ export function QuickActions({
           onClick={onRestart}
           disabled={loading}
           className={clsx(
-            'flex flex-col items-center gap-3 p-4 rounded-xl transition-all',
+            'flex flex-col items-center gap-2 p-3 rounded-xl transition-all',
             'border border-edge',
             'bg-surface-elevated hover:bg-amber-500/20 hover:border-amber-500/50'
           )}
         >
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-500/20">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/20">
             <RotateCcw
-              size={20}
+              size={18}
               className={clsx('text-amber-400', loading && 'animate-spin')}
             />
           </div>
@@ -119,13 +119,13 @@ export function QuickActions({
           onClick={onDoctor}
           disabled={loading}
           className={clsx(
-            'flex flex-col items-center gap-3 p-4 rounded-xl transition-all',
+            'flex flex-col items-center gap-2 p-3 rounded-xl transition-all',
             'border border-edge',
             'bg-surface-elevated hover:bg-purple-500/20 hover:border-purple-500/50'
           )}
         >
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/20">
-            <Stethoscope size={20} className="text-purple-400" />
+          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-purple-500/20">
+            <Stethoscope size={18} className="text-purple-400" />
           </div>
           <span className="text-sm font-medium text-content-secondary">诊断</span>
         </button>

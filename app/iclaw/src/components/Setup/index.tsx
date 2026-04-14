@@ -391,9 +391,9 @@ export function Setup({ onComplete, embedded = false }: SetupProps) {
             transition={{ type: 'spring', damping: 15 }}
             className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-600 mb-4 shadow-lg shadow-brand-500/25"
           >
-            <span className="text-4xl">🦞</span>
+            <span className="text-2xl md:text-4xl">🦞</span>
           </motion.div>
-          <h1 className="text-2xl font-bold text-content-primary mb-2">虾池子</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-content-primary mb-2">虾池子</h1>
           <p className="text-dark-400">环境检测与安装向导</p>
         </div>
 

@@ -252,8 +252,7 @@ button:disabled {
     padding: 16px;
   }
 
-  /* 卡片网格移动端优化 */
-  .grid-cols-2,
+  /* 卡片网格移动端优化 - 3列和4列网格在移动端变为1列，2列保持不变 */
   .grid-cols-3,
   .grid-cols-4 {
     grid-template-columns: repeat(1, minmax(0, 1fr));

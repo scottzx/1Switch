@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import ModuleSection from './components/ModuleSection';
 import { LanPopup } from './components/Network/LanPopup';
 import { WifiPopup } from './components/Network/WifiPopup';
+import { CronPopup } from './components/Cron/CronPopup';
 import { networkApi } from './services/api';
 
 interface Module {
@@ -12,6 +13,7 @@ interface Module {
   type: 'link' | 'route' | 'external';
   url?: string;
   status: 'available' | 'coming-soon';
+  onClick?: () => void;
 }
 
 // 根据设备 IP 动态构建所有模块（按正确顺序：AI 应用 > 扩展应用 > AI 生态 > 系统功能）
@@ -117,6 +119,13 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
           descriptionKey: 'modules.tailscale.description',
           type: 'route',
           status: 'coming-soon',
+        },
+        {
+          id: 'cron',
+          nameKey: 'modules.cronTask.name',
+          descriptionKey: 'modules.cronTask.description',
+          type: 'route',
+          status: 'available',
         },
         {
           id: 'file-manager',
@@ -229,6 +238,7 @@ function App() {
 
   const [showLanPopup, setShowLanPopup] = useState(false);
   const [showWifiPopup, setShowWifiPopup] = useState(false);
+  const [showCronPopup, setShowCronPopup] = useState(false);
   const [lanConnected, setLanConnected] = useState(false);
   const [wifiConnected, setWifiConnected] = useState(false);
   const [sections, setSections] = useState<{ titleKey: string; modules: Module[] }[]>([]);
@@ -247,7 +257,16 @@ function App() {
     const host = window.location.hostname;
     const port = window.location.port;
     console.log('当前页面 Host:', host, 'Port:', port);
-    setSections(buildAllSections(host));
+    const sections = buildAllSections(host);
+    // Add onClick handler for cron module
+    const cronSection = sections.find(s => s.titleKey === 'sections.systemFunctions');
+    if (cronSection) {
+      const cronModule = cronSection.modules.find(m => m.id === 'cron');
+      if (cronModule) {
+        cronModule.onClick = () => setShowCronPopup(true);
+      }
+    }
+    setSections(sections);
   }, []);
 
   useEffect(() => {
@@ -342,6 +361,9 @@ function App() {
 
       {/* WiFi Popup */}
       {showWifiPopup && <WifiPopup onClose={() => setShowWifiPopup(false)} />}
+
+      {/* Cron Popup */}
+      {showCronPopup && <CronPopup onClose={() => setShowCronPopup(false)} />}
     </div>
   );
 }

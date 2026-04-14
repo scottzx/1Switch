@@ -70,7 +70,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 1420,
+      port: 1520,
       proxy: {
         '/api': {
           target: env.VITE_API_BASE_URL || 'http://localhost:8080',

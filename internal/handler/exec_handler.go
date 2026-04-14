@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -385,6 +385,6 @@ func sendSSEEvent(c *gin.Context, event string, data string) {
 
 // escapeJSON 转义 JSON 字符串
 func escapeJSON(s string) string {
-	b, _ := strconv.Unquote(`"` + s + `"`)
-	return strconv.Quote(b)
+	b, _ := json.Marshal(s)
+	return string(b)
 }

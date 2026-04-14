@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import clsx from 'clsx';
 import { PageType } from '../../App';
 import { RefreshCw, ExternalLink, Loader2, Sun, Moon, Menu, Network, Wifi, WifiOff } from 'lucide-react';
 import { useTheme } from '../../lib/ThemeContext';
@@ -100,12 +101,12 @@ export function Header({ currentPage, onRefresh, refreshLoading }: HeaderProps) 
           <Menu size={22} />
         </button>
         <div>
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+          <h2 className="text-base md:text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
           <p className="text-xs hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>{description}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 titlebar-no-drag">
+      <div className="flex items-center gap-1 sm:gap-2 titlebar-no-drag">
         {/* LAN */}
         <button
           onClick={() => setShowLanPopup(true)}
@@ -113,7 +114,7 @@ export function Header({ currentPage, onRefresh, refreshLoading }: HeaderProps) 
           style={{ color: lanConnected ? '#22c55e' : 'var(--text-tertiary)' }}
           title="LAN"
         >
-          <Network size={16} />
+          <Network size={14} className="sm:size-4" />
         </button>
 
         {/* Wi-Fi */}
@@ -123,7 +124,7 @@ export function Header({ currentPage, onRefresh, refreshLoading }: HeaderProps) 
           style={{ color: wifiConnected ? '#22c55e' : 'var(--text-tertiary)' }}
           title="Wi-Fi"
         >
-          {wifiConnected ? <Wifi size={16} /> : <WifiOff size={16} />}
+          {wifiConnected ? <Wifi size={14} className="sm:size-4" /> : <WifiOff size={14} className="sm:size-4" />}
         </button>
 
         {/* 主题切换 */}
@@ -133,7 +134,7 @@ export function Header({ currentPage, onRefresh, refreshLoading }: HeaderProps) 
           style={{ color: 'var(--text-secondary)' }}
           title={theme === 'light' ? '切换到暗色模式' : '切换到亮色模式'}
         >
-          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+          {theme === 'light' ? <Moon size={14} className="sm:size-4" /> : <Sun size={14} className="sm:size-4" />}
         </button>
         <button
           onClick={onRefresh}
@@ -142,12 +143,12 @@ export function Header({ currentPage, onRefresh, refreshLoading }: HeaderProps) 
           style={{ color: 'var(--text-secondary)' }}
           title="刷新状态"
         >
-          <RefreshCw size={16} className={refreshLoading ? 'animate-spin' : ''} />
+          <RefreshCw size={14} className={clsx('sm:size-4', refreshLoading ? 'animate-spin' : '')} />
         </button>
         <button
           onClick={handleOpenDashboard}
           disabled={opening}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-50"
           style={{
             backgroundColor: 'var(--bg-elevated)',
             color: 'var(--text-secondary)',
@@ -155,7 +156,7 @@ export function Header({ currentPage, onRefresh, refreshLoading }: HeaderProps) 
           title="打开 Web Dashboard"
         >
           {opening ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
-          <span>Dashboard</span>
+          <span className="hidden sm:inline">Dashboard</span>
         </button>
       </div>
     </header>
