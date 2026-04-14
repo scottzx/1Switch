@@ -130,9 +130,88 @@ export function Profile() {
     }
 
     return (
-        <div className="h-full flex">
-            {/* 左侧档案导航 */}
-            <div className="w-56 flex-shrink-0 bg-surface-card border-r border-edge flex flex-col">
+        <div className="h-full flex flex-col md:flex-row">
+            {/* 移动端顶部选择器 */}
+            <div className="md:hidden p-4 border-b border-edge bg-surface-card space-y-3">
+                {/* 龙虾选择 */}
+                <div className="relative">
+                    <label className="text-xs text-content-tertiary mb-1 block">选择龙虾</label>
+                    <button
+                        onClick={() => setShowAgentDropdown(!showAgentDropdown)}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 bg-surface-elevated border border-edge rounded-lg hover:border-claw-500 transition-colors"
+                    >
+                        {selectedAgent ? (
+                            <>
+                                <span className="text-base">{selectedAgent.emoji}</span>
+                                <span className="text-sm text-content-primary flex-1 truncate text-left">{selectedAgent.name}</span>
+                            </>
+                        ) : (
+                            <span className="text-sm text-content-secondary">选择龙虾</span>
+                        )}
+                    </button>
+
+                    <AnimatePresence>
+                        {showAgentDropdown && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -4 }}
+                                className="absolute top-full left-0 right-0 mt-1 bg-surface-card border border-edge rounded-lg shadow-xl z-50 overflow-hidden"
+                            >
+                                <div className="p-1 max-h-48 overflow-y-auto">
+                                    {agents.map((agent) => (
+                                        <button
+                                            key={agent.id}
+                                            onClick={() => {
+                                                setSelectedAgent(agent);
+                                                setShowAgentDropdown(false);
+                                                setActionResult(null);
+                                            }}
+                                            className={clsx(
+                                                'w-full flex items-center gap-2 p-2 rounded-md transition-colors text-left',
+                                                selectedAgent?.id === agent.id
+                                                    ? 'bg-claw-500/20 text-content-primary'
+                                                    : 'hover:bg-surface-elevated text-content-secondary'
+                                            )}
+                                        >
+                                            <span className="text-lg">{agent.emoji}</span>
+                                            <span className="text-sm flex-1 truncate">{agent.name}</span>
+                                            {agent.isDefault && (
+                                                <span className="text-xs px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400">默认</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* 文件选择下拉框 */}
+                <div>
+                    <label className="text-xs text-content-tertiary mb-1 block">选择档案</label>
+                    <select
+                        value={selectedFile.name}
+                        onChange={(e) => {
+                            const file = profileFiles.find(f => f.name === e.target.value);
+                            if (file) {
+                                setSelectedFile(file);
+                                setActionResult(null);
+                            }
+                        }}
+                        className="w-full px-3 py-2.5 bg-surface-elevated border border-edge rounded-lg text-sm text-content-primary appearance-none cursor-pointer"
+                    >
+                        {profileFiles.map((file) => (
+                            <option key={file.name} value={file.name}>
+                                {file.chineseName} - {file.description}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            {/* 左侧档案导航 - 桌面端 */}
+            <div className="hidden md:flex w-56 flex-shrink-0 bg-surface-card border-r border-edge flex-col">
                 {/* 导航标题 */}
                 <div className="p-4 border-b border-edge">
                     <h3 className="text-sm font-medium text-content-primary">档案文件</h3>
@@ -237,22 +316,22 @@ export function Profile() {
             {/* 右侧内容区 */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* 顶部操作栏 */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-edge bg-surface-card">
-                    <div>
-                        <h2 className="text-lg font-semibold text-content-primary flex items-center gap-2">
-                            {selectedFile.icon}
+                <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-edge bg-surface-card">
+                    <div className="min-w-0 flex-1">
+                        <h2 className="text-base md:text-lg font-semibold text-content-primary flex items-center gap-2 truncate">
+                            <span className="hidden md:inline">{selectedFile.icon}</span>
                             {selectedFile.chineseName}
                         </h2>
-                        <p className="text-xs text-content-tertiary mt-0.5">{selectedAgent?.workspace}/{selectedFile.name}</p>
+                        <p className="text-xs text-content-tertiary mt-0.5 truncate">{selectedAgent?.workspace}/{selectedFile.name}</p>
                     </div>
 
                     <button
                         onClick={handleEdit}
                         disabled={loading}
-                        className="btn-primary flex items-center gap-2"
+                        className="btn-primary flex items-center gap-2 ml-2 shrink-0"
                     >
                         <Edit3 size={16} />
-                        编辑
+                        <span className="hidden sm:inline">编辑</span>
                     </button>
                 </div>
 

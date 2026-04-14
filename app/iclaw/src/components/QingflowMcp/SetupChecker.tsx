@@ -195,88 +195,81 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
   const handleAuthenticate = () => {
     setStatus((prev) => ({ ...prev, authenticating: true }));
 
-    // 先测试 SSE 流是否正常工作
-    console.log('[Auth] Testing SSE stream...');
-    execApi.streamCommand(
-      'echo "SSE_TEST_OK" && sleep 0.5 && echo "SSE_TEST_DONE"',
-      (data) => console.log('[Auth] test output:', data.content),
-      (status) => console.log('[Auth] test status:', status),
-      (done) => console.log('[Auth] test done:', done)
-    ).onerror = (e) => console.log('[Auth] test SSE error:', e);
-
-    // 读取 token 并认证
-    execApi.streamCommand(
-      'cat ~/.qingflow-mcp/qingflow-token 2>/dev/null || echo ""',
-      (data) => {
-        const token = data.content.trim();
-        console.log('[Auth] token file content:', token ? 'has token (length=' + token.length + ')' : 'empty');
-        if (!token) {
-          setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticating: false }));
-          return;
+    // 使用 Promise 链式处理，避免嵌套 SSE 回调的问题
+    new Promise<string>((resolve, reject) => {
+      // 读取 token
+      execApi.streamCommand(
+        'cat ~/.qingflow-mcp/qingflow-token 2>/dev/null || echo ""',
+        (data) => {
+          const token = data.content.trim();
+          if (token) {
+            resolve(token);
+          } else {
+            reject(new Error('Token file is empty'));
+          }
+        },
+        () => {},
+        () => {
+          // token 读取完成但没收到数据
+          reject(new Error('Token not found'));
         }
-
-        // 使用 Promise 包装 streamCommand，等待命令完成后解析结果
-        new Promise<void>((resolve) => {
+      );
+    })
+      .then((token) => {
+        // 使用 token 进行认证
+        return new Promise<void>((resolve, reject) => {
           const outputLines: string[] = [];
 
           execApi.streamCommand(
             `qingflow auth use-token --token "${token}" --json 2>&1 || echo '{"ok":false}'`,
             (authData) => {
-              // 收集所有输出行
-              console.log('[Auth] output line:', authData.content);
               outputLines.push(authData.content);
             },
-            (statusData) => {
-              console.log('[Auth] status:', statusData);
-            },
+            () => {},
             (doneData) => {
-              console.log('[Auth] done:', doneData);
-              console.log('[Auth] all output lines:', outputLines);
-              // 命令完成后，收集所有非空输出并拼接成一个完整的 JSON 字符串
               if (doneData.exitCode === 0 && outputLines.length > 0) {
-                // 过滤掉空行，拼接所有内容
                 const combinedOutput = outputLines.filter(l => l.trim()).join('').trim();
-                console.log('[Auth] combined output:', combinedOutput);
                 try {
                   const result = JSON.parse(combinedOutput);
-                  console.log('[Auth] parsed result:', result);
                   if (result.ok !== false) {
-                    // 认证成功，保存缓存并完成
-                    execApi.streamCommand(
-                      'mkdir -p ~/.qingflow-mcp && echo "OK" > ~/.qingflow-mcp/setup-complete',
-                      () => {},
-                      () => {},
-                      () => {
-                        setStatus((prev) => ({
-                          ...prev,
-                          cliAuthenticated: true,
-                          authenticating: false,
-                        }));
-                        onComplete();
-                        resolve();
-                      }
-                    );
+                    resolve();
                     return;
                   }
-                } catch (e) {
-                  console.log('[Auth] JSON parse error:', e, 'combinedOutput:', combinedOutput);
-                  // JSON 解析失败，尝试其他方式
+                } catch {
+                  // JSON 解析失败
                 }
               }
-              console.log('[Auth] failed - exitCode:', doneData.exitCode, 'outputLength:', outputLines.length);
-              setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticating: false }));
+              reject(new Error('Auth failed'));
+            }
+          );
+        });
+      })
+      .then(() => {
+        // 保存缓存
+        return new Promise<void>((resolve) => {
+          execApi.streamCommand(
+            'mkdir -p ~/.qingflow-mcp && echo "OK" > ~/.qingflow-mcp/setup-complete',
+            () => {},
+            () => {},
+            () => {
+              setStatus((prev) => ({
+                ...prev,
+                cliAuthenticated: true,
+                authenticating: false,
+              }));
+              onComplete();
               resolve();
             }
-          ).onerror = (e) => {
-            console.log('[Auth] SSE error:', e);
-          };
+          );
         });
-      },
-      () => {},
-      () => {
-        setStatus((prev) => ({ ...prev, cliAuthenticated: false, authenticating: false }));
-      }
-    );
+      })
+      .catch(() => {
+        setStatus((prev) => ({
+          ...prev,
+          cliAuthenticated: false,
+          authenticating: false,
+        }));
+      });
   };
 
   // 监听 OAuth token（来自 postMessage 或 sessionStorage）

@@ -463,18 +463,18 @@ export function Settings({}: SettingsProps) {
           </button>
         </div>
 
-        {/* 设置卡片网格 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* 设置卡片网格 - 2列移动端，4列桌面端 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {settingsCards.map((card) => (
             <button
               key={card.id}
               onClick={() => setActiveModal(card.id)}
-              className="bg-surface-card rounded-2xl p-5 border border-edge hover:border-claw-500/50 transition-all text-left group"
+              className="bg-surface-card rounded-xl p-4 border border-edge hover:border-claw-500/50 transition-all text-left group"
             >
-              <div className="w-12 h-12 rounded-xl bg-surface-elevated flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-lg bg-surface-elevated flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 {card.icon}
               </div>
-              <h3 className="text-sm font-medium text-content-primary mb-1">{card.label}</h3>
+              <h3 className="text-sm font-medium text-content-primary mb-0.5">{card.label}</h3>
               <p className="text-xs text-content-tertiary">{card.description}</p>
             </button>
           ))}

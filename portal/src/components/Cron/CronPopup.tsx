@@ -19,13 +19,21 @@ interface ParsedTimer {
   activates: string;
 }
 
+type TabType = 'crontab' | 'systemd';
+
 export function CronPopup({ onClose }: CronPopupProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('crontab');
   const [cronTasks, setCronTasks] = useState<ParsedCronTask[]>([]);
   const [timers, setTimers] = useState<ParsedTimer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedLog, setExpandedLog] = useState<string | null>(null);
 
-  const loadCronData = async () => {
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -34,139 +42,82 @@ export function CronPopup({ onClose }: CronPopupProps) {
         cronApi.listTimers(),
       ]);
 
-      // Parse crontab
-      if (cronResult.status === 'fulfilled' && cronResult.value) {
-        const tasks = parseCrontab(cronResult.value);
-        setCronTasks(tasks);
+      if (cronResult.status === 'fulfilled') {
+        setCronTasks(parseCrontab(cronResult.value));
       }
-
-      // Parse systemd timers
       if (timersResult.status === 'fulfilled') {
-        const parsed = parseSystemdTimers(timersResult.value);
-        setTimers(parsed);
+        setTimers(parseSystemdTimers(timersResult.value));
       }
-
-      if (cronResult.status === 'rejected') {
-        setError('Failed to load cron tasks');
+      if (cronResult.status === 'rejected' && timersResult.status === 'rejected') {
+        setError('获取失败');
       }
-    } catch (e) {
-      setError('Failed to load cron data');
+    } catch {
+      setError('获取失败');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadCronData();
-  }, []);
-
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-      {/* Popup - centered horizontally */}
-      <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 w-[640px] max-h-[80vh] rounded-xl shadow-xl border bg-surface-card border-edge flex flex-col">
+      <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 w-[700px] max-h-[80vh] rounded-xl shadow-xl border bg-surface-card border-edge overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-edge">
           <div className="flex items-center gap-2">
-            {/* Clock icon */}
-            <svg className="w-4 h-4 text-content-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-4 h-4 text-content-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" />
             </svg>
             <span className="font-medium text-content-primary">定时任务</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={loadCronData}
-              className="p-1.5 rounded-lg transition-colors bg-surface-elevated hover:bg-surface-elevated/80 text-content-secondary"
-              title="Refresh"
-            >
-              <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg transition-colors hover:bg-surface-elevated text-content-tertiary"
-              title="Close"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-surface-elevated text-content-tertiary"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-edge">
+          <button
+            onClick={() => setActiveTab('crontab')}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+              activeTab === 'crontab'
+                ? 'text-accent border-b-2 border-accent bg-surface-elevated/50'
+                : 'text-content-secondary hover:text-content-primary hover:bg-surface-elevated/30'
+            }`}
+          >
+            Crontab 任务 ({cronTasks.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('systemd')}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+              activeTab === 'systemd'
+                ? 'text-accent border-b-2 border-accent bg-surface-elevated/50'
+                : 'text-content-secondary hover:text-content-primary hover:bg-surface-elevated/30'
+            }`}
+          >
+            Systemd 定时器 ({timers.length})
+          </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-4 space-y-6">
+        <div className="flex-1 overflow-auto p-4">
           {loading ? (
             <div className="text-sm text-content-tertiary text-center py-8">Loading...</div>
           ) : error ? (
             <div className="text-sm text-red-500 text-center py-8">{error}</div>
           ) : (
             <>
-              {/* Crontab section */}
-              {cronTasks.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">
-                    Crontab 任务
-                  </h4>
-                  <div className="space-y-2">
-                    {cronTasks.map((task, index) => (
-                      <div key={index} className="bg-surface-elevated rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-accent/10 text-accent">
-                            {task.schedule}
-                          </span>
-                        </div>
-                        <code className="text-xs text-content-primary font-mono break-all">
-                          {task.command}
-                        </code>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {activeTab === 'crontab' && (
+                <CrontabTab tasks={cronTasks} expandedLog={expandedLog} onToggleLog={setExpandedLog} />
               )}
-
-              {/* Systemd timers section */}
-              {timers.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-medium text-content-secondary uppercase tracking-wider mb-3">
-                    Systemd 定时器
-                  </h4>
-                  <div className="bg-surface-elevated rounded-lg overflow-hidden">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-edge">
-                          <th className="text-left px-3 py-2 text-content-secondary font-medium">下次执行</th>
-                          <th className="text-left px-3 py-2 text-content-secondary font-medium">剩余</th>
-                          <th className="text-left px-3 py-2 text-content-secondary font-medium">上次执行</th>
-                          <th className="text-left px-3 py-2 text-content-secondary font-medium">服务单元</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {timers.map((timer, index) => (
-                          <tr key={index} className="border-b border-edge/50 last:border-b-0 hover:bg-surface-card/50">
-                            <td className="px-3 py-2 text-content-primary font-mono">{timer.next}</td>
-                            <td className="px-3 py-2 text-accent font-mono">{timer.left}</td>
-                            <td className="px-3 py-2 text-content-tertiary font-mono">{timer.last}</td>
-                            <td className="px-3 py-2 text-content-primary">
-                              <div className="font-medium">{timer.unit}</div>
-                              <div className="text-content-tertiary text-[10px]">{timer.activates}</div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {cronTasks.length === 0 && timers.length === 0 && (
-                <div className="text-sm text-content-tertiary text-center py-8">
-                  暂无定时任务
-                </div>
+              {activeTab === 'systemd' && (
+                <SystemdTab timers={timers} />
               )}
             </>
           )}
@@ -176,62 +127,110 @@ export function CronPopup({ onClose }: CronPopupProps) {
   );
 }
 
-// Parse crontab output into structured tasks
+function CrontabTab({ tasks, expandedLog, onToggleLog }: { tasks: ParsedCronTask[]; expandedLog: string | null; onToggleLog: (log: string | null) => void }) {
+  if (tasks.length === 0) {
+    return <div className="text-sm text-content-tertiary text-center py-8">暂无 Crontab 任务</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {tasks.map((task, index) => (
+        <div key={index} className="bg-surface-elevated rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-accent/10 text-accent">
+              {task.schedule}
+            </span>
+            <span className="text-xs text-content-tertiary">执行命令</span>
+          </div>
+          <div className="text-xs text-content-primary font-mono bg-surface-card rounded p-2 mb-2 break-all">
+            {task.command}
+          </div>
+          <button
+            onClick={() => onToggleLog(expandedLog === task.raw ? null : task.raw)}
+            className="text-xs text-accent hover:underline"
+          >
+            {expandedLog === task.raw ? '收起日志命令' : '查看完整命令'}
+          </button>
+          {expandedLog === task.raw && (
+            <div className="mt-2 text-xs text-content-secondary font-mono bg-surface-card rounded p-2 break-all">
+              {task.raw}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SystemdTab({ timers }: { timers: ParsedTimer[] }) {
+  if (timers.length === 0) {
+    return <div className="text-sm text-content-tertiary text-center py-8">暂无 Systemd 定时器</div>;
+  }
+
+  return (
+    <div className="bg-surface-elevated rounded-lg overflow-hidden">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-edge bg-surface-card/50">
+            <th className="text-left px-3 py-2 text-content-secondary font-medium">下次执行</th>
+            <th className="text-left px-3 py-2 text-content-secondary font-medium">剩余</th>
+            <th className="text-left px-3 py-2 text-content-secondary font-medium">上次执行</th>
+            <th className="text-left px-3 py-2 text-content-secondary font-medium">服务单元</th>
+          </tr>
+        </thead>
+        <tbody>
+          {timers.map((timer, index) => (
+            <tr key={index} className="border-b border-edge/50 last:border-b-0 hover:bg-surface-card/50">
+              <td className="px-3 py-2 text-content-primary font-mono whitespace-nowrap">{timer.next}</td>
+              <td className="px-3 py-2 text-accent font-mono whitespace-nowrap">{timer.left}</td>
+              <td className="px-3 py-2 text-content-tertiary font-mono whitespace-nowrap">{timer.last}</td>
+              <td className="px-3 py-2 text-content-primary">
+                <div className="font-medium">{timer.unit}</div>
+                <div className="text-content-tertiary text-[10px]">{timer.activates}</div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function parseCrontab(output: string): ParsedCronTask[] {
   const lines = output.split('\n').filter(line => line.trim() && !line.startsWith('#'));
   return lines.map(line => {
-    // Simple parsing: first space-separated chunk is schedule, rest is command
     const parts = line.trim().split(/\s+/);
     let schedule = '';
     let command = '';
 
     if (line.startsWith('@')) {
-      // @reboot, @hourly, etc.
       schedule = parts[0];
       command = parts.slice(1).join(' ');
     } else {
-      // Standard cron: minute hour day month weekday
-      // Find the first 5 fields that look like schedule parts
-      const scheduleParts: string[] = [];
-      const cmdParts: string[] = [];
-      let isSchedule = true;
-
-      for (let i = 0; i < parts.length; i++) {
-        if (isSchedule && scheduleParts.length < 5) {
-          scheduleParts.push(parts[i]);
-        } else {
-          isSchedule = false;
-          cmdParts.push(parts[i]);
-        }
-      }
-
-      schedule = scheduleParts.join(' ');
-      command = cmdParts.join(' ');
+      schedule = parts.slice(0, 5).join(' ');
+      command = parts.slice(5).join(' ');
     }
 
     return { schedule, command, raw: line };
   });
 }
 
-// Parse systemctl list-timers output
 function parseSystemdTimers(output: string): ParsedTimer[] {
   const lines = output.split('\n');
   const timers: ParsedTimer[] = [];
 
-  // Skip header and footer lines
   for (const line of lines) {
     if (!line.trim() || line.includes('listed.') || line.includes('Pass --all')) continue;
 
-    // Match timer lines: NEXT LEFT LAST PASSED UNIT ACTIVATES
-    // Example: Tue 2026-04-14 12:34:51 CST  27min Tue 2026-04-14 11:30:51 CST     36min ago anacron.timer                  anacron.service
-    const match = line.match(/^(.+?)\s{2,}(.+?)\s{2,}(.+?)\s{2,}(.+?)\s{2,}([\w.-]+)\s{2,}([\w.-]+)$/);
-    if (match) {
+    // Try to parse timer line
+    const parts = line.trim().split(/\s{2,}/);
+    if (parts.length >= 6) {
       timers.push({
-        next: match[1].trim(),
-        left: match[2].trim(),
-        last: match[3].trim(),
-        unit: match[5].trim(),
-        activates: match[6].trim(),
+        next: parts[0] || '',
+        left: parts[1] || '',
+        last: parts[2] || '',
+        unit: parts[4] || '',
+        activates: parts[5] || '',
       });
     }
   }
