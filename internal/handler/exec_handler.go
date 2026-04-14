@@ -3,11 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -50,8 +52,9 @@ func (h *ExecHandler) StreamCommand(c *gin.Context) {
 	// 创建任务ID
 	taskID := fmt.Sprintf("%d", time.Now().UnixNano())
 
-	// 创建一个通道用于控制结束
-	done := make(chan error, 1)
+	// 用于等待输出 goroutines 完成
+	var wg sync.WaitGroup
+	var outputErr int32 = 0
 
 	// 异步执行命令
 	go func() {
@@ -61,14 +64,16 @@ func (h *ExecHandler) StreamCommand(c *gin.Context) {
 		// 创建管道捕获 stdout
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			done <- fmt.Errorf("failed to create stdout pipe: %v", err)
+			log.Printf("[EXEC] stdout pipe error: %v", err)
+			atomic.StoreInt32(&outputErr, 1)
 			return
 		}
 
 		// 创建管道捕获 stderr
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
-			done <- fmt.Errorf("failed to create stderr pipe: %v", err)
+			log.Printf("[EXEC] stderr pipe error: %v", err)
+			atomic.StoreInt32(&outputErr, 1)
 			return
 		}
 
@@ -79,7 +84,8 @@ func (h *ExecHandler) StreamCommand(c *gin.Context) {
 		// 启动命令
 		if err := cmd.Start(); err != nil {
 			h.runningCmds.Delete(taskID)
-			done <- fmt.Errorf("failed to start command: %v", err)
+			log.Printf("[EXEC] command start error: %v", err)
+			atomic.StoreInt32(&outputErr, 1)
 			return
 		}
 
@@ -87,7 +93,9 @@ func (h *ExecHandler) StreamCommand(c *gin.Context) {
 		sendSSEEvent(c, "status", fmt.Sprintf(`{"status":"running","pid":%d}`, cmd.Process.Pid))
 
 		// 使用 goroutine 读取 stdout
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			buf := make([]byte, 1024)
 			for {
 				n, err := stdout.Read(buf)
@@ -107,7 +115,9 @@ func (h *ExecHandler) StreamCommand(c *gin.Context) {
 		}()
 
 		// 使用 goroutine 读取 stderr
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			buf := make([]byte, 1024)
 			for {
 				n, err := stderr.Read(buf)
@@ -127,8 +137,15 @@ func (h *ExecHandler) StreamCommand(c *gin.Context) {
 		}()
 
 		// 等待命令完成
+		log.Printf("[EXEC] Stream waiting for cmd.Wait(), pid=%s", taskID)
 		err = cmd.Wait()
+		log.Printf("[EXEC] Stream cmd.Wait() returned, pid=%s", taskID)
 		h.runningCmds.Delete(taskID)
+
+		// 等待所有输出 goroutines 完成
+		log.Printf("[EXEC] Stream waiting for wg.Wait(), pid=%s", taskID)
+		wg.Wait()
+		log.Printf("[EXEC] Stream wg.Wait() done, sending done, pid=%s", taskID)
 
 		// 发送完成事件
 		exitCode := 0
@@ -140,12 +157,11 @@ func (h *ExecHandler) StreamCommand(c *gin.Context) {
 			}
 		}
 		sendSSEEvent(c, "done", fmt.Sprintf(`{"status":"done","exitCode":%d}`, exitCode))
-
-		done <- err
+		log.Printf("[EXEC] Stream done sent, pid=%s, exitCode=%d", taskID, exitCode)
 	}()
 
-	// 保持连接直到完成
-	<-done
+	// 保持连接直到完成（通过 context 取消）
+	<-c.Request.Context().Done()
 }
 
 // KillCommand 终止正在执行的命令
@@ -179,10 +195,12 @@ func (h *ExecHandler) Exec(c *gin.Context) {
 		Cmd string `json:"cmd"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("[EXEC] BadRequest: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "cmd is required"})
 		return
 	}
 
+	log.Printf("[EXEC] Executing: %s", req.Cmd)
 	cmd := exec.Command("bash", "-c", req.Cmd)
 	output, err := cmd.CombinedOutput()
 	exitCode := 0
@@ -193,6 +211,7 @@ func (h *ExecHandler) Exec(c *gin.Context) {
 			exitCode = -1
 		}
 	}
+	log.Printf("[EXEC] Done: exitCode=%d, output=%s", exitCode, string(output))
 
 	c.JSON(http.StatusOK, gin.H{
 		"output":   string(output),
@@ -379,6 +398,7 @@ func RestartServiceWithOutput(outputChan chan string) (string, error) {
 
 // sendSSEEvent 发送 SSE 事件
 func sendSSEEvent(c *gin.Context, event string, data string) {
+	log.Printf("[SSE] event=%s data=%s", event, data)
 	fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", event, data)
 	c.Writer.Flush()
 }

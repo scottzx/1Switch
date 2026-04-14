@@ -45,7 +45,6 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     const cmd = [
       'dpkg -l python3.12-venv 2>/dev/null | grep "^ii" > /dev/null && echo VENV_OK || echo VENV_FAIL',
       'which qingflow && echo MCP_OK || echo MCP_FAIL',
-      'qingflow --version 2>&1 | grep -oE "[0-9]+\\.[0-9]+\\.[0-9]+" | head -1',
       'test -f ~/.qingflow-mcp/qingflow-token && echo TOKEN_OK || echo TOKEN_FAIL',
     ].join('; ');
 
@@ -57,7 +56,6 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
         ...prev,
         pythonVenvInstalled: lines.includes('VENV_OK'),
         mcpInstalled: lines.includes('MCP_OK'),
-        mcpVersion: lines.find(l => /^\d+\.\d+\.\d+$/.test(l)) || null,
         tokenInjected: lines.includes('TOKEN_OK'),
         userEmail: lines.includes('TOKEN_OK') ? 'Token 已配置' : null,
       }));
