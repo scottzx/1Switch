@@ -193,11 +193,8 @@ func SetupRouter(r *gin.Engine) {
 		}
 
 		// Exec routes (SSE command execution)
-		exec := api.Group("/exec")
-		{
-			exec.GET("/stream", execHandler.StreamCommand)
-			exec.POST("/kill", execHandler.KillCommand)
-			exec.POST("", execHandler.Exec)
-		}
+		api.POST("/exec", execHandler.Exec)
+		api.GET("/exec/stream", execHandler.StreamCommand)
+		api.POST("/exec/kill", execHandler.KillCommand)
 	}
 }
