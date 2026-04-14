@@ -451,6 +451,17 @@ func (s *SystemService) isMacOS(ctx context.Context) bool {
 	return err == nil
 }
 
+// isLinux 检测是否为 Linux
+func (s *SystemService) isLinux(ctx context.Context) bool {
+	output, err := s.runCommand(ctx, "uname -s")
+	if err == nil {
+		return strings.TrimSpace(output) == "Linux"
+	}
+	// 备用检测：检查是否存在 /etc/os-release
+	_, err = s.runCommand(ctx, "cat /etc/os-release")
+	return err == nil
+}
+
 // RestartOpenClaw 重启 OpenClaw 服务
 func (s *SystemService) RestartOpenClaw(ctx context.Context) error {
 	_, err := s.runCommandWithContext(ctx, "systemctl restart openclaw")
