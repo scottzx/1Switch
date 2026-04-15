@@ -62,22 +62,38 @@ func (s *FrpService) CheckInstalled(ctx context.Context) bool {
 
 // Install 安装 frpc
 func (s *FrpService) Install(ctx context.Context) *model.FrpInstallResult {
-	// 使用打包在二进制目录的 frpc 安装包
-	execPath, err := os.Executable()
-	if err != nil {
-		return &model.FrpInstallResult{Success: false, Error: fmt.Sprintf("failed to get exec path: %v", err)}
-	}
-	execDir := filepath.Dir(execPath)
-	tarPath := filepath.Join(execDir, "internal", "frp_0.61.1_linux_arm64.tar.gz")
+	// 查找 frpc 安装包的路径（按优先级）
+	// 1. OTA 部署路径：/opt/iclaw/iclaw-manager/（dist.zip 解压后放置）
+	// 2. 开发/旧版路径：$(dirname $exe)/internal/
+	// 3. /tmp 路径（兜底）
+	var tarPath string
+	otaPath := "/opt/iclaw/iclaw-manager/frp_0.61.1_linux_arm64.tar.gz"
 
-	// 如果打包的包不存在，尝试从 /tmp 获取
-	if _, err := os.Stat(tarPath); os.IsNotExist(err) {
-		tarPath = "/tmp/frp_0.61.1_linux_arm64.tar.gz"
+	execPath, err := os.Executable()
+	if err == nil {
+		execDir := filepath.Dir(execPath)
+		devPath := filepath.Join(execDir, "internal", "frp_0.61.1_linux_arm64.tar.gz")
+
+		// 按优先级尝试
+		for _, p := range []string{otaPath, devPath, "/tmp/frp_0.61.1_linux_arm64.tar.gz"} {
+			if _, err := os.Stat(p); err == nil {
+				tarPath = p
+				break
+			}
+		}
+	} else {
+		// 无法获取 exe 路径时，直接尝试 OTA 路径和 /tmp
+		for _, p := range []string{otaPath, "/tmp/frp_0.61.1_linux_arm64.tar.gz"} {
+			if _, err := os.Stat(p); err == nil {
+				tarPath = p
+				break
+			}
+		}
 	}
 
 	// 检查安装包是否存在
-	if _, err := os.Stat(tarPath); os.IsNotExist(err) {
-		return &model.FrpInstallResult{Success: false, Error: fmt.Sprintf("frpc package not found at: %s", tarPath)}
+	if tarPath == "" || _, err := os.Stat(tarPath); os.IsNotExist(err) {
+		return &model.FrpInstallResult{Success: false, Error: fmt.Sprintf("frpc package not found")}
 	}
 
 	// 解压 frpc (去掉顶层目录)

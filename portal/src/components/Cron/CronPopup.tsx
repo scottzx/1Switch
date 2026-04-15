@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { cronApi } from '../../services/api';
+import { cronApi, execApi } from '../../services/api';
 
 interface CronPopupProps {
   onClose: () => void;
@@ -8,6 +8,7 @@ interface CronPopupProps {
 interface ParsedCronTask {
   schedule: string;
   command: string;
+  logFile: string;
   raw: string;
 }
 
@@ -27,7 +28,9 @@ export function CronPopup({ onClose }: CronPopupProps) {
   const [timers, setTimers] = useState<ParsedTimer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [logContent, setLogContent] = useState<string | null>(null);
+  const [loadingLog, setLoadingLog] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -55,6 +58,28 @@ export function CronPopup({ onClose }: CronPopupProps) {
       setError('获取失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleExpand = async (task: ParsedCronTask) => {
+    if (expandedTask === task.raw) {
+      setExpandedTask(null);
+      setLogContent(null);
+      return;
+    }
+
+    setExpandedTask(task.raw);
+
+    if (task.logFile) {
+      setLoadingLog(true);
+      try {
+        const result = await execApi.exec(`tail -50 ${task.logFile}`);
+        setLogContent(result.output || '暂无日志内容');
+      } catch {
+        setLogContent('无法读取日志');
+      } finally {
+        setLoadingLog(false);
+      }
     }
   };
 
@@ -114,7 +139,13 @@ export function CronPopup({ onClose }: CronPopupProps) {
           ) : (
             <>
               {activeTab === 'crontab' && (
-                <CrontabTab tasks={cronTasks} expandedLog={expandedLog} onToggleLog={setExpandedLog} />
+                <CrontabTab
+                  tasks={cronTasks}
+                  expandedTask={expandedTask}
+                  logContent={logContent}
+                  loadingLog={loadingLog}
+                  onToggle={handleToggleExpand}
+                />
               )}
               {activeTab === 'systemd' && (
                 <SystemdTab timers={timers} />
@@ -127,7 +158,19 @@ export function CronPopup({ onClose }: CronPopupProps) {
   );
 }
 
-function CrontabTab({ tasks, expandedLog, onToggleLog }: { tasks: ParsedCronTask[]; expandedLog: string | null; onToggleLog: (log: string | null) => void }) {
+function CrontabTab({
+  tasks,
+  expandedTask,
+  logContent,
+  loadingLog,
+  onToggle,
+}: {
+  tasks: ParsedCronTask[];
+  expandedTask: string | null;
+  logContent: string | null;
+  loadingLog: boolean;
+  onToggle: (task: ParsedCronTask) => void;
+}) {
   if (tasks.length === 0) {
     return <div className="text-sm text-content-tertiary text-center py-8">暂无 Crontab 任务</div>;
   }
@@ -140,20 +183,31 @@ function CrontabTab({ tasks, expandedLog, onToggleLog }: { tasks: ParsedCronTask
             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-accent/10 text-accent">
               {task.schedule}
             </span>
-            <span className="text-xs text-content-tertiary">执行命令</span>
+            {task.logFile && (
+              <span className="text-xs text-content-tertiary">{task.logFile}</span>
+            )}
           </div>
           <div className="text-xs text-content-primary font-mono bg-surface-card rounded p-2 mb-2 break-all">
             {task.command}
           </div>
-          <button
-            onClick={() => onToggleLog(expandedLog === task.raw ? null : task.raw)}
-            className="text-xs text-accent hover:underline"
-          >
-            {expandedLog === task.raw ? '收起日志命令' : '查看完整命令'}
-          </button>
-          {expandedLog === task.raw && (
-            <div className="mt-2 text-xs text-content-secondary font-mono bg-surface-card rounded p-2 break-all">
-              {task.raw}
+          {task.logFile && (
+            <button
+              onClick={() => onToggle(task)}
+              className="text-xs text-accent hover:underline"
+            >
+              {expandedTask === task.raw
+                ? loadingLog
+                  ? '加载中...'
+                  : '收起日志'
+                : '查看日志'}
+            </button>
+          )}
+          {expandedTask === task.raw && logContent !== null && (
+            <div className="mt-2">
+              <div className="text-xs text-content-tertiary mb-1">最近 50 行日志：</div>
+              <pre className="text-xs text-content-secondary font-mono bg-surface-card rounded p-2 overflow-auto max-h-40 whitespace-pre-wrap">
+                {loadingLog ? '加载中...' : logContent}
+              </pre>
             </div>
           )}
         </div>
@@ -202,6 +256,7 @@ function parseCrontab(output: string): ParsedCronTask[] {
     const parts = line.trim().split(/\s+/);
     let schedule = '';
     let command = '';
+    let logFile = '';
 
     if (line.startsWith('@')) {
       schedule = parts[0];
@@ -211,7 +266,13 @@ function parseCrontab(output: string): ParsedCronTask[] {
       command = parts.slice(5).join(' ');
     }
 
-    return { schedule, command, raw: line };
+    // Extract log file path from command (e.g., >> /var/log/xxx.log 2>&1)
+    const logMatch = command.match(/>>\s*(\S+\.log)/);
+    if (logMatch) {
+      logFile = logMatch[1];
+    }
+
+    return { schedule, command, logFile, raw: line };
   });
 }
 
@@ -222,7 +283,6 @@ function parseSystemdTimers(output: string): ParsedTimer[] {
   for (const line of lines) {
     if (!line.trim() || line.includes('listed.') || line.includes('Pass --all')) continue;
 
-    // Try to parse timer line
     const parts = line.trim().split(/\s{2,}/);
     if (parts.length >= 6) {
       timers.push({

@@ -100,6 +100,9 @@ if [ -f "$PROJECT_DIR/dist/index.html" ]; then
     log "    前端版本: $(grep -o 'data-version="[^"]*"' "$PROJECT_DIR/dist/index.html")"
 fi
 
+# 打包 frpc 安装包到 dist
+cp "$PROJECT_DIR/internal/frp_0.61.1_linux_arm64.tar.gz" "$PROJECT_DIR/dist/"
+
 # 打包
 cd "$PROJECT_DIR/dist"
 zip -r ../dist.zip .

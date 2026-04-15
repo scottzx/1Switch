@@ -10,7 +10,6 @@ const CALLBACK_URL = `${window.location.origin}/app/iclaw/qingflow-callback`;
 interface SetupStatus {
   pythonVenvInstalled: boolean | null;
   mcpInstalled: boolean | null;
-  mcpVersion: string | null;
   tokenInjected: boolean | null;
   userEmail: string | null;
   cliAuthenticated: boolean | null;
@@ -28,7 +27,6 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
   const [status, setStatus] = useState<SetupStatus>({
     pythonVenvInstalled: null,
     mcpInstalled: null,
-    mcpVersion: null,
     tokenInjected: null,
     userEmail: null,
     cliAuthenticated: null,
@@ -44,43 +42,58 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
   const checkAllStatus = async () => {
     const cmd = [
       'dpkg -l python3.12-venv 2>/dev/null | grep "^ii" > /dev/null && echo VENV_OK || echo VENV_FAIL',
-      'which qingflow && echo MCP_OK || echo MCP_FAIL',
+      // 检查三个 MCP 包是否安装
+      'which qingflow && echo QINGFLOW_OK || echo QINGFLOW_FAIL',
+      'which qingflow-app-user-mcp && echo USER_MCP_OK || echo USER_MCP_FAIL',
+      'which qingflow-app-builder-mcp && echo BUILDER_MCP_OK || echo BUILDER_MCP_FAIL',
       'test -f ~/.qingflow-mcp/qingflow-token && echo TOKEN_OK || echo TOKEN_FAIL',
+      // 检查认证缓存文件是否存在
+      'test -f ~/.qingflow-mcp/setup-complete && cat ~/.qingflow-mcp/setup-complete || echo ""',
     ].join('; ');
 
     try {
       const result = await execApi.execCommand(cmd);
       const lines = result.output.split('\n').filter(l => l.trim());
 
+      // 尝试解析认证缓存中的用户信息
+      let cliAuthenticated = false;
+      let userEmail: string | null = null;
+
+      // 找到包含 qingflow 响应的行（以 { 开头）
+      const authCacheLine = lines.find(l => l.trim().startsWith('{'));
+      if (authCacheLine) {
+        try {
+          const authData = JSON.parse(authCacheLine);
+          if (authData.email) {
+            cliAuthenticated = true;
+            userEmail = authData.email;
+          }
+        } catch {
+          // JSON 解析失败，忽略
+        }
+      }
+
       setStatus((prev) => ({
         ...prev,
         pythonVenvInstalled: lines.includes('VENV_OK'),
-        mcpInstalled: lines.includes('MCP_OK'),
+        // 三个 MCP 包都安装才算安装完成
+        mcpInstalled: lines.includes('QINGFLOW_OK') && lines.includes('USER_MCP_OK') && lines.includes('BUILDER_MCP_OK'),
         tokenInjected: lines.includes('TOKEN_OK'),
-        userEmail: lines.includes('TOKEN_OK') ? 'Token 已配置' : null,
+        cliAuthenticated,
+        userEmail: userEmail || (lines.includes('TOKEN_OK') ? 'Token 已配置' : null),
       }));
     } catch (e) {
-      console.error('checkAllStatus failed:', e);
+      console.error('[checkAllStatus] failed:', e);
+      // 设置为默认值（允许重新认证）
+      setStatus((prev) => ({
+        ...prev,
+        pythonVenvInstalled: false,
+        mcpInstalled: false,
+        tokenInjected: false,
+        cliAuthenticated: false,
+        userEmail: null,
+      }));
     }
-  };
-
-  // 获取 MCP 版本
-  const getMcpVersion = async (): Promise<string | null> => {
-    return new Promise((resolve) => {
-      execApi.streamCommand(
-        'qingflow --version 2>&1 || echo "not found"',
-        (output) => {
-          const match = output.content.match(/(\d+\.\d+\.\d+)/);
-          if (match) {
-            resolve(match[1]);
-          }
-        },
-        () => {},
-        () => {
-          resolve(null);
-        }
-      );
-    });
   };
 
   useEffect(() => {
@@ -119,8 +132,15 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     const tabId = addTab('install qingflow-cli', '安装 qingflow-cli');
     setStatus((prev) => ({ ...prev, installingMcp: true }));
 
+    // 串行执行三个安装命令
+    const installCmd = [
+      'sudo npm install -g @qingflow-tech/qingflow-cli',
+      'sudo npm install -g @qingflow-tech/qingflow-app-user-mcp',
+      'sudo npm install -g @qingflow-tech/qingflow-app-builder-mcp',
+    ].join(' && ');
+
     execApi.streamCommand(
-      'npm install -g @josephyan/qingflow-cli',
+      installCmd,
       (data) => appendOutput(tabId, data.content),
       (data) => {
         if (data.status === 'running') setTabStatus(tabId, 'running');
@@ -129,11 +149,9 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
         setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
 
         if (data.exitCode === 0) {
-          const version = await getMcpVersion();
           setStatus((prev) => ({
             ...prev,
             mcpInstalled: true,
-            mcpVersion: version,
             installingMcp: false,
           }));
         } else {
@@ -216,49 +234,67 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
       );
     })
       .then((token) => {
-        // 使用 token 进行认证
+        // 使用 token 进行认证，--persist 会自动持久化保存认证信息
         return new Promise<void>((resolve, reject) => {
           const outputLines: string[] = [];
 
           execApi.streamCommand(
-            `qingflow auth use-token --token "${token}" --json 2>&1 || echo '{"ok":false}'`,
+            `qingflow auth use-token --token "${token}" --persist 2>&1`,
             (authData) => {
               outputLines.push(authData.content);
             },
             () => {},
             (doneData) => {
-              if (doneData.exitCode === 0 && outputLines.length > 0) {
-                const combinedOutput = outputLines.filter(l => l.trim()).join('').trim();
-                try {
-                  const result = JSON.parse(combinedOutput);
-                  if (result.ok !== false) {
-                    resolve();
-                    return;
-                  }
-                } catch {
-                  // JSON 解析失败
-                }
+              if (doneData.exitCode === 0) {
+                // 认证成功
+                resolve();
+                return;
               }
+              // 认证失败，输出错误信息
+              console.log('[Auth] auth failed:', outputLines.join(''));
               reject(new Error('Auth failed'));
             }
           );
         });
       })
       .then(() => {
-        // 保存缓存
+        // 认证成功后，使用 whoami 获取用户信息并保存缓存
         return new Promise<void>((resolve) => {
+          const outputLines: string[] = [];
           execApi.streamCommand(
-            'mkdir -p ~/.qingflow-mcp && echo "OK" > ~/.qingflow-mcp/setup-complete',
+            'qingflow auth whoami --json 2>&1',
+            (data) => {
+              outputLines.push(data.content);
+            },
             () => {},
-            () => {},
-            () => {
-              setStatus((prev) => ({
-                ...prev,
-                cliAuthenticated: true,
-                authenticating: false,
-              }));
-              onComplete();
-              resolve();
+            (doneData) => {
+              if (doneData.exitCode === 0 && outputLines.length > 0) {
+                const combinedOutput = outputLines.filter(l => l.trim()).join('').trim();
+                // 保存用户信息到缓存文件
+                const escapedJson = combinedOutput.replace(/'/g, "'\\''");
+                execApi.streamCommand(
+                  `mkdir -p ~/.qingflow-mcp && echo '${escapedJson}' > ~/.qingflow-mcp/setup-complete`,
+                  () => {},
+                  () => {},
+                  () => {
+                    setStatus((prev) => ({
+                      ...prev,
+                      cliAuthenticated: true,
+                      authenticating: false,
+                    }));
+                    onComplete();
+                    resolve();
+                  }
+                );
+              } else {
+                setStatus((prev) => ({
+                  ...prev,
+                  cliAuthenticated: true,
+                  authenticating: false,
+                }));
+                onComplete();
+                resolve();
+              }
             }
           );
         });
@@ -302,7 +338,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     };
   }, []);
 
-  const { pythonVenvInstalled, mcpInstalled, mcpVersion, tokenInjected, userEmail, cliAuthenticated, installingPython, installingMcp, authenticating } = status;
+  const { pythonVenvInstalled, mcpInstalled, tokenInjected, userEmail, cliAuthenticated, installingPython, installingMcp, authenticating } = status;
   const canProceed = cliAuthenticated;
 
   return (
@@ -382,10 +418,10 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
             )}
             <div>
               <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                步骤 2：安装 qingflow-cli
+                步骤 2：安装 MCP 工具
               </p>
               <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {mcpInstalled === null ? '检测中...' : mcpInstalled ? (mcpVersion ? `qingflow-cli v${mcpVersion}` : '已安装') : '命令行工具'}
+                {mcpInstalled === null ? '检测中...' : mcpInstalled ? '已安装' : '命令行工具'}
               </p>
             </div>
           </div>
@@ -490,7 +526,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
               </p>
             </div>
 
-            {tokenInjected && cliAuthenticated === null && (
+            {tokenInjected && cliAuthenticated !== true && (
               <button
                 onClick={handleAuthenticate}
                 disabled={authenticating}
