@@ -13,7 +13,7 @@ export function QuickCommandPopup({ onClose }: QuickCommandPopupProps) {
     setLoading(true);
     setResult(null);
     try {
-      const cmd = `systemctl stop iclaw-ttyd 2>/dev/null; pkill -f ttyd || true
+      const cmd = `systemctl stop iclaw-ttyd 2>/dev/null; killall ttyd 2>/dev/null || true
 mkdir -p /etc/systemd/system
 cat > /etc/systemd/system/iclaw-ttyd.service << 'EOF'
 [Unit]
@@ -62,14 +62,12 @@ type = tcp
 local_ip = 127.0.0.1
 local_port = 22
 remote_port =
-EOF
-pkill -f 'frpc -c' 2>/dev/null || true
-nohup frpc -c /var/lib/iclaw/frpc.ini > /dev/null 2>&1 &`;
+EOF`;
       const res = await execApi.exec(cmd);
       if (res.exitCode !== 0) {
         setResult({ type: 'error', text: `失败: ${res.output || '命令执行失败'}` });
       } else {
-        setResult({ type: 'success', text: 'FRP 配置已创建并启动' });
+        setResult({ type: 'success', text: 'FRP 配置已创建' });
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
