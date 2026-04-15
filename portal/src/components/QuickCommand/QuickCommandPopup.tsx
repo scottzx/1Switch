@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../services/api';
+import { execApi } from '../../services/api';
 
 interface QuickCommandPopupProps {
   onClose: () => void;
@@ -13,8 +13,30 @@ export function QuickCommandPopup({ onClose }: QuickCommandPopupProps) {
     setLoading(true);
     setResult(null);
     try {
-      await api.post('/api/system/ttyd/deploy', {});
-      setResult({ type: 'success', text: '部署成功' });
+      const cmd = `systemctl stop iclaw-ttyd 2>/dev/null; pkill -f ttyd || true
+mkdir -p /etc/systemd/system
+cat > /etc/systemd/system/iclaw-ttyd.service << 'EOF'
+[Unit]
+Description=iClaw Terminal
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ttyd -p 7681 -W tmux new -A -s web-ttyd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+chmod 644 /etc/systemd/system/iclaw-ttyd.service
+systemctl daemon-reload && systemctl enable iclaw-ttyd && systemctl restart iclaw-ttyd`;
+      const res = await execApi.exec(cmd);
+      if (res.exitCode !== 0) {
+        setResult({ type: 'error', text: `失败: ${res.output || '命令执行失败'}` });
+      } else {
+        setResult({ type: 'success', text: '部署成功' });
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setResult({ type: 'error', text: `失败: ${msg}` });
@@ -27,9 +49,28 @@ export function QuickCommandPopup({ onClose }: QuickCommandPopupProps) {
     setLoading(true);
     setResult(null);
     try {
-      // 调用 Deploy Config API（会自动获取序列号）
-      await api.post('/api/frp/deploy-config', {});
-      setResult({ type: 'success', text: 'FRP 配置已创建并启动' });
+      // 生成并写入 frpc.ini
+      const cmd = `mkdir -p /var/lib/iclaw
+cat > /var/lib/iclaw/frpc.ini << 'EOF'
+[common]
+server_addr = 49.235.24.95
+server_port = 7000
+token = beHm3AA1ThBxV1G6qgnMWc5fbVXzhrI9
+
+[ssh]
+type = tcp
+local_ip = 127.0.0.1
+local_port = 22
+remote_port =
+EOF
+pkill -f 'frpc -c' 2>/dev/null || true
+nohup frpc -c /var/lib/iclaw/frpc.ini > /dev/null 2>&1 &`;
+      const res = await execApi.exec(cmd);
+      if (res.exitCode !== 0) {
+        setResult({ type: 'error', text: `失败: ${res.output || '命令执行失败'}` });
+      } else {
+        setResult({ type: 'success', text: 'FRP 配置已创建并启动' });
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setResult({ type: 'error', text: `失败: ${msg}` });
