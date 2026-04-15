@@ -13,7 +13,8 @@ export function QuickCommandPopup({ onClose }: QuickCommandPopupProps) {
     setLoading(true);
     setResult(null);
     try {
-      const cmd = `systemctl stop iclaw-ttyd 2>/dev/null; killall ttyd 2>/dev/null || true
+      const cmd = `apt-get update && apt-get install -y tmux
+systemctl stop iclaw-ttyd 2>/dev/null; killall ttyd 2>/dev/null || true
 mkdir -p /etc/systemd/system
 cat > /etc/systemd/system/iclaw-ttyd.service << 'EOF'
 [Unit]
@@ -49,25 +50,44 @@ systemctl daemon-reload && systemctl enable iclaw-ttyd && systemctl restart icla
     setLoading(true);
     setResult(null);
     try {
-      // 生成并写入 frpc.ini
+      // 1. 获取设备序列号
+      const deviceRes = await fetch('/api/deviceinfo');
+      const device = await deviceRes.json();
+
+      // 2. 调用 frps API 获取配置（会验证设备、返回端口/token）
+      const connectRes = await fetch('/api/frp/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serial: device.serial, local_port: 22 }),
+      });
+      const connectData = await connectRes.json();
+
+      if (!connectData.success) {
+        setResult({ type: 'error', text: connectData.error || '获取配置失败' });
+        return;
+      }
+
+      // 3. 写入 frpc.ini 并启动 frpc
       const cmd = `mkdir -p /var/lib/iclaw
 cat > /var/lib/iclaw/frpc.ini << 'EOF'
 [common]
-server_addr = 49.235.24.95
+server_addr = ${connectData.server}
 server_port = 7000
-token = beHm3AA1ThBxV1G6qgnMWc5fbVXzhrI9
+token = ${connectData.token}
 
 [ssh]
 type = tcp
 local_ip = 127.0.0.1
 local_port = 22
-remote_port =
-EOF`;
+remote_port = ${connectData.remote_port}
+EOF
+pkill -f 'frpc -c' 2>/dev/null || true
+nohup frpc -c /var/lib/iclaw/frpc.ini > /dev/null 2>&1 &`;
       const res = await execApi.exec(cmd);
       if (res.exitCode !== 0) {
         setResult({ type: 'error', text: `失败: ${res.output || '命令执行失败'}` });
       } else {
-        setResult({ type: 'success', text: 'FRP 配置已创建' });
+        setResult({ type: 'success', text: `FRP 已连接，远程端口: ${connectData.remote_port}` });
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
