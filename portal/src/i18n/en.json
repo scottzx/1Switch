@@ -95,6 +95,10 @@
     "frp": {
       "name": "Remote Assistance",
       "description": "FRP reverse proxy for TCP/UDP tunneling."
+    },
+    "quickCommand": {
+      "name": "Quick Commands",
+      "description": "Device maintenance quick commands."
     }
   }
 }

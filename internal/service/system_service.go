@@ -468,6 +468,50 @@ func (s *SystemService) RestartOpenClaw(ctx context.Context) error {
 	return err
 }
 
+// DeployTtydService 部署 iClaw TTYD+tmux 服务
+func (s *SystemService) DeployTtydService(ctx context.Context) error {
+	// ttyd service 文件内容
+	serviceContent := `[Unit]
+Description=iClaw Terminal
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ttyd -p 7681 -W tmux new -A -s web-ttyd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+`
+	// 先通过 systemd 停止旧服务，再杀孤儿进程
+	if _, err := s.runCommandWithContext(ctx, "systemctl stop iclaw-ttyd 2>/dev/null; pkill -f ttyd || true"); err != nil {
+		return fmt.Errorf("停止旧ttyd进程失败: %w", err)
+	}
+
+	// 写入 service 文件
+	if _, err := s.runCommandWithContext(ctx, "mkdir -p /etc/systemd/system"); err != nil {
+		return fmt.Errorf("创建systemd目录失败: %w", err)
+	}
+
+	// 使用 tee 写入文件（需要 root 权限，admin-api 通常以 root 运行）
+	if _, err := s.runCommandWithContext(ctx, "cat > /etc/systemd/system/iclaw-ttyd.service << 'EOF'\n"+serviceContent+"EOF"); err != nil {
+		return fmt.Errorf("写入service文件失败: %w", err)
+	}
+
+	// 设置权限
+	if _, err := s.runCommandWithContext(ctx, "chmod 644 /etc/systemd/system/iclaw-ttyd.service"); err != nil {
+		return fmt.Errorf("设置权限失败: %w", err)
+	}
+
+	// reload systemd、设置自启动、启动服务
+	if _, err := s.runCommandWithContext(ctx, "systemctl daemon-reload && systemctl enable iclaw-ttyd && systemctl restart iclaw-ttyd"); err != nil {
+		return fmt.Errorf("启动ttyd服务失败: %w", err)
+	}
+
+	return nil
+}
+
 // GetDeviceInfo 获取设备基本信息（hostname、序列号、IP）
 func (s *SystemService) GetDeviceInfo(ctx context.Context) (*model.DeviceInfo, error) {
 	info := &model.DeviceInfo{}

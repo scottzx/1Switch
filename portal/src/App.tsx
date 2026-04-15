@@ -4,6 +4,7 @@ import ModuleSection from './components/ModuleSection';
 import { LanPopup } from './components/Network/LanPopup';
 import { WifiPopup } from './components/Network/WifiPopup';
 import { CronPopup } from './components/Cron/CronPopup';
+import { QuickCommandPopup } from './components/QuickCommand/QuickCommandPopup';
 import { networkApi } from './services/api';
 
 interface Module {
@@ -159,6 +160,13 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
           url: '/app/frp/',
           status: 'available',
         },
+        {
+          id: 'quick-command',
+          nameKey: 'modules.quickCommand.name',
+          descriptionKey: 'modules.quickCommand.description',
+          type: 'route',
+          status: 'available',
+        },
       ],
     },
   ];
@@ -239,6 +247,7 @@ function App() {
   const [showLanPopup, setShowLanPopup] = useState(false);
   const [showWifiPopup, setShowWifiPopup] = useState(false);
   const [showCronPopup, setShowCronPopup] = useState(false);
+  const [showQuickCommandPopup, setShowQuickCommandPopup] = useState(false);
   const [lanConnected, setLanConnected] = useState(false);
   const [wifiConnected, setWifiConnected] = useState(false);
   const [sections, setSections] = useState<{ titleKey: string; modules: Module[] }[]>([]);
@@ -264,6 +273,10 @@ function App() {
       const cronModule = cronSection.modules.find(m => m.id === 'cron');
       if (cronModule) {
         cronModule.onClick = () => setShowCronPopup(true);
+      }
+      const quickCommandModule = cronSection.modules.find(m => m.id === 'quick-command');
+      if (quickCommandModule) {
+        quickCommandModule.onClick = () => setShowQuickCommandPopup(true);
       }
     }
     setSections(sections);
@@ -364,6 +377,9 @@ function App() {
 
       {/* Cron Popup */}
       {showCronPopup && <CronPopup onClose={() => setShowCronPopup(false)} />}
+
+      {/* Quick Command Popup */}
+      {showQuickCommandPopup && <QuickCommandPopup onClose={() => setShowQuickCommandPopup(false)} />}
     </div>
   );
 }

@@ -60,6 +60,18 @@ export const systemApi = {
     const data = await request<{ ip: string }>('/api/system/device-ip');
     return data.ip;
   },
+  deployTtyd: async (): Promise<void> => {
+    await request('/api/system/ttyd/deploy', { method: 'POST' });
+  },
+};
+
+export const api = {
+  post: async (path: string, body: unknown): Promise<void> => {
+    await request(path, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
 };
 
 export interface ExecResult {

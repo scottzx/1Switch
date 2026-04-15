@@ -95,6 +95,10 @@
     "frp": {
       "name": "远程协助",
       "description": "FRP 内网穿透，支持 TCP/UDP 隧道。"
+    },
+    "quickCommand": {
+      "name": "快捷指令",
+      "description": "设备维护快捷指令，快速执行常见操作。"
     }
   }
 }

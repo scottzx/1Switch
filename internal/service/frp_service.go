@@ -92,7 +92,10 @@ func (s *FrpService) Install(ctx context.Context) *model.FrpInstallResult {
 	}
 
 	// 检查安装包是否存在
-	if tarPath == "" || _, err := os.Stat(tarPath); os.IsNotExist(err) {
+	if tarPath == "" {
+		return &model.FrpInstallResult{Success: false, Error: fmt.Sprintf("frpc package not found")}
+	}
+	if _, err := os.Stat(tarPath); os.IsNotExist(err) {
 		return &model.FrpInstallResult{Success: false, Error: fmt.Sprintf("frpc package not found")}
 	}
 

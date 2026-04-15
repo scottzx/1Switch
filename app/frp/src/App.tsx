@@ -19,6 +19,19 @@ function App() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
+    // 获取设备序列号
+    const fetchDeviceInfo = async () => {
+      try {
+        const res = await fetch('/api/deviceinfo');
+        const data = await res.json();
+        if (data?.serial) {
+          setSerial(data.serial);
+        }
+      } catch (e) {
+        console.error('Failed to fetch device info:', e);
+      }
+    };
+    fetchDeviceInfo();
     checkStatus();
   }, []);
 

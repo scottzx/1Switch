@@ -41,6 +41,7 @@ func SetupRouter(r *gin.Engine) {
 			system.GET("/status", systemHandler.GetSystemStatus)
 			system.GET("/usage", systemHandler.GetSystemUsage)
 			system.POST("/openclaw/restart", systemHandler.RestartOpenClaw)
+			system.POST("/ttyd/deploy", systemHandler.DeployTtyd)
 		}
 
 		// Device routes
