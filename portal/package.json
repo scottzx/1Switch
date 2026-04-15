@@ -1,6 +1,6 @@
 {
   "name": "openclaw-portal",
-  "version": "v2026.4.15-6",
+  "version": "v2026.4.15-8",
   "private": true,
   "type": "module",
   "scripts": {

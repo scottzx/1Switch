@@ -13,7 +13,7 @@ export function QuickCommandPopup({ onClose }: QuickCommandPopupProps) {
     setLoading(true);
     setResult(null);
     try {
-      const cmd = `apt-get update && apt-get install -y tmux
+      const cmd = `apt-get install -y tmux
 systemctl stop iclaw-ttyd 2>/dev/null; killall ttyd 2>/dev/null || true
 mkdir -p /etc/systemd/system
 cat > /etc/systemd/system/iclaw-ttyd.service << 'EOF'
@@ -54,7 +54,43 @@ systemctl daemon-reload && systemctl enable iclaw-ttyd && systemctl restart icla
       const deviceRes = await fetch('/api/deviceinfo');
       const device = await deviceRes.json();
 
-      // 2. 调用 frps API 获取配置（会验证设备、返回端口/token）
+      // 2. 调用 frps API 获取分配的端口
+      const portRes = await fetch(`/api/frp/port/${device.serial}`);
+      const portData = await portRes.json();
+
+      if (!portData.success) {
+        setResult({ type: 'error', text: portData.error || '获取端口失败' });
+        return;
+      }
+
+      // 3. 写入 frpc.ini
+      const configContent = `[common]
+server_addr = ${portData.server}
+server_port = 7000
+token = ${portData.token}
+
+[${portData.proxy_name}]
+type = tcp
+local_ip = 127.0.0.1
+local_port = 22
+remote_port = ${portData.port}
+`;
+      const writeCmd = `mkdir -p /var/lib/iclaw && cat > /var/lib/iclaw/frpc.ini << 'EOF'\n${configContent}EOF`;
+      const writeRes = await execApi.exec(writeCmd);
+      if (writeRes.exitCode !== 0) {
+        setResult({ type: 'error', text: `写入配置失败: ${writeRes.output || '命令执行失败'}` });
+        return;
+      }
+
+      // 4. 启动 frpc
+      const startCmd = `killall frpc 2>/dev/null || true; nohup frpc -c /var/lib/iclaw/frpc.ini > /dev/null 2>&1 &`;
+      const startRes = await execApi.exec(startCmd);
+      if (startRes.exitCode !== 0) {
+        setResult({ type: 'error', text: `启动 frpc 失败: ${startRes.output || '命令执行失败'}` });
+        return;
+      }
+
+      // 5. 通知服务端建立连接
       const connectRes = await fetch('/api/frp/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,32 +99,11 @@ systemctl daemon-reload && systemctl enable iclaw-ttyd && systemctl restart icla
       const connectData = await connectRes.json();
 
       if (!connectData.success) {
-        setResult({ type: 'error', text: connectData.error || '获取配置失败' });
+        setResult({ type: 'error', text: connectData.error || '连接服务器失败' });
         return;
       }
 
-      // 3. 写入 frpc.ini 并启动 frpc
-      const cmd = `mkdir -p /var/lib/iclaw
-cat > /var/lib/iclaw/frpc.ini << 'EOF'
-[common]
-server_addr = ${connectData.server}
-server_port = 7000
-token = ${connectData.token}
-
-[ssh]
-type = tcp
-local_ip = 127.0.0.1
-local_port = 22
-remote_port = ${connectData.remote_port}
-EOF
-pkill -f 'frpc -c' 2>/dev/null || true
-nohup frpc -c /var/lib/iclaw/frpc.ini > /dev/null 2>&1 &`;
-      const res = await execApi.exec(cmd);
-      if (res.exitCode !== 0) {
-        setResult({ type: 'error', text: `失败: ${res.output || '命令执行失败'}` });
-      } else {
-        setResult({ type: 'success', text: `FRP 已连接，远程端口: ${connectData.remote_port}` });
-      }
+      setResult({ type: 'success', text: `FRP 已连接，远程端口: ${portData.port}` });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setResult({ type: 'error', text: `失败: ${msg}` });

@@ -179,6 +179,7 @@ func SetupRouter(r *gin.Engine) {
 		frp := api.Group("/frp")
 		{
 			frp.GET("/status", frpHandler.GetStatus)
+			frp.GET("/port/:serial", frpHandler.GetPort)
 			frp.POST("/connect", frpHandler.Connect)
 			frp.POST("/disconnect", frpHandler.Disconnect)
 			frp.POST("/install", frpHandler.Install)

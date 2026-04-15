@@ -30,9 +30,10 @@ type FrpConnectRequest struct {
 type FrpConnectResponse struct {
 	Success    bool   `json:"success"`
 	Server     string `json:"server,omitempty"`
-	RemotePort int   `json:"remote_port,omitempty"`
-	LocalPort  int   `json:"local_port,omitempty"`
+	RemotePort int    `json:"remote_port,omitempty"`
+	LocalPort  int    `json:"local_port,omitempty"`
 	Token      string `json:"token,omitempty"`
+	ProxyName  string `json:"proxy_name,omitempty"`
 	Link       string `json:"link,omitempty"`
 	Command    string `json:"command,omitempty"`
 	Error      string `json:"error,omitempty"`

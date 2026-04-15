@@ -131,6 +131,68 @@ func (s *FrpService) GetStatus(ctx context.Context) *model.FrpStatus {
 	return status
 }
 
+// AllocatePort 分配 FRP 端口（只分配，不建立连接）
+func (s *FrpService) AllocatePort(ctx context.Context, serial string) (*model.FrpConnectResponse, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// 调用远程 frps 服务器的 API
+	frpsURL := "http://49.235.24.95:1420/api/frp/connect"
+
+	// 构建请求体
+	jsonData := fmt.Sprintf(`{"serial":"%s","local_port":22}`, serial)
+
+	// 发送 HTTP 请求
+	cmd := exec.CommandContext(ctx, "curl", "-s", "-X", "POST", frpsURL,
+		"-H", "Content-Type: application/json",
+		"-d", jsonData)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return &model.FrpConnectResponse{
+			Success: false,
+			Error:   fmt.Sprintf("failed to call frps: %v", err),
+		}, err
+	}
+
+	// 解析响应 JSON
+	var response struct {
+		Success    bool   `json:"success"`
+		Server     string `json:"server"`
+		Port       int    `json:"port"`
+		Token      string `json:"token"`
+		Link       string `json:"link"`
+		Command    string `json:"command"`
+		Message    string `json:"message"`
+		Error      string `json:"error"`
+	}
+
+	if err := json.Unmarshal(output, &response); err != nil {
+		return &model.FrpConnectResponse{
+			Success: false,
+			Error:   fmt.Sprintf("failed to parse response: %v", err),
+		}, err
+	}
+
+	if !response.Success {
+		return &model.FrpConnectResponse{
+			Success: false,
+			Error:   response.Error,
+		}, fmt.Errorf(response.Error)
+	}
+
+	return &model.FrpConnectResponse{
+		Success:    true,
+		Server:     response.Server,
+		RemotePort: response.Port,
+		LocalPort:  22,
+		Token:      response.Token,
+		ProxyName:  serial,
+		Link:       response.Link,
+		Command:    response.Command,
+	}, nil
+}
+
 // Connect 连接到 FRP 服务器 (代理到远程 frps)
 func (s *FrpService) Connect(ctx context.Context, req *model.FrpConnectRequest) (*model.FrpConnectResponse, error) {
 	s.mu.Lock()
@@ -187,6 +249,7 @@ func (s *FrpService) Connect(ctx context.Context, req *model.FrpConnectRequest) 
 		RemotePort: response.Port,
 		LocalPort:  req.LocalPort,
 		Token:      response.Token,
+		ProxyName:  req.Serial,
 		Link:       response.Link,
 		Command:    response.Command,
 	}, nil
