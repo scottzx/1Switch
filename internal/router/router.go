@@ -182,6 +182,7 @@ func SetupRouter(r *gin.Engine) {
 			frp.POST("/connect", frpHandler.Connect)
 			frp.POST("/disconnect", frpHandler.Disconnect)
 			frp.POST("/install", frpHandler.Install)
+			frp.POST("/deploy-config", frpHandler.DeployConfig)
 		}
 
 		// Terminal sessions routes

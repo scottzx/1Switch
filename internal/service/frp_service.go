@@ -7,7 +7,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
+	"time"
 
 	"iclaw-admin-api/internal/model"
 )
@@ -199,6 +201,123 @@ func (s *FrpService) Disconnect(ctx context.Context) error {
 	exec.CommandContext(ctx, "pkill", "-f", "frpc").Run()
 
 	return nil
+}
+
+// DeployConfig 创建 frpc.ini 配置文件并启动 frpc
+func (s *FrpService) DeployConfig(ctx context.Context, serial string, localPort int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// 调用 Connect API 获取配置
+	frpsURL := "http://49.235.24.95:1420/api/frp/connect"
+	jsonData := fmt.Sprintf(`{"serial":"%s","local_port":%d}`, serial, localPort)
+
+	cmd := exec.CommandContext(ctx, "curl", "-s", "-X", "POST", frpsURL,
+		"-H", "Content-Type: application/json",
+		"-d", jsonData)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("调用frps API失败: %v", err)
+	}
+
+	var response struct {
+		Success bool   `json:"success"`
+		Server  string `json:"server"`
+		Port    int    `json:"port"`
+		Token   string `json:"token"`
+		Link    string `json:"link"`
+		Command string `json:"command"`
+		Error   string `json:"error"`
+	}
+
+	if err := json.Unmarshal(output, &response); err != nil {
+		return fmt.Errorf("解析响应失败: %v", err)
+	}
+
+	if !response.Success {
+		return fmt.Errorf("frps返回错误: %s", response.Error)
+	}
+
+	// 生成 frpc.ini 配置
+	configContent := fmt.Sprintf(`[common]
+server_addr = %s
+server_port = 7000
+token = %s
+
+[ssh]
+type = tcp
+local_ip = 127.0.0.1
+local_port = %d
+remote_port = %d
+`, response.Server, response.Token, localPort, response.Port)
+
+	// 创建配置目录
+	if _, err := s.runCommand(ctx, "mkdir -p /var/lib/iclaw"); err != nil {
+		return fmt.Errorf("创建配置目录失败: %v", err)
+	}
+
+	// 写入配置文件
+	configCmd := exec.CommandContext(ctx, "tee", "/var/lib/iclaw/frpc.ini")
+	configCmd.Stdin = strings.NewReader(configContent)
+	if err := configCmd.Run(); err != nil {
+		return fmt.Errorf("写入配置文件失败: %v", err)
+	}
+
+	// 停止旧进程
+	s.runCommand(ctx, "pkill -f 'frpc -c' 2>/dev/null || true")
+
+	// 启动 frpc
+	frpcCmd := exec.CommandContext(ctx, "nohup", "frpc", "-c", "/var/lib/iclaw/frpc.ini")
+	frpcCmd.Stdout, _ = os.Stdout, os.Stdout
+	frpcCmd.Stderr, _ = os.Stderr, os.Stderr
+	if err := frpcCmd.Start(); err != nil {
+		return fmt.Errorf("启动frpc失败: %v", err)
+	}
+
+	return nil
+}
+
+// GetDeviceSerial 获取设备序列号
+func (s *FrpService) GetDeviceSerial(ctx context.Context) string {
+	// 读取 /var/lib/iclaw/serial
+	output, err := exec.CommandContext(ctx, "cat", "/var/lib/iclaw/serial").Output()
+	if err == nil {
+		serial := strings.TrimSpace(string(output))
+		if serial != "" {
+			return serial
+		}
+	}
+
+	// 备用方案：读取 DMI 信息
+	for _, path := range []string{
+		"/sys/class/dmi/id/product_uuid",
+		"/sys/firmware/devicetree/base/serial-number",
+	} {
+		output, err := exec.CommandContext(ctx, "cat", path).Output()
+		if err == nil {
+			serial := strings.TrimSpace(string(output))
+			if serial != "" {
+				return serial
+			}
+		}
+	}
+
+	return ""
+}
+
+// runCommand 执行 shell 命令
+func (s *FrpService) runCommand(ctx context.Context, cmd string) (string, error) {
+	execCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	parts := []string{"-c", cmd}
+	cmdExec := exec.CommandContext(execCtx, "/bin/sh", parts...)
+	output, err := cmdExec.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
 }
 
 func generateToken(length int) string {

@@ -37,3 +37,9 @@ type FrpConnectResponse struct {
 	Command    string `json:"command,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
+
+// FrpDeployConfigRequest FRP 部署配置请求
+type FrpDeployConfigRequest struct {
+	Serial    string `json:"serial"`
+	LocalPort int    `json:"local_port"`
+}

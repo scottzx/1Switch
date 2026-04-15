@@ -12,7 +12,7 @@ import (
 	"iclaw-admin-api/internal/service"
 )
 
-const Version = "v2026.4.15-2"
+const Version = "v2026.4.15-3"
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "--version" {
