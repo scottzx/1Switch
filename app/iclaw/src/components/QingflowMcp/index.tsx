@@ -5,10 +5,13 @@ import { AppBrowser } from './components/AppBrowser';
 import { RecordManager } from './components/RecordManager';
 import { TaskCenter } from './components/TaskCenter';
 import type { QingflowApp, QingflowSchema } from './types';
+import { ArrowLeft, Boxes, Plug, ChevronRight } from 'lucide-react';
 
 type TabType = 'apps' | 'records' | 'tasks' | 'analytics';
+type ViewMode = 'list' | 'config';
 
 export function QingflowMcp() {
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [setupComplete, setSetupComplete] = useState(false);
   const [selectedApp, setSelectedApp] = useState<QingflowApp | null>(null);
   const [currentSchema, setCurrentSchema] = useState<QingflowSchema | null>(null);
@@ -21,6 +24,63 @@ export function QingflowMcp() {
     { id: 'analytics', label: '分析' },
   ];
 
+  // 拓展功能列表视图
+  if (viewMode === 'list') {
+    return (
+      <div className="h-full p-6">
+        <div className="max-w-4xl mx-auto">
+          {/* 页面标题 */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <Boxes size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  拓展功能
+                </h1>
+                <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                  探索更多功能模块
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 模块列表 */}
+          <div className="space-y-3">
+            {/* 轻流 MCP */}
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              onClick={() => setViewMode('config')}
+              className="w-full p-4 rounded-xl text-left transition-all hover:scale-[1.01]"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-primary)',
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                  <Plug size={24} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+                    轻流 MCP
+                  </h3>
+                  <p className="text-sm truncate" style={{ color: 'var(--text-tertiary)' }}>
+                    连接轻流平台，自动化业务流程
+                  </p>
+                </div>
+                <ChevronRight size={20} className="text-[var(--text-tertiary)]" />
+              </div>
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Setup 未完成，显示 SetupChecker（含 Step 1-4）
   if (!setupComplete) {
     return <SetupChecker onComplete={() => setSetupComplete(true)} />;
@@ -29,6 +89,18 @@ export function QingflowMcp() {
   // 主功能页面
   return (
     <div className="h-full flex flex-col">
+      {/* 返回按钮 */}
+      <div className="px-4 pt-4">
+        <button
+          onClick={() => setViewMode('list')}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-[var(--bg-card)]"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <ArrowLeft size={18} />
+          <span className="text-sm font-medium">返回拓展功能</span>
+        </button>
+      </div>
+
       {/* Tab Navigation */}
       <div
         className="mx-4 flex items-center gap-1 p-1 rounded-lg"

@@ -54,26 +54,13 @@ systemctl daemon-reload && systemctl enable iclaw-ttyd && systemctl restart icla
       const deviceRes = await fetch('/api/deviceinfo');
       const device = await deviceRes.json();
 
-      // 2. 调用服务器 API 获取配置（服务器在此刻分配端口）
-      const connectRes = await fetch('/api/frp/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serial: device.serial, local_port: 22 }),
-      });
-      const portData = await connectRes.json();
-
-      if (!portData.success) {
-        setResult({ type: 'error', text: portData.error || '获取端口失败' });
-        return;
-      }
-
-      // 3. 写入 frpc.ini (remote_port = 0，由服务器分配)
+      // 2. 写入 frpc.ini（服务器地址和 token 硬编码，remote_port = 0 由服务器自动分配）
       const configContent = `[common]
-server_addr = ${portData.server}
+server_addr = 49.235.24.95
 server_port = 7000
-token = ${portData.token}
+token = beHm3AA1ThBxV1G6qgnMWc5fbVXzhrI9
 
-[${portData.proxy_name}]
+[${device.serial}]
 type = tcp
 local_ip = 127.0.0.1
 local_port = 22
@@ -86,7 +73,7 @@ remote_port = 0
         return;
       }
 
-      // 4. 启动 frpc
+      // 3. 启动 frpc
       const startCmd = `killall frpc 2>/dev/null || true; nohup frpc -c /var/lib/iclaw/frpc.ini > /dev/null 2>&1 &`;
       const startRes = await execApi.exec(startCmd);
       if (startRes.exitCode !== 0) {
@@ -94,7 +81,20 @@ remote_port = 0
         return;
       }
 
-      setResult({ type: 'success', text: `FRP 配置已写入，端口由服务器自动分配` });
+      // 4. 调用 API 获取实际分配的端口
+      const connectRes = await fetch('/api/frp/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serial: device.serial, local_port: 22 }),
+      });
+      const portData = await connectRes.json();
+
+      if (!portData.success) {
+        setResult({ type: 'error', text: portData.error || '获取端口失败' });
+        return;
+      }
+
+      setResult({ type: 'success', text: `FRP 配置已写入，远程端口: ${portData.remote_port}` });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setResult({ type: 'error', text: `失败: ${msg}` });
