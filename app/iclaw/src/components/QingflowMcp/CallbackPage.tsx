@@ -5,7 +5,10 @@ export function CallbackPage() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    // 支持新旧两种 callback 格式：
+    // 旧格式: ?token=xxx
+    // 新格式: ?mcpCredential=mcp_xxx
+    const token = searchParams.get('token') || searchParams.get('mcpCredential');
 
     if (token) {
       // 1. 存储到 sessionStorage

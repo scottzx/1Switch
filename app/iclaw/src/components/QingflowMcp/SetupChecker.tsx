@@ -167,11 +167,36 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     window.open(oauthUrl, 'qingflow_oauth', 'width=600,height=700');
   };
 
-  // 处理 OAuth token
-  const handleOAuthToken = async (token: string) => {
+  // 处理 OAuth credential
+  const handleOAuthToken = async (credential: string) => {
+    // 直接保存 credential 到 mcporter.json 的 x_qingflow_client_id
+    const mcporterConfig = JSON.stringify({
+      mcpServers: {
+        "qingflow-user": {
+          command: "/usr/bin/qingflow-app-user-mcp",
+          env: {
+            QINGFLOW_MCP_DEFAULT_BASE_URL: "https://qingflow.com/api",
+          }
+        },
+        "qingflow-builder": {
+          command: "/usr/bin/qingflow-app-builder-mcp",
+          env: {
+            QINGFLOW_MCP_DEFAULT_BASE_URL: "https://qingflow.com/api",
+          }
+        },
+        "qingflow-cli": {
+          command: "/usr/bin/qingflow",
+          env: {
+            QINGFLOW_MCP_DEFAULT_BASE_URL: "https://qingflow.com/api",
+          }
+        }
+      },
+      x_qingflow_client_id: credential
+    }, null, 2);
+
     await new Promise<void>((resolve) => {
       execApi.streamCommand(
-        `mkdir -p ~/.qingflow-mcp && echo "${token}" > ~/.qingflow-mcp/qingflow-token`,
+        `mkdir -p ~/.openclaw/workspace/config && echo '${mcporterConfig.replace(/'/g, "'\\''")}' > ~/.openclaw/workspace/config/mcporter.json`,
         () => {},
         () => {},
         () => {
@@ -206,57 +231,34 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
       () => {},
       () => {}
     );
-
   };
 
-  // Step 4: CLI 认证
+  // Step 4: CLI 认证 - 使用 use-credential 从 mcporter.json 读取认证
   const handleAuthenticate = () => {
     setStatus((prev) => ({ ...prev, authenticating: true }));
 
-    // 使用 Promise 链式处理，避免嵌套 SSE 回调的问题
-    new Promise<string>((resolve, reject) => {
-      // 读取 token
+    // 使用 auth use-credential 从 mcporter.json 读取 x_qingflow_client_id 进行认证
+    new Promise<void>((resolve, reject) => {
+      const outputLines: string[] = [];
+
       execApi.streamCommand(
-        'cat ~/.qingflow-mcp/qingflow-token 2>/dev/null || echo ""',
-        (data) => {
-          const token = data.content.trim();
-          if (token) {
-            resolve(token);
-          } else {
-            reject(new Error('Token file is empty'));
-          }
+        `qingflow auth use-credential 2>&1`,
+        (authData) => {
+          outputLines.push(authData.content);
         },
         () => {},
-        () => {
-          // token 读取完成但没收到数据
-          reject(new Error('Token not found'));
+        (doneData) => {
+          if (doneData.exitCode === 0) {
+            // 认证成功
+            resolve();
+            return;
+          }
+          // 认证失败，输出错误信息
+          console.log('[Auth] use-credential failed:', outputLines.join(''));
+          reject(new Error('Auth failed'));
         }
       );
     })
-      .then((token) => {
-        // 使用 token 进行认证，--persist 会自动持久化保存认证信息
-        return new Promise<void>((resolve, reject) => {
-          const outputLines: string[] = [];
-
-          execApi.streamCommand(
-            `qingflow auth use-token --token "${token}" --persist 2>&1`,
-            (authData) => {
-              outputLines.push(authData.content);
-            },
-            () => {},
-            (doneData) => {
-              if (doneData.exitCode === 0) {
-                // 认证成功
-                resolve();
-                return;
-              }
-              // 认证失败，输出错误信息
-              console.log('[Auth] auth failed:', outputLines.join(''));
-              reject(new Error('Auth failed'));
-            }
-          );
-        });
-      })
       .then(() => {
         // 认证成功后，使用 whoami 获取用户信息并保存缓存
         return new Promise<void>((resolve) => {

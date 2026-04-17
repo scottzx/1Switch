@@ -92,6 +92,26 @@ function useQingflow() {
     [executeCommand]
   );
 
+  // 从 mcporter.json 读取 x_qingflow_client_id 并使用 use-credential 认证
+  const authUseCredential = useCallback(
+    async (wsId?: string) => {
+      const wsArg = wsId ? ` --ws-id ${wsId}` : '';
+      return executeCommand(
+        `cat ~/.openclaw/workspace/config/mcporter.json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('x_qingflow_client_id',''))" 2>/dev/null || echo ""`
+      ).then(async (result) => {
+        if (result.ok && result.data) {
+          const clientId = Array.isArray(result.data) ? result.data.join('') : String(result.data);
+          const trimmedId = clientId.trim();
+          if (trimmedId) {
+            return executeCommand(`auth use-credential --credential ${trimmedId}${wsArg} --json`);
+          }
+        }
+        return { ok: false, error: 'Failed to read x_qingflow_client_id from mcporter.json' };
+      });
+    },
+    [executeCommand]
+  );
+
   const authLogout = useCallback(async () => {
     return executeCommand('auth logout --json');
   }, [executeCommand]);
@@ -235,6 +255,7 @@ function useQingflow() {
     authWhoami,
     authLogin,
     authUseToken,
+    authUseCredential,
     authLogout,
     // Workspace
     listWorkspaces,

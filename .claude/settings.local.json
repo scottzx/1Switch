@@ -62,7 +62,8 @@
       "Bash(unzip -p dist.zip app/iclaw/assets/index-CVaSFJRL.js)",
       "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/iclaw/.env*)",
       "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/frp/.env*)",
-      "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/novnc/.env*)"
+      "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/novnc/.env*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

@@ -41,11 +41,34 @@ export function AuthPanel({ onAuthChange }: AuthPanelProps) {
         setError(null);
 
         try {
-          // 保存 token 到文件
-          await qingflow.executeCommand(`mkdir -p ~/.qingflow-mcp && echo "${receivedToken}" > ~/.qingflow-mcp/qingflow-token`);
+          // 保存 credential 到 mcporter.json 的 x_qingflow_client_id
+          const mcporterConfig = JSON.stringify({
+            mcpServers: {
+              "qingflow-user": {
+                command: "/usr/bin/qingflow-app-user-mcp",
+                env: {
+                  QINGFLOW_MCP_DEFAULT_BASE_URL: "https://qingflow.com/api",
+                }
+              },
+              "qingflow-builder": {
+                command: "/usr/bin/qingflow-app-builder-mcp",
+                env: {
+                  QINGFLOW_MCP_DEFAULT_BASE_URL: "https://qingflow.com/api",
+                }
+              },
+              "qingflow-cli": {
+                command: "/usr/bin/qingflow",
+                env: {
+                  QINGFLOW_MCP_DEFAULT_BASE_URL: "https://qingflow.com/api",
+                }
+              }
+            },
+            x_qingflow_client_id: receivedToken
+          }, null, 2);
+          await qingflow.executeCommand(`mkdir -p ~/.openclaw/workspace/config && echo '${mcporterConfig.replace(/'/g, "'\\''")}' > ~/.openclaw/workspace/config/mcporter.json`);
 
-          // 使用 token 登录
-          const result = await qingflow.authUseToken(receivedToken);
+          // 使用 authUseCredential 从 mcporter.json 读取认证
+          const result = await qingflow.authUseCredential();
           if (result.ok) {
             await checkAuthStatus();
           } else {

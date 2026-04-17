@@ -54,16 +54,20 @@ systemctl daemon-reload && systemctl enable iclaw-ttyd && systemctl restart icla
       const deviceRes = await fetch('/api/deviceinfo');
       const device = await deviceRes.json();
 
-      // 2. 调用 frps API 获取分配的端口
-      const portRes = await fetch(`/api/frp/port/${device.serial}`);
-      const portData = await portRes.json();
+      // 2. 调用服务器 API 获取配置（服务器在此刻分配端口）
+      const connectRes = await fetch('/api/frp/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serial: device.serial, local_port: 22 }),
+      });
+      const portData = await connectRes.json();
 
       if (!portData.success) {
         setResult({ type: 'error', text: portData.error || '获取端口失败' });
         return;
       }
 
-      // 3. 写入 frpc.ini
+      // 3. 写入 frpc.ini (remote_port = 0，由服务器分配)
       const configContent = `[common]
 server_addr = ${portData.server}
 server_port = 7000
@@ -73,7 +77,7 @@ token = ${portData.token}
 type = tcp
 local_ip = 127.0.0.1
 local_port = 22
-remote_port = ${portData.port}
+remote_port = 0
 `;
       const writeCmd = `mkdir -p /var/lib/iclaw && cat > /var/lib/iclaw/frpc.ini << 'EOF'\n${configContent}EOF`;
       const writeRes = await execApi.exec(writeCmd);
@@ -90,20 +94,7 @@ remote_port = ${portData.port}
         return;
       }
 
-      // 5. 通知服务端建立连接
-      const connectRes = await fetch('/api/frp/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serial: device.serial, local_port: 22 }),
-      });
-      const connectData = await connectRes.json();
-
-      if (!connectData.success) {
-        setResult({ type: 'error', text: connectData.error || '连接服务器失败' });
-        return;
-      }
-
-      setResult({ type: 'success', text: `FRP 已连接，远程端口: ${portData.port}` });
+      setResult({ type: 'success', text: `FRP 配置已写入，端口由服务器自动分配` });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setResult({ type: 'error', text: `失败: ${msg}` });

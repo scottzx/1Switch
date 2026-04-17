@@ -29,8 +29,8 @@
       "description": "OpenClaw Agent core service. Fixed port 18789."
     },
     "iclaw": {
-      "name": "iClaw",
-      "description": "OpenClaw device management and configuration console."
+      "name": "1Switch",
+      "description": "1Switch device management and configuration console."
     },
     "claudeCode": {
       "name": "Claude Code",
@@ -69,8 +69,8 @@
       "description": "Self-hosted AI gateway connecting chat apps to AI agents. Keep your data in control."
     },
     "iclawManual": {
-      "name": "iClaw H1 User Manual",
-      "description": "iClaw H1 device user manual with quick start guide, feature introduction, and operation instructions."
+      "name": "1Switch H1 User Manual",
+      "description": "1Switch H1 device user manual with quick start guide, feature introduction, and operation instructions."
     },
     "tailscale": {
       "name": "Tailscale",
