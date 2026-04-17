@@ -46,7 +46,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
       'which qingflow && echo QINGFLOW_OK || echo QINGFLOW_FAIL',
       'which qingflow-app-user-mcp && echo USER_MCP_OK || echo USER_MCP_FAIL',
       'which qingflow-app-builder-mcp && echo BUILDER_MCP_OK || echo BUILDER_MCP_FAIL',
-      'test -f ~/.qingflow-mcp/qingflow-token && echo TOKEN_OK || echo TOKEN_FAIL',
+      'test -f ~/.openclaw/workspace/config/mcporter.json && echo TOKEN_OK || echo TOKEN_FAIL',
       // 检查认证缓存文件是否存在
       'test -f ~/.qingflow-mcp/setup-complete && cat ~/.qingflow-mcp/setup-complete || echo ""',
     ].join('; ');
