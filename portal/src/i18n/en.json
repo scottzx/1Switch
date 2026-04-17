@@ -1,10 +1,10 @@
 {
   "header": {
-    "title": "iClaw Portal",
-    "subtitle": "OpenClaw Management Interface"
+    "title": "Yijie Switch",
+    "subtitle": "一芥枢纽 · AI Hub Ready to Use"
   },
   "footer": {
-    "brand": "OpenClaw Portal",
+    "brand": "Yijie Switch",
     "tagline": "Good design is as little design as possible."
   },
   "theme": {
@@ -29,7 +29,7 @@
       "description": "OpenClaw Agent core service. Fixed port 18789."
     },
     "iclaw": {
-      "name": "1Switch",
+      "name": "Yijie Switch",
       "description": "1Switch device management and configuration console."
     },
     "claudeCode": {
@@ -69,7 +69,7 @@
       "description": "Self-hosted AI gateway connecting chat apps to AI agents. Keep your data in control."
     },
     "iclawManual": {
-      "name": "1Switch H1 User Manual",
+      "name": "Yijie Switch H1 User Manual",
       "description": "1Switch H1 device user manual with quick start guide, feature introduction, and operation instructions."
     },
     "tailscale": {
