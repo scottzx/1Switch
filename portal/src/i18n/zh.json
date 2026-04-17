@@ -29,8 +29,8 @@
       "description": "OpenClaw Agent 核心服务，固定端口 18789。"
     },
     "iclaw": {
-      "name": "1Switch",
-      "description": "1Switch 设备管理与配置控制台。"
+      "name": "Yijie Switch",
+      "description": "Yijie Switch 设备管理与配置控制台。"
     },
     "claudeCode": {
       "name": "Claude Code",
@@ -69,8 +69,8 @@
       "description": "自托管 AI Gateway，连接聊天应用到 AI 智能体。数据自主可控，适合开发者。"
     },
     "iclawManual": {
-      "name": "1Switch H1 使用手册",
-      "description": "1Switch H1 设备使用手册，包含快速入门、功能介绍、操作指南等内容。"
+      "name": "Yijie Switch H1 使用手册",
+      "description": "Yijie Switch H1 设备使用手册，包含快速入门、功能介绍、操作指南等内容。"
     },
     "tailscale": {
       "name": "Tailscale",

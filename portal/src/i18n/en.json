@@ -30,7 +30,7 @@
     },
     "iclaw": {
       "name": "Yijie Switch",
-      "description": "1Switch device management and configuration console."
+      "description": "Yijie Switch device management and configuration console."
     },
     "claudeCode": {
       "name": "Claude Code",
@@ -70,7 +70,7 @@
     },
     "iclawManual": {
       "name": "Yijie Switch H1 User Manual",
-      "description": "1Switch H1 device user manual with quick start guide, feature introduction, and operation instructions."
+      "description": "Yijie Switch H1 device user manual with quick start guide, feature introduction, and operation instructions."
     },
     "tailscale": {
       "name": "Tailscale",
