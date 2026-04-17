@@ -169,7 +169,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
 
   // 处理 OAuth credential
   const handleOAuthToken = async (credential: string) => {
-    // 直接保存 credential 到 mcporter.json 的 x_qingflow_client_id
+    // 保存 credential 到 mcporter.json，CLI 期望 x-qingflow-client-id 在 mcpServers.qingflow.headers 下
     const mcporterConfig = JSON.stringify({
       mcpServers: {
         "qingflow-user": {
@@ -189,9 +189,13 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
           env: {
             QINGFLOW_MCP_DEFAULT_BASE_URL: "https://qingflow.com/api",
           }
+        },
+        "qingflow": {
+          headers: {
+            "x-qingflow-client-id": credential
+          }
         }
-      },
-      x_qingflow_client_id: credential
+      }
     }, null, 2);
 
     await new Promise<void>((resolve) => {

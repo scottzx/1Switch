@@ -66,7 +66,7 @@ local_ip = 127.0.0.1
 local_port = 22
 remote_port = 0
 `;
-      const writeCmd = `mkdir -p /var/lib/iclaw && cat > /var/lib/iclaw/frpc.ini << 'EOF'\n${configContent}EOF`;
+      const writeCmd = `mkdir -p ~/.yi_switch/app/frp && cat > ~/.yi_switch/app/frp/frpc.ini << 'EOF'\n${configContent}EOF`;
       const writeRes = await execApi.exec(writeCmd);
       if (writeRes.exitCode !== 0) {
         setResult({ type: 'error', text: `写入配置失败: ${writeRes.output || '命令执行失败'}` });
@@ -74,7 +74,7 @@ remote_port = 0
       }
 
       // 3. 启动 frpc
-      const startCmd = `killall frpc 2>/dev/null || true; nohup frpc -c /var/lib/iclaw/frpc.ini > /dev/null 2>&1 &`;
+      const startCmd = `killall frpc 2>/dev/null || true; nohup frpc -c ~/.yi_switch/app/frp/frpc.ini > /dev/null 2>&1 &`;
       const startRes = await execApi.exec(startCmd);
       if (startRes.exitCode !== 0) {
         setResult({ type: 'error', text: `启动 frpc 失败: ${startRes.output || '命令执行失败'}` });
