@@ -18,6 +18,7 @@ func SetupRouter(r *gin.Engine) {
 	networkHandler := handler.NewNetworkHandler(networkService)
 	frpHandler := handler.NewFrpHandler(frpService)
 	sessionHandler := handler.NewSessionHandler()
+	execHandler := handler.NewExecHandler()
 
 	api := r.Group("/api")
 	{
@@ -40,6 +41,7 @@ func SetupRouter(r *gin.Engine) {
 			system.GET("/status", systemHandler.GetSystemStatus)
 			system.GET("/usage", systemHandler.GetSystemUsage)
 			system.POST("/openclaw/restart", systemHandler.RestartOpenClaw)
+			system.POST("/ttyd/deploy", systemHandler.DeployTtyd)
 		}
 
 		// Device routes
@@ -96,6 +98,16 @@ func SetupRouter(r *gin.Engine) {
 			ai.POST("/primary-model", handler.SetPrimaryModel)
 			ai.POST("/model", handler.AddAvailableModel)
 			ai.DELETE("/model/:id", handler.RemoveAvailableModel)
+		}
+
+		// Profile routes
+		profile := api.Group("/profile")
+		{
+			profile.GET("/files", handler.GetProfileFiles)
+			profile.GET("/files/:name", handler.GetProfileFile)
+			profile.POST("/files/:name", handler.SaveProfileFile)
+			profile.GET("/identity", handler.GetIdentity)
+			profile.POST("/identity", handler.SaveIdentity)
 		}
 
 		// Channels routes (placeholder)
@@ -167,10 +179,11 @@ func SetupRouter(r *gin.Engine) {
 		frp := api.Group("/frp")
 		{
 			frp.GET("/status", frpHandler.GetStatus)
-			frp.GET("/serial", frpHandler.GetSerial)
+			frp.GET("/port/:serial", frpHandler.GetPort)
 			frp.POST("/connect", frpHandler.Connect)
 			frp.POST("/disconnect", frpHandler.Disconnect)
 			frp.POST("/install", frpHandler.Install)
+			frp.POST("/deploy-config", frpHandler.DeployConfig)
 		}
 
 		// Terminal sessions routes
@@ -181,5 +194,10 @@ func SetupRouter(r *gin.Engine) {
 			terminal.DELETE("/sessions/:name", sessionHandler.DeleteSession)
 			terminal.GET("/sessions/default", sessionHandler.GetDefaultSession)
 		}
+
+		// Exec routes (SSE command execution)
+		api.POST("/exec", execHandler.Exec)
+		api.GET("/exec/stream", execHandler.StreamCommand)
+		api.POST("/exec/kill", execHandler.KillCommand)
 	}
 }

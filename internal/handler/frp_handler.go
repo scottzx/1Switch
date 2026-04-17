@@ -29,15 +29,26 @@ func (h *FrpHandler) GetStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, status)
 }
 
-// GetSerial 获取设备序列号
-// @Summary 获取设备序列号
+// GetPort 获取分配的 FRP 端口
+// @Summary 获取分配的 FRP 端口
 // @Tags FRP
 // @Produce json
-// @Success 200 {object} map[string]string
-// @Router /api/frp/serial [get]
-func (h *FrpHandler) GetSerial(c *gin.Context) {
-	serial := h.svc.GetSerial(c.Request.Context())
-	c.JSON(http.StatusOK, gin.H{"serial": serial})
+// @Param serial path string true "设备序列号"
+// @Success 200 {object} model.FrpConnectResponse
+// @Router /api/frp/port/{serial} [get]
+func (h *FrpHandler) GetPort(c *gin.Context) {
+	serial := c.Param("serial")
+	if serial == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "缺少序列号"})
+		return
+	}
+
+	resp, err := h.svc.AllocatePort(c.Request.Context(), serial)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // Connect 连接到 FRP 服务器
@@ -89,4 +100,32 @@ func (h *FrpHandler) Install(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
+}
+
+// DeployConfig 创建 frpc.ini 并启动 frpc
+// @Summary 部署 FRP 配置
+// @Tags FRP
+// @Produce json
+// @Param request body model.FrpDeployConfigRequest true "部署请求"
+// @Success 200 {object} map[string]string
+// @Router /api/frp/deploy-config [post]
+func (h *FrpHandler) DeployConfig(c *gin.Context) {
+	var req model.FrpDeployConfigRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// 如果没有提供序列号，自动获取
+		serial := h.svc.GetDeviceSerial(c.Request.Context())
+		if serial == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "无法获取设备序列号"})
+			return
+		}
+		req.Serial = serial
+		req.LocalPort = 22
+	}
+
+	err := h.svc.DeployConfig(c.Request.Context(), req.Serial, req.LocalPort)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "FRP 配置已创建并启动"})
 }

@@ -9,14 +9,16 @@ import {
   Loader2,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { api } from '../../lib/tauri';
+import { api, execApi } from '../../services/api';
 import { serviceLogger } from '../../lib/logger';
+import { useTerminalStore } from '../../stores/terminalStore';
 
 export function ServiceManager() {
   const [logs, setLogs] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const { addTab, appendOutput, setStatus } = useTerminalStore();
 
   serviceLogger.debug('ServiceManager 组件渲染');
 
@@ -53,25 +55,58 @@ export function ServiceManager() {
     serviceLogger.action(`服务操作: ${action}`);
     serviceLogger.info(`正在执行: ${action}_service`);
     setActionLoading(action);
+
+    // 创建新的终端标签页
+    const commandLabels = {
+      start: 'openclaw gateway start',
+      stop: 'openclaw gateway stop',
+      restart: 'openclaw gateway restart',
+    };
+    const tabId = addTab(commandLabels[action], `Gateway ${action}`);
+
     try {
-      let result: string;
-      switch (action) {
-        case 'start':
-          result = await api.startService();
-          break;
-        case 'stop':
-          result = await api.stopService();
-          break;
-        case 'restart':
-          result = await api.restartService();
-          break;
-      }
-      serviceLogger.info(`✅ ${action} 操作成功`, result);
-      await fetchLogs();
+      // 使用 SSE 执行命令
+      await new Promise<void>((resolve, reject) => {
+        const eventSource = execApi.streamCommand(
+          commandLabels[action],
+          // onOutput
+          (data) => {
+            appendOutput(tabId, data.content);
+          },
+          // onStatus
+          (data) => {
+            if (data.status === 'running') {
+              setStatus(tabId, 'running');
+            }
+          },
+          // onDone
+          (data) => {
+            setStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            if (data.exitCode !== 0) {
+              appendOutput(tabId, `[命令退出，退出码: ${data.exitCode}]`);
+            }
+            setActionLoading(null);
+            fetchLogs();
+            resolve();
+          }
+        );
+
+        // 处理错误
+        eventSource.onerror = (e) => {
+          serviceLogger.error(`SSE 错误:`, e);
+          setStatus(tabId, 'error');
+          appendOutput(tabId, `[错误: SSE 连接失败]`);
+          setActionLoading(null);
+          reject(e);
+        };
+      });
+
+      serviceLogger.info(`✅ ${action} 操作成功`);
     } catch (e) {
       serviceLogger.error(`❌ ${action} 操作失败`, e);
+      setStatus(tabId, 'error');
+      appendOutput(tabId, `[错误: ${e}]`);
       alert(`操作失败: ${e}`);
-    } finally {
       setActionLoading(null);
     }
   };

@@ -16,22 +16,13 @@ export function Terminal() {
   const isMobile = useIsMobile();
   const [deviceIP, setDeviceIP] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    const fetchDeviceIP = async () => {
-      try {
-        const response = await fetch('/api/system/device-ip');
-        const data = await response.json();
-        setDeviceIP(data.ip);
-      } catch (e) {
-        setError('无法获取设备IP');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDeviceIP();
+    // 直接使用浏览器当前的连接地址
+    const hostname = window.location.hostname;
+    setDeviceIP(hostname);
+    setLoading(false);
   }, []);
 
   const terminalUrl = deviceIP ? `http://${deviceIP}:7681` : '';
@@ -44,10 +35,10 @@ export function Terminal() {
     );
   }
 
-  if (error || !terminalUrl) {
+  if (!terminalUrl) {
     return (
       <div className="h-full flex items-center justify-center text-content-secondary">
-        <p>{error || '无法加载终端'}</p>
+        <p>无法加载终端</p>
       </div>
     );
   }

@@ -17,9 +17,11 @@ import {
     Key,
     FileWarning,
     Server,
+    Terminal,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { invoke } from '../../lib/invoke-shim';
+import { useTerminalStore } from '../../stores/terminalStore';
 
 // 安全风险项接口
 interface SecurityIssue {
@@ -88,6 +90,8 @@ export function Security() {
     const [fixing, setFixing] = useState(false);
     const [fixResult, setFixResult] = useState<FixResult | null>(null);
     const [manualInstructions, setManualInstructions] = useState<string>('');
+    const [scanInTerminal, setScanInTerminal] = useState(false);
+    const { addTab, appendOutput, setStatus } = useTerminalStore();
 
     // 执行安全扫描
     const handleScan = async () => {
@@ -98,6 +102,52 @@ export function Security() {
         setFixResult(null);
         setManualInstructions('');
 
+        // 如果选择在终端中显示，创建新的终端标签
+        if (scanInTerminal) {
+            const tabId = addTab('openclaw security audit --json', '安全扫描');
+            setStatus(tabId, 'running');
+            appendOutput(tabId, 'Starting security scan...');
+            appendOutput(tabId, '');
+
+            try {
+                const { execApi } = await import('../../services/api');
+                await new Promise<void>((resolve, reject) => {
+                    const eventSource = execApi.streamCommand(
+                        'openclaw security audit --json',
+                        (data) => {
+                            appendOutput(tabId, data.content);
+                        },
+                        (data) => {
+                            if (data.status === 'running') {
+                                setStatus(tabId, 'running');
+                            }
+                        },
+                        (data) => {
+                            setStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+                            if (data.exitCode !== 0) {
+                                appendOutput(tabId, `[Command exited with code: ${data.exitCode}]`);
+                            }
+                            resolve();
+                        }
+                    );
+
+                    eventSource.onerror = (e) => {
+                        console.error('SSE error:', e);
+                        setStatus(tabId, 'error');
+                        appendOutput(tabId, '[Error: SSE connection failed]');
+                        reject(e);
+                    };
+                });
+
+                setScanning(false);
+                return;
+            } catch {
+                setScanning(false);
+                return;
+            }
+        }
+
+        // 默认行为：通过 invoke 获取结构化结果
         try {
             const result = await invoke<SecurityIssue[]>('run_security_scan');
             setIssues(result);
@@ -110,7 +160,6 @@ export function Security() {
             setSelectedIds(fixableIds);
         } catch (e) {
             console.error('安全扫描失败:', e);
-            // 展示一个本地模拟结果以保证 UI 可用
             setIssues([]);
             setScanned(true);
         } finally {
@@ -201,7 +250,6 @@ export function Security() {
                     className="rounded-2xl p-6 border border-red-900/40 relative overflow-hidden"
                     style={{ backgroundColor: 'var(--bg-card)' }}
                 >
-
                     <div className="relative z-10">
                         <div className="flex items-start gap-4 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0 ring-1 ring-red-500/30">
@@ -209,27 +257,39 @@ export function Security() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-content-primary mb-1">
-                                    ⚠️ 安全风险提醒
+                                    OpenClaw 安全风险提醒
                                 </h3>
                                 <p className="text-sm text-content-secondary leading-relaxed">
                                     OpenClaw 拥有<span className="text-red-400 font-medium">读写文件、发送消息、执行代码</span>等强大权限。
-                                    AI 的自主决策可能导致以下风险：
+                                    AI 的自主决策或提示词注入可能导致以下风险：
                                 </p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                             <div className="flex items-center gap-2 p-3 bg-surface-overlay rounded-lg border border-edge-secondary">
-                                <FileWarning size={16} className="text-red-400 flex-shrink-0" />
-                                <span className="text-xs text-content-secondary">重要文件被误删或覆盖</span>
+                                <AlertOctagon size={14} className="text-red-400 flex-shrink-0" />
+                                <span className="text-xs text-content-secondary">飞书群组策略开放 + Elevated 工具启用</span>
                             </div>
                             <div className="flex items-center gap-2 p-3 bg-surface-overlay rounded-lg border border-edge-secondary">
-                                <AlertTriangle size={16} className="text-amber-400 flex-shrink-0" />
-                                <span className="text-xs text-content-secondary">邮件/消息被误发送</span>
+                                <Server size={14} className="text-red-400 flex-shrink-0" />
+                                <span className="text-xs text-content-secondary">开放群组暴露 Runtime/Filesystem 工具</span>
                             </div>
                             <div className="flex items-center gap-2 p-3 bg-surface-overlay rounded-lg border border-edge-secondary">
-                                <Globe size={16} className="text-blue-400 flex-shrink-0" />
-                                <span className="text-xs text-content-secondary">敏感数据泄露到外部</span>
+                                <Globe size={14} className="text-amber-400 flex-shrink-0" />
+                                <span className="text-xs text-content-secondary">反向代理 headers 未配置可信</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-3 bg-surface-overlay rounded-lg border border-edge-secondary">
+                                <Package size={14} className="text-amber-400 flex-shrink-0" />
+                                <span className="text-xs text-content-secondary">扩展插件使用宽松工具策略</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-3 bg-surface-overlay rounded-lg border border-edge-secondary">
+                                <Key size={14} className="text-amber-400 flex-shrink-0" />
+                                <span className="text-xs text-content-secondary">denyCommands 规则未生效</span>
+                            </div>
+                            <div className="flex items-center gap-2 p-3 bg-surface-overlay rounded-lg border border-edge-secondary">
+                                <Wifi size={14} className="text-blue-400 flex-shrink-0" />
+                                <span className="text-xs text-content-secondary">插件安装未锁定版本</span>
                             </div>
                         </div>
 
@@ -249,22 +309,34 @@ export function Security() {
                             <div>
                                 <h3 className="text-lg font-semibold text-content-primary">安全检测</h3>
                                 <p className="text-xs text-content-tertiary">
-                                    扫描系统配置、网络暴露、技能库等安全风险
+                                    检查攻击面、群组策略、工具暴露、代理配置、插件安全等
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={handleScan}
-                            disabled={scanning}
-                            className="btn-primary flex items-center gap-2 text-sm"
-                        >
-                            {scanning ? (
-                                <Loader2 size={16} className="animate-spin" />
-                            ) : (
-                                <Search size={16} />
-                            )}
-                            {scanning ? '正在检测...' : '开始检测'}
-                        </button>
+                        <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 text-xs text-content-secondary cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={scanInTerminal}
+                                    onChange={(e) => setScanInTerminal(e.target.checked)}
+                                    className="w-3.5 h-3.5 rounded border-edge bg-surface-elevated text-claw-500 focus:ring-claw-500"
+                                />
+                                <Terminal size={12} />
+                                在终端中显示
+                            </label>
+                            <button
+                                onClick={handleScan}
+                                disabled={scanning}
+                                className="btn-primary flex items-center gap-2 text-sm"
+                            >
+                                {scanning ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                    <Search size={16} />
+                                )}
+                                {scanning ? '正在检测...' : '开始检测'}
+                            </button>
+                        </div>
                     </div>
 
                     {/* 扫描进度动画 */}
@@ -290,9 +362,9 @@ export function Security() {
                                         />
                                     </div>
                                     <div className="flex justify-between mt-2 text-xs text-content-tertiary">
-                                        <span>检测 IP 地址...</span>
-                                        <span>检测端口暴露...</span>
-                                        <span>扫描技能库...</span>
+                                        <span>检测攻击面...</span>
+                                        <span>检测群组策略...</span>
+                                        <span>检测工具暴露...</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -454,7 +526,7 @@ export function Security() {
                                         )}
                                     </AnimatePresence>
 
-                                    {/* 不可修复项的手动防护说明 */}
+                                    {/* 手动防护说明 */}
                                     {(unfixableIssues.length > 0 || manualInstructions) && (
                                         <div className="bg-surface-elevated rounded-xl p-5 border border-edge">
                                             <div className="flex items-center gap-2 mb-3">
@@ -472,13 +544,31 @@ ${unfixableIssues
                                                         )
                                                         .join('\n\n')}
 
+高风险修复指南：
+[高风险] 开放群组 + Elevated 工具
+   -> 设置 channels.feishu.groupPolicy="allowlist"
+   -> 禁用 tools.elevated 或保持极严格的 allowlist
+
+[高风险] 开放群组 + Runtime/Filesystem
+   -> 对开放群组使用 tools.profile="messaging"
+   -> 设置 tools.fs.workspaceOnly=true
+   -> 设置 agents.defaults.sandbox.mode="all"
+
+[警告] 反向代理 headers 未配置
+   -> 设置 gateway.trustedProxies 为代理 IP
+   -> 或保持 Control UI 本地访问
+
+[警告] 插件工具可达
+   -> 对处理不可信输入的 Agent 使用 restrictive profiles (minimal/coding)
+   -> 显式 tool allowlists 排除插件工具
+
+[警告] 插件版本未锁定
+   -> 锁定到精确版本: @scope/pkg@1.2.3
+
 通用安全建议：
-• 将 OpenClaw 服务绑定到 127.0.0.1 而非 0.0.0.0
-• 避免在公网环境直接暴露 OpenClaw 端口
-• 定期检查已安装技能库的源代码和权限声明
-• 为 OpenClaw 设置 Gateway Token 身份验证
-• 使用反向代理（如 Nginx）并启用 HTTPS 访问
-• 限制 AI 对敏感目录和敏感操作的访问权限`}
+- 建议使用 tools.profile="messaging" 限制消息场景的工具暴露
+- 设置 agents.defaults.sandbox.mode="all" 启用完整沙箱
+- 定期检查 openclaw security audit --deep 做深度检测`}
                                             </div>
                                         </div>
                                     )}
@@ -493,15 +583,13 @@ ${unfixableIssues
 }
 
 // 单个安全风险项组件
-function SecurityIssueItem({
-    issue,
-    selected,
-    onToggle,
-}: {
+interface SecurityIssueItemProps {
     issue: SecurityIssue;
     selected: boolean;
     onToggle: () => void;
-}) {
+}
+
+function SecurityIssueItem({ issue, selected, onToggle }: SecurityIssueItemProps) {
     const config = severityConfig[issue.severity];
     const CategoryIcon = categoryIcons[issue.category] || Info;
     const isDisabled = !issue.fixable || issue.fixed;

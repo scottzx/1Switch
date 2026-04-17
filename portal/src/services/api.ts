@@ -60,4 +60,45 @@ export const systemApi = {
     const data = await request<{ ip: string }>('/api/system/device-ip');
     return data.ip;
   },
+  deployTtyd: async (): Promise<void> => {
+    await request('/api/system/ttyd/deploy', { method: 'POST' });
+  },
+};
+
+export const api = {
+  post: async (path: string, body: unknown): Promise<void> => {
+    await request(path, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+};
+
+export interface ExecResult {
+  output: string;
+  exitCode: number;
+}
+
+export const execApi = {
+  exec: async (command: string): Promise<ExecResult> => {
+    return request<ExecResult>('/api/exec', {
+      method: 'POST',
+      body: JSON.stringify({ cmd: command }),
+    });
+  },
+};
+
+export const cronApi = {
+  listTasks: async (): Promise<string> => {
+    const result = await execApi.exec('crontab -l');
+    // crontab -l outputs to stderr when no crontab exists, output contains the message
+    if (result.exitCode !== 0 && result.output.includes('no crontab')) {
+      return '';
+    }
+    return result.output;
+  },
+  listTimers: async (): Promise<string> => {
+    const result = await execApi.exec('systemctl list-timers --no-pager');
+    return result.output;
+  },
 };

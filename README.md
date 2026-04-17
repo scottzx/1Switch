@@ -1,8 +1,9 @@
-# 🦞 虾池子 (iClaw)
+# 一芥枢纽 (1Switch)
 
-**OpenClaw 的 Web 管理面板**，基于 **Go + Gin / React + TypeScript + Vite** 构建。
+**开箱即用的 AI 中枢**，受电话交换台原理启发。
 
-原 [OpenClaw Manager (Tauri)](https://github.com/VVillageMoonlight/openclaw-manager) 已停止维护，当前项目从上游 OpenClaw 复用了前端代码，重新开发了 Go 后端，并大幅扩展了功能。
+> 📞 电话机（框架）可以随时更换，但交换台（接入层）不需要跟着重新布线。用户只需要把电话线插到交换台上，剩下的交给交换台去路由。
+> 一芥枢纽就是这样一座交换台。
 
 [English](README_EN.md)
 
@@ -11,6 +12,45 @@
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+
+---
+
+## 🌟 核心定位
+
+**1Switch = AI 时代的电话交换台**
+
+用户只需把"电话线"（AI 框架、渠道、工具）插到枢纽上，配置一次，永远稳定。切换框架不需要重新布线。
+
+---
+
+## 🏗️ 三层架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│   第3层 · 聚合服务层                                      │
+│   大模型 + 知识 + 工具 + 技能 + 记忆                       │
+│   ┌──────────┬──────────┬──────────┬──────────┐           │
+│   │ Claude   │ GPT-4o   │ GLM-5.1  │ Qwen3    │           │
+│   └──────────┴──────────┴──────────┴──────────┘           │
+│   OpenAI / 智谱 / 阿里 / 百度 ——— 统一接入，透明计费         │
+├─────────────────────────────────────────────────────────┤
+│   第2层 · 智能体网关 (Agent Gateway)                      │
+│   每一个智能体的独立配置空间                                │
+│   ┌────────────┐  ┌────────────┐  ┌────────────┐        │
+│   │  Agent A   │  │  Agent B   │  │  Agent C   │        │
+│   │ OpenClaw  │  │  Hermes    │  │  自研框架   │        │
+│   │+Claude-4  │  │+GPT-4o    │  │+GLM-5.1    │        │
+│   │+代码工具   │  │+记忆工具   │  │+行业知识   │        │
+│   └────────────┘  └────────────┘  └────────────┘        │
+│   框架随意切换，配置跟随迁移                                │
+├─────────────────────────────────────────────────────────┤
+│   第1层 · 消息网关 (Message Gateway)                      │
+│   ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐     │
+│   │ 飞书  │  │ 钉钉  │  │WhatsApp│  │ 手机  │  │机器人│     │
+│   └──────┘  └──────┘  └──────┘  └──────┘  └──────┘     │
+│   ★ 只配一次，永远稳定 ★                                  │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -39,61 +79,11 @@
 
 ---
 
-## 🏗️ 技术架构
-
-```
-iclaw/
-├── cmd/admin-api/          # Go 后端入口
-│   └── main.go
-├── internal/               # Go 后端内部实现
-│   ├── handler/           # HTTP handlers
-│   ├── service/           # 业务逻辑
-│   └── model/             # 数据模型
-├── admin-api              # 编译后的后端二进制
-├── src/                   # React 前端
-│   ├── App.tsx
-│   ├── components/
-│   │   ├── Layout/        # 布局（侧边栏 + 顶栏）
-│   │   ├── Dashboard/      # 概览
-│   │   ├── AIConfig/       # AI 模型配置
-│   │   ├── Agents/         # 数字员工
-│   │   ├── Channels/       # 消息渠道
-│   │   ├── Skills/         # 技能管理
-│   │   ├── Security/       # 安全防护
-│   │   ├── Testing/        # 测试诊断
-│   │   ├── Logs/           # 应用日志
-│   │   ├── Terminal/       # 终端控制
-│   │   ├── FileBrowser/    # 文件管理
-│   │   └── Settings/       # 系统设置
-│   ├── stores/             # Zustand 状态管理
-│   └── lib/                # 工具库
-├── novnc/                 # noVNC (Web Terminal)
-├── public/                # 静态资源（PWA icons、manifest）
-└── scripts/                # 设备注册脚本
-```
-
-### 技术栈
-
-| 层级 | 技术 | 说明 |
-|------|------|------|
-| 前端框架 | React 18 | 用户界面 |
-| 构建工具 | Vite | 快速开发与构建 |
-| 样式 | TailwindCSS + CSS 变量 | 主题切换 + 原子化 CSS |
-| 状态管理 | Zustand | 轻量级状态管理 |
-| 动画 | Framer Motion | 流畅过渡动画 |
-| 国际化 | react-i18next | 中英文支持 |
-| PWA | vite-plugin-pwa + Workbox | 离线缓存、主屏幕图标 |
-| 后端 | Go + Gin | 高性能 HTTP API |
-| 终端 | noVNC + WebSocket | 嵌入式 Web Terminal |
-| 设备注册 | Bash + Python | 设备自助上报系统 |
-
----
-
 ## 🚀 快速开始
 
 ### 方式一：直接下载
 
-👉 **[下载最新版本](https://github.com/scottzx/iclaw-manager/releases/latest)**
+👉 **[下载最新版本](https://github.com/scottzx/1switch-manager/releases/latest)**
 
 包含 `admin-api` 后端二进制，下载后运行即可。
 
@@ -108,7 +98,7 @@ iclaw/
 #### 构建后端
 
 ```bash
-cd iclaw
+cd 1switch-manager
 go build -o admin-api ./cmd/admin-api
 ```
 
@@ -133,44 +123,6 @@ go run ./cmd/admin-api
 
 ---
 
-## 📁 项目结构（前端）
-
-```
-src/
-├── App.tsx                  # 根组件 + 路由
-├── main.tsx                 # 入口
-├── components/
-│   ├── Layout/
-│   │   ├── Sidebar.tsx     # 桌面端固定侧边栏
-│   │   ├── MobileSidebar.tsx# 移动端抽屉侧边栏
-│   │   └── Header.tsx       # 顶栏
-│   ├── Dashboard/           # 概览
-│   ├── AIConfig/            # 模型配置
-│   ├── Agents/              # 数字员工
-│   ├── Channels/            # 消息渠道
-│   ├── Skills/              # 技能管理
-│   ├── Security/            # 安全防护
-│   ├── Testing/             # 测试诊断
-│   ├── Logs/                # 应用日志
-│   ├── Terminal/            # 终端控制
-│   ├── FileBrowser/         # 文件管理
-│   └── Settings/            # 系统设置
-├── stores/
-│   └── appStore.ts          # Zustand 全局状态
-├── lib/
-│   ├── tauri.ts             # Tauri API 调用封装
-│   ├── invoke-shim.ts        # invoke 兼容层
-│   ├── ThemeContext.tsx      # 主题上下文
-│   └── logger.ts            # 日志工具
-├── i18n/
-│   ├── zh.json              # 中文翻译
-│   └── en.json              # 英文翻译
-└── styles/
-    └── globals.css          # 全局样式 + CSS 变量
-```
-
----
-
 ## 🔌 API 接口
 
 后端默认监听 `http://0.0.0.0:18789`，主要接口：
@@ -182,7 +134,7 @@ src/
 | `POST /api/service/start` | 启动服务 |
 | `POST /api/service/stop` | 停止服务 |
 | `POST /api/service/restart` | 重启服务 |
-| `GET /api/logs` | 获取日志 |
+| `GET /logs` | 获取日志 |
 | `GET /api/ai/config` | 获取 AI 配置 |
 | `PUT /api/ai/config` | 保存 AI 配置 |
 | `GET /api/channels` | 获取渠道配置 |
@@ -213,8 +165,8 @@ MIT License - 详见 [LICENSE](LICENSE)
 
 - [OpenClaw](https://github.com/miaoxworld/openclaw) - OpenClaw 核心项目
 - [OpenClawInstaller](https://github.com/miaoxworld/OpenClawInstaller) - 命令行安装器
-- [iClaw Manager](https://github.com/scottzx/iclaw-manager) - 本项目
+- [1Switch Manager](https://github.com/scottzx/1switch-manager) - 本项目
 
 ---
 
-**Made with ❤️ by iClaw Team**
+**Made with ❤️ by 1Switch Team**

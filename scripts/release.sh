@@ -100,6 +100,9 @@ if [ -f "$PROJECT_DIR/dist/index.html" ]; then
     log "    前端版本: $(grep -o 'data-version="[^"]*"' "$PROJECT_DIR/dist/index.html")"
 fi
 
+# 打包 frpc 安装包到 dist
+cp "$PROJECT_DIR/internal/frp_0.61.1_linux_arm64.tar.gz" "$PROJECT_DIR/dist/"
+
 # 打包
 cd "$PROJECT_DIR/dist"
 zip -r ../dist.zip .
@@ -144,7 +147,7 @@ if gh release view "$VERSION" --repo "$GITHUB_REPO" &>/dev/null; then
     gh release upload "$VERSION" "$BUILD_DIR/$VERSION/admin-api" "$BUILD_DIR/$VERSION/dist.zip" --clobber --repo "$GITHUB_REPO"
 else
     log "    创建新 Release..."
-    gh release create "$VERSION" --title "$VERSION" --notes "iClaw OTA 版本" --target main "$BUILD_DIR/$VERSION/admin-api" "$BUILD_DIR/$VERSION/dist.zip" --repo "$GITHUB_REPO"
+    gh release create "$VERSION" --title "$VERSION" --generate-notes --target main "$BUILD_DIR/$VERSION/admin-api" "$BUILD_DIR/$VERSION/dist.zip" --repo "$GITHUB_REPO"
 fi
 
 log "    GitHub: https://github.com/${GITHUB_REPO}/releases/tag/${VERSION}"

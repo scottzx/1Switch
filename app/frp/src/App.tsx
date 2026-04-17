@@ -6,7 +6,12 @@ import './styles/index.css';
 type Status = 'idle' | 'checking' | 'connecting' | 'disconnecting' | 'installing';
 
 function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'zh' ? 'en' : 'zh';
+    i18n.changeLanguage(newLang);
+  };
   const [frpStatus, setFrpStatus] = useState<FrpStatus | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [serial, setSerial] = useState('');
@@ -14,6 +19,19 @@ function App() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
+    // 获取设备序列号
+    const fetchDeviceInfo = async () => {
+      try {
+        const res = await fetch('/api/deviceinfo');
+        const data = await res.json();
+        if (data?.serial) {
+          setSerial(data.serial);
+        }
+      } catch (e) {
+        console.error('Failed to fetch device info:', e);
+      }
+    };
+    fetchDeviceInfo();
     checkStatus();
     // 获取设备序列号
     frpApi.serial().then(res => {
@@ -122,9 +140,17 @@ function App() {
     <div className="min-h-screen bg-white flex items-center justify-center p-8">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-2xl font-medium tracking-tight text-gray-900">{t('header.title')}</h1>
-          <p className="text-sm text-gray-500 mt-1">{t('header.subtitle')}</p>
+        <div className="mb-12 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-medium tracking-tight text-gray-900">{t('header.title')}</h1>
+            <p className="text-sm text-gray-500 mt-1">{t('header.subtitle')}</p>
+          </div>
+          <button
+            onClick={toggleLanguage}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {i18n.language === 'zh' ? 'EN' : '中文'}
+          </button>
         </div>
 
         {/* Main Content */}

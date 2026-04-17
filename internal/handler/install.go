@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,11 +10,85 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"iclaw-admin-api/internal/model"
 	"iclaw-admin-api/internal/service"
 )
+
+// npm 镜像配置
+var (
+	npmMirrorRegistry = "https://registry.npmmirror.com"
+	npmMirrorInit     sync.Once
+	useNpmMirror      = false
+)
+
+// isLinux 检测是否为 Linux 系统
+func isLinux() bool {
+	return runtime.GOOS == "linux" || (strings.Contains(runtime.GOOS, "linux") && len(runtime.GOOS) == 5)
+}
+
+// setupLinuxMirrors 配置 Linux 国内镜像源
+func setupLinuxMirrors() {
+	if !isLinux() {
+		return
+	}
+
+	// 设置 npm 镜像（只执行一次）
+	npmMirrorInit.Do(func() {
+		// 检查是否已配置镜像
+		cmd := exec.Command("bash", "-c", "npm config get registry")
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		if err := cmd.Run(); err == nil {
+			registry := strings.TrimSpace(out.String())
+			// 如果已经是 npmmirror 镜像，跳过
+			if strings.Contains(registry, "npmmirror") || strings.Contains(registry, "taobao") {
+				useNpmMirror = true
+				return
+			}
+		}
+
+		// 切换到 npmmirror 镜像
+		setCmd := exec.Command("npm", "config", "set", "registry", npmMirrorRegistry)
+		if err := setCmd.Run(); err == nil {
+			useNpmMirror = true
+		}
+	})
+}
+
+// switchAptToChineseMirror 切换 apt 源到国内镜像
+func switchAptToChineseMirror() error {
+	if !isLinux() {
+		return nil
+	}
+
+	// 检查是否已经是阿里云源
+	checkCmd := exec.Command("bash", "-c", "grep -q 'mirrors.aliyun.com' /etc/apt/sources.list 2>/dev/null && echo 'already' || echo 'not_found'")
+	var out bytes.Buffer
+	checkCmd.Stdout = &out
+	if err := checkCmd.Run(); err == nil {
+		if strings.TrimSpace(out.String()) == "already" {
+			return nil // 已经是阿里云源
+		}
+	}
+
+	// 备份当前 sources.list
+	backupCmd := exec.Command("bash", "-c", "cp /etc/apt/sources.list /etc/apt/sources.list.bak 2>/dev/null || true")
+	backupCmd.Run()
+
+	// 切换到阿里云镜像
+	switchMirror := `cat > /etc/apt/sources.list << 'EOF'
+# 阿里云 Ubuntu 22.04 镜像源
+deb http://mirrors.aliyun.com/ubuntu-ports/ jammy main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu-ports/ jammy-updates main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu-ports/ jammy-security main restricted universe multiverse
+EOF`
+	cmd := exec.Command("bash", "-c", switchMirror)
+	return cmd.Run()
+}
 
 // CheckEnvironment 检查环境
 func CheckEnvironment(c *gin.Context) {
@@ -50,6 +125,11 @@ func InstallNodeJS(c *gin.Context) {
 		return
 	}
 
+	// Linux 系统配置国内镜像
+	if isLinux() {
+		setupLinuxMirrors()
+	}
+
 	// Install Node.js via npm install -g openclaw (includes Node.js)
 	cmd := exec.Command("npm", "install", "-g", "openclaw")
 	output, err := cmd.CombinedOutput()
@@ -75,6 +155,11 @@ func InstallOpenClaw(c *gin.Context) {
 			Message: "OpenClaw is already installed",
 		})
 		return
+	}
+
+	// Linux 系统配置国内镜像
+	if isLinux() {
+		setupLinuxMirrors()
 	}
 
 	cmd := exec.Command("npm", "install", "-g", "openclaw")
@@ -111,8 +196,15 @@ func InitOpenClawConfig(c *gin.Context) {
 
 // OpenInstallTerminal 打开安装终端
 func OpenInstallTerminal(c *gin.Context) {
+	message := "Please open your terminal and run: curl -fsSL https://openclaw.io/install.sh | sh"
+	if isLinux() {
+		message = "Linux 系统建议先切换到国内镜像源:\n" +
+			"  npm config set registry https://registry.npmmirror.com\n" +
+			"然后安装:\n" +
+			"  curl -fsSL https://openclaw.io/install.sh | sh"
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Please open your terminal and run: curl -fsSL https://openclaw.io/install.sh | sh",
+		"message": message,
 	})
 }
 

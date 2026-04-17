@@ -6,23 +6,28 @@ import { Sidebar, MobileSidebar } from './components/Layout/Sidebar';
 import { Header } from './components/Layout/Header';
 import { Dashboard } from './components/Dashboard';
 import { AIConfig } from './components/AIConfig';
+import { Profile } from './components/Profile';
 import { Channels } from './components/Channels';
 import { Skills } from './components/Skills';
-import { Agents } from './components/Agents';
 import { Settings } from './components/Settings';
 import { Security } from './components/Security';
 import { Testing } from './components/Testing';
+import { QingflowMcp } from './components/QingflowMcp';
+import { CallbackPage } from './components/QingflowMcp/CallbackPage';
 import { Logs } from './components/Logs';
 import { Terminal } from './components/Terminal';
 import { FileBrowser } from './components/FileBrowser';
+import { TerminalPanel } from './components/TerminalPanel';
 import { appLogger } from './lib/logger';
 import { api } from './lib/tauri';
+import { execApi } from './services/api';
+import { useTerminalStore } from './stores/terminalStore';
 import { ThemeProvider } from './lib/ThemeContext';
 import { Download, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
-export type PageType = 'dashboard' | 'ai' | 'agents' | 'channels' | 'skills' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser';
+export type PageType = 'dashboard' | 'profile' | 'ai' | 'channels' | 'skills' | 'qingflow-mcp' | 'testing' | 'logs' | 'security' | 'settings' | 'terminal' | 'filebrowser';
 
-const PAGE_TYPE_KEYS: PageType[] = ['dashboard', 'ai', 'agents', 'channels', 'skills', 'testing', 'logs', 'security', 'settings', 'terminal', 'filebrowser'];
+const PAGE_TYPE_KEYS: PageType[] = ['dashboard', 'profile', 'ai', 'channels', 'skills', 'qingflow-mcp', 'testing', 'logs', 'security', 'settings', 'terminal', 'filebrowser'];
 
 export interface EnvironmentStatus {
   node_installed: boolean;
@@ -64,15 +69,23 @@ function App() {
   const [envStatus, setEnvStatus] = useState<EnvironmentStatus | null>(null);
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | null>(null);
 
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateInfo] = useState<UpdateInfo | null>(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
+  const [refreshLoading, setRefreshLoading] = useState(false);
 
   useEffect(() => {
-    const path = location.pathname.slice(1) as PageType;
-    if (PAGE_TYPE_KEYS.includes(path)) {
-      setCurrentPage(path);
+    const path = location.pathname.slice(1);
+
+    // Handle OAuth callback
+    if (path === 'qingflow-callback') {
+      // Render callback page without App layout
+      return;
+    }
+
+    if (PAGE_TYPE_KEYS.includes(path as PageType)) {
+      setCurrentPage(path as PageType);
     }
   }, [location.pathname]);
 
@@ -92,6 +105,15 @@ function App() {
       };
       appLogger.info('环境检查完成', status);
       setEnvStatus(status);
+
+      // 同时获取服务状态
+      try {
+        const serviceStatus = await api.getServiceStatus();
+        setServiceStatus({ running: serviceStatus.running, pid: serviceStatus.pid, port: serviceStatus.port });
+      } catch (e) {
+        appLogger.warn('获取服务状态失败', e);
+      }
+
       setIsReady(true);
     } catch (e) {
       appLogger.error('环境检查失败', e);
@@ -99,38 +121,62 @@ function App() {
     }
   }, []);
 
-  const checkUpdate = useCallback(async () => {
-    appLogger.info('检查 OpenClaw 更新...');
+  const handleRefresh = useCallback(async () => {
+    setRefreshLoading(true);
     try {
-      const info = await api.checkUpdate() as UpdateInfo;
-      appLogger.info('更新检查结果', info);
-      setUpdateInfo(info);
-      if (info.update_available) {
-        setShowUpdateBanner(true);
-      }
+      await checkEnvironment();
+      const status = await api.getServiceStatus();
+      setServiceStatus({ running: status.running, pid: status.pid, port: status.port });
     } catch (e) {
-      appLogger.error('检查更新失败', e);
+      appLogger.error('刷新状态失败', e);
+    } finally {
+      setRefreshLoading(false);
     }
-  }, []);
+  }, [checkEnvironment]);
 
   const handleUpdate = async () => {
     setUpdating(true);
     setUpdateResult(null);
+
+    const { addTab, appendOutput, setStatus: setTabStatus } = useTerminalStore.getState();
+    const tabId = addTab('openclaw update', 'OpenClaw 更新');
+
     try {
-      const result = await api.updateOpenClaw();
-      setUpdateResult({ success: true, message: result });
-      await checkEnvironment();
-      setTimeout(() => {
-        setShowUpdateBanner(false);
-        setUpdateResult(null);
-      }, 3000);
-    } catch (e) {
-      setUpdateResult({
-        success: false,
-        message: t('app.updateError'),
-        error: String(e),
+      await new Promise<void>((resolve, reject) => {
+        const es = execApi.streamCommand(
+          'openclaw update',
+          (data) => appendOutput(tabId, data.content),
+          (data) => { if (data.status === 'running') setTabStatus(tabId, 'running'); },
+          (data) => {
+            setTabStatus(tabId, data.exitCode === 0 ? 'done' : 'error', data.exitCode);
+            if (data.exitCode === 0) {
+              setUpdateResult({ success: true, message: '更新完成' });
+              checkEnvironment();
+              setTimeout(() => {
+                setShowUpdateBanner(false);
+                setUpdateResult(null);
+              }, 3000);
+            } else {
+              setUpdateResult({
+                success: false,
+                message: t('app.updateError'),
+                error: `Exit code: ${data.exitCode}`,
+              });
+            }
+            setUpdating(false);
+            resolve();
+          }
+        );
+        es.onerror = () => {
+          setTabStatus(tabId, 'error');
+          appendOutput(tabId, '[错误: SSE 连接失败]');
+          setUpdateResult({ success: false, message: t('app.updateError'), error: 'SSE 连接失败' });
+          setUpdating(false);
+          reject(new Error('SSE 连接失败'));
+        };
       });
-    } finally {
+    } catch (e) {
+      console.error('更新失败:', e);
       setUpdating(false);
     }
   };
@@ -139,27 +185,6 @@ function App() {
     appLogger.info('🦞 App 组件已挂载');
     checkEnvironment();
   }, [checkEnvironment]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      checkUpdate();
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [checkUpdate]);
-
-  useEffect(() => {
-    const fetchServiceStatus = async () => {
-      try {
-        const status = await api.getServiceStatus();
-        setServiceStatus({ running: status.running, pid: status.pid, port: status.port });
-      } catch {
-        // 静默处理轮询错误
-      }
-    };
-    fetchServiceStatus();
-    const interval = setInterval(fetchServiceStatus, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleSetupComplete = useCallback(() => {
     appLogger.info('安装向导完成');
@@ -173,6 +198,11 @@ function App() {
   };
 
   const renderPage = () => {
+    // Handle OAuth callback page
+    if (location.pathname === '/qingflow-callback' || location.pathname === '/app/iclaw/qingflow-callback') {
+      return <CallbackPage />;
+    }
+
     const pageVariants = {
       initial: { opacity: 0, x: 20 },
       animate: { opacity: 1, x: 0 },
@@ -181,14 +211,15 @@ function App() {
 
     const pages: Record<PageType, JSX.Element> = {
       dashboard: <Dashboard envStatus={envStatus} onSetupComplete={handleSetupComplete} />,
+      profile: <Profile />,
       ai: <AIConfig />,
-      agents: <Agents />,
       channels: <Channels />,
       skills: <Skills />,
+      'qingflow-mcp': <QingflowMcp />,
       testing: <Testing />,
       logs: <Logs />,
       security: <Security />,
-      settings: <Settings onEnvironmentChange={checkEnvironment} />,
+      settings: <Settings />,
       terminal: <Terminal />,
       filebrowser: <FileBrowser />,
     };
@@ -304,10 +335,13 @@ function App() {
         <MobileSidebar currentPage={currentPage} onNavigate={handleNavigate} serviceStatus={serviceStatus} />
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header currentPage={currentPage} />
+          <Header currentPage={currentPage} onRefresh={handleRefresh} refreshLoading={refreshLoading} />
 
-          <main className="flex-1 overflow-hidden p-6">
-            {renderPage()}
+          <main className="flex-1 overflow-hidden p-6 pb-0 flex flex-col">
+            <div className="flex-1 overflow-hidden">
+              {renderPage()}
+            </div>
+            <TerminalPanel />
           </main>
         </div>
       </div>

@@ -59,7 +59,7 @@ export function StatusCard({ status, loading }: StatusCardProps) {
             <Activity size={16} className="text-accent-cyan" />
             <span className="text-xs text-content-secondary">端口</span>
           </div>
-          <p className="text-xl font-semibold text-content-primary">
+          <p className="text-base md:text-xl font-semibold text-content-primary">
             {status?.port || 18789}
           </p>
         </div>
@@ -69,7 +69,7 @@ export function StatusCard({ status, loading }: StatusCardProps) {
             <Cpu size={16} className="text-accent-purple" />
             <span className="text-xs text-content-secondary">进程 ID</span>
           </div>
-          <p className="text-xl font-semibold text-content-primary">
+          <p className="text-base md:text-xl font-semibold text-content-primary">
             {status?.pid || '--'}
           </p>
         </div>
@@ -79,7 +79,7 @@ export function StatusCard({ status, loading }: StatusCardProps) {
             <HardDrive size={16} className="text-accent-green" />
             <span className="text-xs text-content-secondary">内存</span>
           </div>
-          <p className="text-xl font-semibold text-content-primary">
+          <p className="text-base md:text-xl font-semibold text-content-primary">
             {status?.memory_mb ? `${status.memory_mb.toFixed(1)} MB` : '--'}
           </p>
         </div>
@@ -89,7 +89,7 @@ export function StatusCard({ status, loading }: StatusCardProps) {
             <Clock size={16} className="text-accent-amber" />
             <span className="text-xs text-content-secondary">运行时间</span>
           </div>
-          <p className="text-xl font-semibold text-content-primary">
+          <p className="text-base md:text-xl font-semibold text-content-primary">
             {formatUptime(status?.uptime_seconds || null)}
           </p>
         </div>

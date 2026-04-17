@@ -1,10 +1,10 @@
 {
   "header": {
-    "title": "iClaw Portal",
-    "subtitle": "OpenClaw 管理界面"
+    "title": "1Switch Portal",
+    "subtitle": "一芥枢纽 · 开箱即用的 AI"
   },
   "footer": {
-    "brand": "OpenClaw Portal",
+    "brand": "1Switch Portal",
     "tagline": "好的设计就是尽可能少的设计。"
   },
   "theme": {
@@ -29,8 +29,8 @@
       "description": "OpenClaw Agent 核心服务，固定端口 18789。"
     },
     "iclaw": {
-      "name": "iClaw",
-      "description": "OpenClaw 设备管理与配置控制台。"
+      "name": "1Switch",
+      "description": "1Switch 设备管理与配置控制台。"
     },
     "claudeCode": {
       "name": "Claude Code",
@@ -69,12 +69,16 @@
       "description": "自托管 AI Gateway，连接聊天应用到 AI 智能体。数据自主可控，适合开发者。"
     },
     "iclawManual": {
-      "name": "iClaw H1 使用手册",
-      "description": "iClaw H1 设备使用手册，包含快速入门、功能介绍、操作指南等内容。"
+      "name": "1Switch H1 使用手册",
+      "description": "1Switch H1 设备使用手册，包含快速入门、功能介绍、操作指南等内容。"
     },
     "tailscale": {
       "name": "Tailscale",
       "description": "网络隧道与 Mesh VPN，安全远程访问。"
+    },
+    "cronTask": {
+      "name": "定时任务",
+      "description": "查看和管理定时任务的执行状态。"
     },
     "fileManager": {
       "name": "文件管理器",
@@ -91,6 +95,10 @@
     "frp": {
       "name": "远程协助",
       "description": "FRP 内网穿透，支持 TCP/UDP 隧道。"
+    },
+    "quickCommand": {
+      "name": "快捷指令",
+      "description": "设备维护快捷指令，快速执行常见操作。"
     }
   }
 }

@@ -116,3 +116,18 @@ func (h *SystemHandler) UpdateDeviceInfo(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "设备信息更新成功"})
 }
+
+// DeployTtyd 部署 ttyd+tmux 服务
+// @Summary 部署 ttyd+tmux 服务
+// @Tags System
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /api/system/ttyd/deploy [post]
+func (h *SystemHandler) DeployTtyd(c *gin.Context) {
+	err := h.svc.DeployTtydService(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ttyd service deployed"})
+}

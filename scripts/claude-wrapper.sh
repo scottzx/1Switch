@@ -3,9 +3,9 @@
 # claude-wrapper.sh - Claude 单槽位 + 三等待位 wrapper
 #
 # 功能：
-#   - 槽位只有 1 个
+#   - 槽位最多 2 个
 #   - 等待队列最多 3 个
-#   - 第 4 个直接报错返回
+#   - 第 5 个直接报错返回
 #
 # 使用方式：
 #   1. 备份原始 claude: mv /usr/local/bin/claude /usr/local/bin/claude-real
@@ -13,6 +13,7 @@
 #
 
 # ========== 配置 ==========
+MAX_SLOTS=2
 MAX_WAIT=3
 LOCK_DIR="/tmp/claude-slot.lock"
 
@@ -25,13 +26,46 @@ log_error() {
     echo "[$(date '+%H:%M:%S')] ERROR: $1" >&2
 }
 
-# 尝试获取槽位（slot-0）
+# 清理 stale 锁（槽位或等待位的进程已死）
+cleanup_stale_locks() {
+    # slot-*: 检查每个槽位的进程是否存活
+    for slot_dir in "$LOCK_DIR"/slot-*; do
+        [ -d "$slot_dir" ] || continue
+        local slot_pid
+        slot_pid=$(cat "$slot_dir/pid" 2>/dev/null)
+        if [ -n "$slot_pid" ] && ! kill -0 "$slot_pid" 2>/dev/null; then
+            rm -rf "$slot_dir"
+        fi
+    done
+    # wait-*: 检查每个等待位的进程是否存活
+    for wait_dir in "$LOCK_DIR"/wait-*; do
+        [ -d "$wait_dir" ] || continue
+        local wait_pid
+        wait_pid=$(basename "$wait_dir" | sed 's/wait-//')
+        if ! kill -0 "$wait_pid" 2>/dev/null; then
+            rm -rf "$wait_dir"
+        fi
+    done
+}
+
+# 尝试获取任意空闲槽位
 try_acquire_slot() {
-    if mkdir "$LOCK_DIR/slot-0" 2>/dev/null; then
-        echo $$ > "$LOCK_DIR/slot-0/pid"
-        return 0
-    fi
+    # 先清理 stale 锁
+    cleanup_stale_locks
+
+    # 尝试占用任意一个空闲槽位
+    for i in $(seq 0 $((MAX_SLOTS - 1))); do
+        if mkdir "$LOCK_DIR/slot-$i" 2>/dev/null; then
+            echo $$ > "$LOCK_DIR/slot-$i/pid"
+            return 0
+        fi
+    done
     return 1
+}
+
+# 当前占用的槽位数
+count_active_slots() {
+    ls -d "$LOCK_DIR"/slot-* 2>/dev/null | wc -l
 }
 
 # 获取槽位（阻塞，直到成功或队列满）
@@ -45,7 +79,8 @@ wait_for_slot() {
             return 0
         fi
 
-        # 槽位被占用，检查等待队列是否已满
+        # 槽位被占用，检查等待队列是否已满（先清理 stale 锁）
+        cleanup_stale_locks
         wait_count=$(ls -d "$LOCK_DIR/wait-"* 2>/dev/null | wc -l)
 
         if [ "$wait_count" -ge "$MAX_WAIT" ]; then
@@ -62,23 +97,29 @@ wait_for_slot() {
             return 1
         fi
 
-        # 等待槽位释放的信号
-        log_info "等待空位... (队列位置: $wait_count)"
-        while [ -d "$LOCK_DIR/slot-0" ]; do
+        # 等待任意槽位释放的信号
+        log_info "等待空位... (队列位置: $wait_count, 运行中: $(count_active_slots)/$MAX_SLOTS)"
+        while [ "$(count_active_slots)" -ge "$MAX_SLOTS" ]; do
             sleep 1
+            # 等待期间也检查槽位是否已 stale，避免死等
+            cleanup_stale_locks
         done
 
-        # 槽位空了，移除自己的等待位并重试竞争槽位
+        # 有槽位空了，移除自己的等待位并重试竞争槽位
         rmdir "$LOCK_DIR/wait-$$" 2>/dev/null
     done
 }
 
 # 释放槽位
 release_slot() {
-    if [ -f "$LOCK_DIR/slot-0/pid" ] && [ "$(cat "$LOCK_DIR/slot-0/pid")" = "$$" ]; then
-        rm -rf "$LOCK_DIR/slot-0"
-        log_info "释放槽位"
-    fi
+    for slot_dir in "$LOCK_DIR"/slot-*; do
+        [ -d "$slot_dir" ] || continue
+        if [ "$(cat "$slot_dir/pid" 2>/dev/null)" = "$$" ]; then
+            rm -rf "$slot_dir"
+            log_info "释放槽位"
+            return
+        fi
+    done
 }
 
 # ========== 主逻辑 ==========
@@ -90,7 +131,7 @@ trap release_slot EXIT
 
 # 等待获取槽位
 if ! wait_for_slot; then
-    log_error "已有 1 个 Claude 运行中，3 个等待位也已满，请稍后再试"
+    log_error "已有 $MAX_SLOTS 个 Claude 运行中，$MAX_WAIT 个等待位也已满，请稍后再试"
     exit 1
 fi
 

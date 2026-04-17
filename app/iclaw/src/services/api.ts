@@ -210,6 +210,14 @@ export interface WifiStatus {
   ip?: string;
 }
 
+// Profile file types
+export interface ProfileFile {
+  name: string;
+  chineseName: string;
+  description: string;
+  exists: boolean;
+}
+
 // System monitoring API (from admin-ui)
 export const systemApi = {
   info: async (): Promise<SystemInfo> => {
@@ -471,6 +479,34 @@ export const api = {
     return response.data.message;
   },
 
+  // Profile - 档案文件
+  getProfileFiles: async (workspace?: string): Promise<ProfileFile[]> => {
+    const params = workspace ? `?workspace=${encodeURIComponent(workspace)}` : '';
+    const response = await apiClient.get<{ files: ProfileFile[] }>(`/api/profile/files${params}`);
+    return response.data.files;
+  },
+
+  getProfileFile: async (fileName: string, workspace?: string): Promise<{ content: string; exists: boolean }> => {
+    const params = workspace ? `?workspace=${encodeURIComponent(workspace)}` : '';
+    const response = await apiClient.get<{ content: string; exists: boolean }>(`/api/profile/files/${fileName}${params}`);
+    return response.data;
+  },
+
+  saveProfileFile: async (fileName: string, content: string, workspace?: string): Promise<void> => {
+    await apiClient.post<MessageResponse>(`/api/profile/files/${fileName}`, { content, workspace });
+  },
+
+  // Legacy Profile APIs (for backward compatibility)
+  getIdentity: async (workspace?: string): Promise<string> => {
+    const params = workspace ? `?workspace=${encodeURIComponent(workspace)}` : '';
+    const response = await apiClient.get<{ content: string }>(`/api/profile/identity${params}`);
+    return response.data.content || '';
+  },
+
+  saveIdentity: async (content: string, workspace?: string): Promise<void> => {
+    await apiClient.post<MessageResponse>('/api/profile/identity', { content, workspace });
+  },
+
   // Skills
   getSkills: async (): Promise<unknown[]> => {
     const response = await apiClient.get<unknown[]>('/api/skills');
@@ -569,6 +605,101 @@ export const api = {
       })),
       requires_api_key: p.requires_api_key,
     }));
+  },
+};
+
+// Exec API - SSE command execution
+export interface SSEOutputEvent {
+  type: 'stdout' | 'stderr';
+  content: string;
+}
+
+export interface SSEStatusEvent {
+  status: 'running' | 'done';
+  pid?: number;
+  exitCode?: number;
+}
+
+export interface SSEEvent {
+  event: string;
+  data: string;
+}
+
+export const execApi = {
+  /**
+   * 创建 SSE 连接来流式执行命令
+   * @param cmd 要执行的命令 (start/stop/restart)
+   * @param onOutput 收到输出时的回调
+   * @param onStatus 收到状态更新时的回调
+   * @param onDone 命令完成时的回调
+   * @returns EventSource 实例，需要手动关闭
+   */
+  streamCommand: (
+    cmd: string,
+    onOutput?: (event: SSEOutputEvent) => void,
+    onStatus?: (event: SSEStatusEvent) => void,
+    onDone?: (event: SSEStatusEvent) => void
+  ): EventSource => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+    const url = `${apiBaseUrl}/api/exec/stream?cmd=${encodeURIComponent(cmd)}`;
+    const eventSource = new EventSource(url);
+
+    eventSource.addEventListener('output', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        onOutput?.(data);
+      } catch {
+        // 如果不是 JSON，直接作为文本处理
+        onOutput?.({ type: 'stdout', content: e.data });
+      }
+    });
+
+    eventSource.addEventListener('status', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        onStatus?.(data);
+      } catch {
+        // ignore
+      }
+    });
+
+    eventSource.addEventListener('done', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        onDone?.(data);
+      } catch {
+        // ignore
+      }
+      eventSource.close();
+    });
+
+    eventSource.onerror = (e) => {
+      console.error('SSE error:', e);
+      eventSource.close();
+    };
+
+    return eventSource;
+  },
+
+  /**
+   * 终止正在执行的命令
+   */
+  killCommand: async (id?: string): Promise<void> => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+    const url = id ? `${apiBaseUrl}/api/exec/kill?id=${id}` : `${apiBaseUrl}/api/exec/kill`;
+    await apiClient.post(url);
+  },
+
+  /**
+   * 同步执行命令并返回结果（用于快速检测状态）
+   */
+  execCommand: async (cmd: string): Promise<{ output: string; exitCode: number }> => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+    const response = await apiClient.post<{ output: string; exitCode: number }>(
+      `${apiBaseUrl}/api/exec`,
+      { cmd }
+    );
+    return response.data;
   },
 };
 

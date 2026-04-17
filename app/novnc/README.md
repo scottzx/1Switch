@@ -1,10 +1,10 @@
 ## noVNC: HTML VNC client library and application
 
-> **Note**: This is a sub-application integrated into iclaw-manager project.
+> **Note**: This is a sub-application integrated into 1switch-manager project.
 
-### iclaw-manager 集成说明
+### 1switch-manager 集成说明
 
-本项目作为 iclaw-manager 的子应用引入，提供浏览器端的 VNC 远程桌面功能。
+本项目作为 1switch-manager 的子应用引入，提供浏览器端的 VNC 远程桌面功能。
 
 #### 架构
 
@@ -34,7 +34,7 @@
 
 #### 待完善
 
-- [ ] 与 iclaw-manager 主应用路由集成
+- [ ] 与 1switch-manager 主应用路由集成
 - [ ] WebSocket Proxy 服务集成
 - [ ] VNC 连接管理界面
 - [ ] 连接配置持久化

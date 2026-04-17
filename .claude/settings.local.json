@@ -54,7 +54,16 @@
       "WebFetch(domain:github.com)",
       "Bash(mkdir -p /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-deploy/tools)",
       "Bash(cp \"/Users/scott/Library/Mobile Documents/com~apple~CloudDocs/Downloads/frp_0.61.1_linux_arm64.tar.gz\" /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-deploy/tools/)",
-      "Read(//Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-deploy/tools/**)"
+      "Read(//Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-deploy/tools/**)",
+      "Read(//Users/scott/.openclaw/**)",
+      "Bash(openclaw skills:*)",
+      "Bash(openclaw agents:*)",
+      "Bash(bash scripts/release.sh)",
+      "Bash(unzip -p dist.zip app/iclaw/assets/index-CVaSFJRL.js)",
+      "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/iclaw/.env*)",
+      "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/frp/.env*)",
+      "Bash(ls -la /Users/scott/Documents/01-开发项目/AI应用/iclaw/iclaw-manager/app/novnc/.env*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
