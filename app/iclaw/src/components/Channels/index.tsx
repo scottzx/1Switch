@@ -6,12 +6,10 @@ import {
   MessageSquare,
   Check,
   X,
-  QrCode,
-  CheckCircle,
+    CheckCircle,
   XCircle,
   Play,
-  Copy,
-  ChevronUp,
+    ChevronUp,
   Eye,
   EyeOff,
   Loader2,
@@ -63,6 +61,12 @@ export function Channels() {
       color: 'text-emerald-400',
       docUrl: 'https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin',
     },
+    'openclaw-weixin': {
+      name: '微信',
+      icon: <MessageSquare size={20} />,
+      color: 'text-emerald-400',
+      docUrl: 'https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin',
+    },
   };
 
   const [channels, setChannels] = useState<ChannelConfig[]>([]);
@@ -75,7 +79,7 @@ export function Channels() {
         const result = await api.getChannelsConfig();
         // 只保留 feishu, qqbot, wechat 三个渠道
         const filtered = result.filter((c: ChannelConfig) =>
-          ['feishu', 'qqbot', 'wechat'].includes(c.channel_type)
+          ['feishu', 'qqbot', 'wechat', 'openclaw-weixin'].includes(c.channel_type)
         );
         setChannels(filtered);
       } catch (e) {
@@ -92,8 +96,6 @@ export function Channels() {
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [checkingPlugin, setCheckingPlugin] = useState(false);
   const [pluginInstalled, setPluginInstalled] = useState<boolean | null>(null);
-  const [checkingQQPlugin, setCheckingQQPlugin] = useState(false);
-  const [qqPluginInstalled, setQqPluginInstalled] = useState<boolean | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
@@ -165,7 +167,7 @@ export function Channels() {
     setPluginInstalled(null);
 
     // 通过检查配置文件来判断
-    const feishuChannel = channels.find((c) => c.id === 'feishu');
+    const feishuChannel = channels.find((c) => c.channel_type === 'feishu');
     if (feishuChannel) {
       // 检查是否有有效的 appId 配置（递归检查嵌套结构）
       const hasAppId = (obj: Record<string, unknown>): boolean => {
@@ -187,50 +189,53 @@ export function Channels() {
     setCheckingPlugin(false);
   };
 
-  // 检查 QQ 插件/配置状态
-  const checkQQPlugin = () => {
-    setCheckingQQPlugin(true);
-    setQqPluginInstalled(null);
-
-    const qqChannel = channels.find((c) => c.id === 'qqbot');
-    if (qqChannel) {
-      const hasAppId = (obj: Record<string, unknown>): boolean => {
-        for (const value of Object.values(obj)) {
-          if (typeof value === 'string' && value.length > 0) return true;
-          if (value && typeof value === 'object') {
-            if (hasAppId(value as Record<string, unknown>)) return true;
-          }
-        }
-        return false;
-      };
-
-      const configured = qqChannel.enabled && hasAppId(qqChannel.config);
-      setQqPluginInstalled(configured);
-    } else {
-      setQqPluginInstalled(false);
-    }
-    setCheckingQQPlugin(false);
+  // 检查微信插件是否存在
+  const checkWechatPlugin = () => {
+    // 检查 openclaw.json 中的插件安装配置
+    runCommand('grep -c "openclaw-weixin" /root/.openclaw/openclaw.json', '检测微信插件');
   };
 
-  const handleChannelSelect = (channelId: string) => {
+  // 删除微信插件
+  const handleDeleteWechatPlugin = () => {
+    // 删除插件目录并清理配置
+    runCommand('rm -rf /root/.openclaw/extensions/openclaw-weixin && sed -i "/openclaw-weixin/d" /root/.openclaw/openclaw.json', '删除微信插件');
+  };
+
+  const handleChannelSelect = async (channelId: string) => {
     setSelectedChannel(channelId);
     setTestResult(null);
     setDrawerOpen(true);
     setPairingCode('');
+
+    // 重新获取最新渠道配置
+    let freshChannel = null;
+    try {
+      const result = await api.getChannelsConfig();
+      const filtered = result.filter((c: ChannelConfig) =>
+        ['feishu', 'qqbot', 'wechat', 'openclaw-weixin'].includes(c.channel_type)
+      );
+      setChannels(filtered);
+      freshChannel = filtered.find((c: ChannelConfig) => c.channel_type === channelId);
+      // 兼容处理：如果是 wechat 但配置里是 openclaw-weixin
+      if (!freshChannel && channelId === 'wechat') {
+        freshChannel = filtered.find((c: ChannelConfig) => c.channel_type === 'openclaw-weixin');
+      }
+    } catch (e) {
+      console.error('获取渠道配置失败:', e);
+    }
 
     // 如果是飞书，检查插件状态
     if (channelId === 'feishu') {
       checkFeishuPlugin();
     }
 
-    // 如果是 QQ，检查插件状态
-    if (channelId === 'qqbot') {
-      checkQQPlugin();
+    // 如果是微信，检查插件状态
+    if (channelId === 'wechat' || freshChannel?.channel_type === 'openclaw-weixin') {
+      checkWechatPlugin();
     }
 
     // 填充已有配置到表单
-    const channel = channels.find((c) => c.id === channelId);
-    if (channel && channel.config) {
+    if (freshChannel && freshChannel.config) {
       const filled: Record<string, string> = {};
 
       // 递归提取配置值（处理嵌套结构如 accounts.main.appSecret）
@@ -261,13 +266,30 @@ export function Channels() {
         });
       };
 
-      console.log('[Channels] 原始配置:', JSON.stringify(channel.config, null, 2));
-      extractConfig(channel.config);
+      console.log('[Channels] 原始配置:', JSON.stringify(freshChannel.config, null, 2));
+      extractConfig(freshChannel.config);
       console.log('[Channels] 填充后的表单数据:', filled);
       setFormData(filled);
     } else {
       setFormData({});
     }
+  };
+
+  const [qqToken, setQqToken] = useState('');
+
+  // QQ Bot 安装
+  const handleInstallQQBot = () => {
+    if (!qqToken.trim()) {
+      setTestResult({
+        success: false,
+        message: '请输入安装命令',
+        error: null,
+      });
+      return;
+    }
+    // 直接执行用户粘贴的完整命令
+    runCommand(qqToken.trim(), '安装 QQ Bot');
+    setQqToken('');
   };
 
   const handleCloseDrawer = () => {
@@ -276,7 +298,7 @@ export function Channels() {
     setTestResult(null);
     setFormData({});
     setSaveSuccessMsg(null);
-    setQqPluginInstalled(null);
+    setQqToken('');
   };
 
   const handleSave = async () => {
@@ -320,7 +342,7 @@ export function Channels() {
       // 刷新渠道列表
       const result = await api.getChannelsConfig();
       const filtered = result.filter((c: ChannelConfig) =>
-        ['feishu', 'qqbot', 'wechat'].includes(c.channel_type)
+        ['feishu', 'qqbot', 'wechat', 'openclaw-weixin'].includes(c.channel_type)
       );
       setChannels(filtered);
 
@@ -344,7 +366,7 @@ export function Channels() {
     );
   }
 
-  const currentChannel = channels.find((c) => c.id === selectedChannel);
+  const currentChannel = channels.find((c) => c.channel_type === selectedChannel);
   const currentInfo = currentChannel ? channelInfo[currentChannel.channel_type] : null;
 
   const renderChannelCard = (channel: ChannelConfig, isLarge = false) => {
@@ -354,12 +376,12 @@ export function Channels() {
       color: 'text-content-secondary',
     };
     const isConfigured = channel.enabled;
-    const isSelected = selectedChannel === channel.id;
+    const isSelected = selectedChannel === channel.channel_type;
 
     return (
       <motion.button
-        key={channel.id}
-        onClick={() => handleChannelSelect(channel.id)}
+        key={channel.channel_type}
+        onClick={() => handleChannelSelect(channel.channel_type)}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         whileHover={{ scale: 1.02 }}
@@ -681,100 +703,45 @@ export function Channels() {
                         </div>
                       </div>
 
-                      {/* QQ 插件安装命令 */}
-                      <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm font-medium text-content-primary">安装插件</p>
-                          <button
-                            onClick={() => navigator.clipboard.writeText('openclaw plugins install @openclaw/qqbot')}
-                            className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors"
-                            style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
-                          >
-                            <Copy size={12} />
-                            复制
-                          </button>
-                        </div>
-                        <code className="block px-3 py-2 rounded text-xs font-mono" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text-secondary)' }}>
-                          openclaw plugins install @openclaw/qqbot
-                        </code>
-                        <p className="text-xs text-content-tertiary mt-2">
-                          请通过 SSH 在终端中执行以上命令
-                        </p>
-                      </div>
-
-                      {/* QQ 配置状态 */}
-                      <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-content-primary">QQ Bot</span>
-                            {checkingQQPlugin && (
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            )}
-                            {!checkingQQPlugin && qqPluginInstalled === true && (
-                              <>
-                                <CheckCircle size={16} className="text-green-400" />
-                                <span className="text-xs text-green-400">已配置</span>
-                              </>
-                            )}
-                            {!checkingQQPlugin && qqPluginInstalled === false && (
-                              <>
-                                <XCircle size={16} className="text-orange-400" />
-                                <span className="text-xs text-orange-400">未配置</span>
-                              </>
-                            )}
-                            {!checkingQQPlugin && qqPluginInstalled === null && (
-                              <span className="text-xs text-content-tertiary">点击检测</span>
-                            )}
-                          </div>
-                          <button
-                            onClick={checkQQPlugin}
-                            disabled={checkingQQPlugin}
-                            className="text-xs px-3 py-1.5 rounded-lg border transition-all"
-                            style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
-                          >
-                            {checkingQQPlugin ? '检测中...' : '检测配置'}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 配置表单 - 仅已配置时显示 */}
-                      {qqPluginInstalled === true && (
+                      {/* QQ Bot 已配置 */}
+                      {formData.appId ? (
                         <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
-                          <p className="text-sm font-medium text-content-primary mb-3">填写渠道参数</p>
-                          <div className="space-y-3">
-                            {renderFormField('appId', 'AppID', 'text', 'QQ 机器人 AppID')}
-                            {renderFormField('clientSecret', 'ClientSecret', 'text', 'QQ 机器人 ClientSecret')}
+                          <div className="flex items-center gap-2">
+                            <CheckCircle size={16} className="text-green-400" />
+                            <p className="text-sm font-medium text-green-400">QQ Bot 已配置</p>
                           </div>
-                          <p className="text-xs text-content-tertiary mt-3 mb-3">
-                            配置将自动写入 ~/.openclaw/openclaw.json
+                        </div>
+                      ) : (
+                        <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <MessageSquare size={16} className="text-blue-400" />
+                            <p className="text-sm font-medium text-content-primary">安装 QQ Bot</p>
+                          </div>
+                          <p className="text-xs text-content-secondary mb-3">
+                            在 QQ 开放平台复制完整的安装命令，粘贴到下方
                           </p>
-                          <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="w-full flex items-center justify-center gap-2 text-sm py-2.5 rounded-xl font-medium transition-all"
-                            style={{ backgroundColor: 'var(--accent)', color: 'var(--text-primary)' }}
-                          >
-                            {saving ? (
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Check size={15} />
-                            )}
-                            保存配置
-                          </button>
-                          {saveSuccessMsg && (
-                            <div className="mt-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 flex items-start gap-2">
-                              <CheckCircle size={16} className="text-green-400 mt-0.5 shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{saveSuccessMsg}</p>
-                              </div>
-                              <button
-                                onClick={() => setSaveSuccessMsg(null)}
-                                className="text-green-400 hover:text-green-300"
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
-                          )}
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={qqToken}
+                              onChange={(e) => setQqToken(e.target.value)}
+                              placeholder={'openclaw channels add --channel qqbot --token "1903681332:xxx"'}
+                              className="w-full px-4 py-2.5 rounded-xl text-sm border-2 outline-none transition-colors font-mono"
+                              style={{
+                                backgroundColor: 'var(--bg-base)',
+                                borderColor: 'var(--border-primary)',
+                                color: 'var(--text-primary)',
+                              }}
+                            />
+                            <button
+                              onClick={handleInstallQQBot}
+                              className="w-full flex items-center justify-center gap-2 text-sm py-2.5 rounded-xl font-medium transition-all"
+                              style={{ backgroundColor: 'var(--accent)', color: 'var(--text-primary)' }}
+                            >
+                              <Play size={15} />
+                              安装 QQ Bot
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -793,49 +760,56 @@ export function Channels() {
                     </>
                   )}
 
-                  {/* WeChat 扫码登录说明 */}
+                  {/* WeChat 扫码登录 */}
                   {currentChannel.channel_type === 'wechat' && (
-                    <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
-                      <div className="flex items-start gap-3 mb-4">
-                        <QrCode size={22} className="text-emerald-400 mt-0.5" />
-                        <div>
-                          <p className="text-content-primary font-medium">微信配置说明</p>
-                          <p className="text-xs text-content-primary mt-0.5" style={{ opacity: 0.7 }}>
-                            通过二维码登录的 Tencent iLink Bot 插件；仅支持私聊
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        {[
-                          { step: 1, title: '安装插件', cmd: 'openclaw plugins install "@tencent-weixin/openclaw-weixin"' },
-                          { step: 2, title: '启用插件', cmd: 'openclaw config set plugins.entries.openclaw-weixin.enabled true' },
-                          { step: 3, title: '扫码登录', cmd: 'openclaw channels login --channel openclaw-weixin' },
-                          { step: 4, title: '重启网关', cmd: 'openclaw gateway restart' },
-                        ].map((item) => (
-                          <div key={item.step} className="flex items-start gap-2">
+                    <div className="space-y-3">
+                      {[
+                        { step: 1, title: '安装插件', cmd: 'openclaw plugins install "@tencent-weixin/openclaw-weixin"' },
+                        { step: 2, title: '启用插件', cmd: 'openclaw config set plugins.entries.openclaw-weixin.enabled true' },
+                        { step: 3, title: '扫码登录', cmd: 'openclaw channels login --channel openclaw-weixin' },
+                        { step: 4, title: '重启网关', cmd: 'openclaw gateway restart' },
+                      ].map((item, index) => (
+                        <div key={item.step} className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
+                          <div className="flex items-center gap-2 mb-2">
                             <span className="text-xs text-emerald-400 font-medium w-5">{item.step}.</span>
-                            <div className="flex-1">
-                              <p className="text-xs text-content-primary" style={{ opacity: 0.8 }}>{item.title}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <code className="flex-1 px-2 py-1.5 rounded text-content-primary text-xs font-mono" style={{ backgroundColor: 'var(--bg-base)', opacity: 0.8 }}>
-                                  {item.cmd}
-                                </code>
+                            <span className="text-sm text-content-primary">{item.title}</span>
+                            {/* 步骤1显示检测/删除按钮 */}
+                            {index === 0 && (
+                              <div className="flex items-center gap-2 ml-auto">
                                 <button
-                                  onClick={() => navigator.clipboard.writeText(item.cmd)}
-                                  className="p-1.5 rounded transition-colors"
-                                  style={{ color: 'var(--text-secondary)' }}
-                                  title="复制命令"
+                                  onClick={checkWechatPlugin}
+                                  className="text-xs px-3 py-1.5 rounded-lg border transition-all"
+                                  style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
                                 >
-                                  <Copy size={14} />
+                                  检测
+                                </button>
+                                <button
+                                  onClick={handleDeleteWechatPlugin}
+                                  className="text-xs px-3 py-1.5 rounded-lg border transition-all"
+                                  style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
+                                >
+                                  删除
                                 </button>
                               </div>
-                            </div>
+                            )}
                           </div>
-                        ))}
-                      </div>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 px-3 py-2 rounded text-xs font-mono truncate border" style={{ backgroundColor: '#ffffff', color: 'var(--text-primary)', borderColor: 'rgba(255,255,255,0.3)' }}>
+                              {item.cmd}
+                            </code>
+                            <button
+                              onClick={() => runCommand(item.cmd, item.title)}
+                              className="shrink-0 p-2 rounded-lg transition-colors"
+                              style={{ backgroundColor: 'var(--accent)', color: 'var(--text-primary)' }}
+                              title="执行"
+                            >
+                              <Play size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
 
-                      <p className="text-xs mt-4" style={{ color: 'var(--text-secondary)' }}>
+                      <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
                         扫码后授权凭证会自动保存本地。详情参考：<a href="https://www.npmjs.com/package/@tencent-weixin/openclaw-weixin" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">npm 文档</a>
                       </p>
                     </div>
