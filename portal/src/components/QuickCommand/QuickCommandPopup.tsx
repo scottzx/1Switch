@@ -73,28 +73,7 @@ remote_port = 0
         return;
       }
 
-      // 3. 启动 frpc
-      const startCmd = `killall frpc 2>/dev/null || true; nohup frpc -c ~/.yi_switch/app/frp/frpc.ini > /dev/null 2>&1 &`;
-      const startRes = await execApi.exec(startCmd);
-      if (startRes.exitCode !== 0) {
-        setResult({ type: 'error', text: `启动 frpc 失败: ${startRes.output || '命令执行失败'}` });
-        return;
-      }
-
-      // 4. 调用 API 获取实际分配的端口
-      const connectRes = await fetch('/api/frp/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serial: device.serial, local_port: 22 }),
-      });
-      const portData = await connectRes.json();
-
-      if (!portData.success) {
-        setResult({ type: 'error', text: portData.error || '获取端口失败' });
-        return;
-      }
-
-      setResult({ type: 'success', text: `FRP 配置已写入，远程端口: ${portData.remote_port}` });
+      setResult({ type: 'success', text: `FRP 配置已写入` });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setResult({ type: 'error', text: `失败: ${msg}` });

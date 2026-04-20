@@ -29,7 +29,7 @@
       "description": "OpenClaw Agent core service. Fixed port 18789."
     },
     "iclaw": {
-      "name": "iClaw Portal",
+      "name": "iClaw",
       "description": "iClaw device management and configuration console."
     },
     "claudeCode": {

@@ -56,22 +56,12 @@ function App() {
   const connect = async () => {
     setStatus('connecting');
     try {
-      const res = await frpApi.connect({
+      const res = await frpApi.deployConfig({
         serial: serial,
         local_port: parseInt(localPort),
       });
       if (res.data.success) {
-        setFrpStatus({
-          installed: true,
-          connected: true,
-          server: res.data.server || null,
-          remote_port: res.data.remote_port || res.data.port || null,
-          local_port: res.data.local_port || null,
-          token: res.data.token || null,
-          link: res.data.link || null,
-          command: res.data.command || null,
-          error: res.data.message || null,
-        });
+        await checkStatus();
       }
     } catch (e) {
       console.error(e);

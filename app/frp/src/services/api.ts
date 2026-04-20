@@ -44,6 +44,7 @@ export const frpApi = {
   status: () => api.get<FrpStatus>('/frp/status'),
   serial: () => api.get<{ serial: string }>('/frp/serial'),
   connect: (data: FrpConnectRequest) => api.post<FrpConnectResponse>('/frp/connect', data),
+  deployConfig: (data: FrpConnectRequest) => api.post<{ success: boolean; message?: string; error?: string }>('/frp/deploy-config', data),
   disconnect: () => api.post<{ success: boolean }>('/frp/disconnect'),
   install: () => api.post<FrpInstallResult>('/frp/install'),
 };

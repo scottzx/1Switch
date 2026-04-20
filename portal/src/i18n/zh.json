@@ -29,7 +29,7 @@
       "description": "OpenClaw Agent 核心服务，固定端口 18789。"
     },
     "iclaw": {
-      "name": "iClaw控制台",
+      "name": "iClaw",
       "description": "iClaw 设备管理与配置控制台。"
     },
     "claudeCode": {

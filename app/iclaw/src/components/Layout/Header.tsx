@@ -21,7 +21,7 @@ const pageTitles: Record<PageType, { title: string; description: string }> = {
   ai: { title: '模型配置', description: '配置 AI 提供商和模型' },
   channels: { title: '消息渠道', description: '配置 Telegram、Discord、飞书等' },
   skills: { title: '技能管理', description: '管理内置、官方、社区与自定义技能' },
-  'qingflow-mcp': { title: '轻流MCP', description: '轻流工作流管理与审批' },
+  'qingflow-mcp': { title: '拓展工坊', description: '找到好玩、好用的拓展功能' },
   testing: { title: '测试诊断', description: '系统诊断与问题排查' },
   logs: { title: '应用日志', description: '查看 Manager 应用的控制台日志' },
   security: { title: '安全防护', description: '安全风险检测与一键修复' },

@@ -24,27 +24,11 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
       titleKey: 'sections.aiApplications',
       modules: [
         {
-          id: 'open-claude',
-          nameKey: 'modules.openClaude.name',
-          descriptionKey: 'modules.openClaude.description',
-          type: 'external',
-          url: `http://${deviceIp}:18789`, // 动态获取 IP
-          status: 'available',
-        },
-        {
           id: 'iclaw',
           nameKey: 'modules.iclaw.name',
           descriptionKey: 'modules.iclaw.description',
           type: 'route',
           url: '/app/iclaw/',
-          status: 'available',
-        },
-        {
-          id: 'claude-code',
-          nameKey: 'modules.claudeCode.name',
-          descriptionKey: 'modules.claudeCode.description',
-          type: 'external',
-          url: `http://${deviceIp}:7681`,
           status: 'available',
         },
       ],

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { RefreshCw, CheckCircle, XCircle, ExternalLink, Download } from 'lucide-react';
 import { execApi } from '../../services/api';
 import { useTerminalStore } from '../../stores/terminalStore';
+import { TOOLS_MD } from './toolsMd';
 
 // OAuth 配置
 const QINGFLOW_LOGIN_URL = 'https://openclaw-login.qingflow.com';
@@ -13,10 +14,12 @@ interface SetupStatus {
   tokenInjected: boolean | null;
   userEmail: string | null;
   cliAuthenticated: boolean | null;
+  toolsInstalled: boolean | null;
   loading: boolean;
   installingPython: boolean;
   installingMcp: boolean;
   authenticating: boolean;
+  installingTools: boolean;
 }
 
 interface SetupCheckerProps {
@@ -30,10 +33,12 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     tokenInjected: null,
     userEmail: null,
     cliAuthenticated: null,
+    toolsInstalled: null,
     loading: false,
     installingPython: false,
     installingMcp: false,
     authenticating: false,
+    installingTools: false,
   });
 
   const { addTab, appendOutput, setStatus: setTabStatus } = useTerminalStore();
@@ -49,6 +54,8 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
       'test -f ~/.openclaw/workspace/config/mcporter.json && echo TOKEN_OK || echo TOKEN_FAIL',
       // 检查认证缓存文件是否存在
       'test -f ~/.qingflow-mcp/setup-complete && cat ~/.qingflow-mcp/setup-complete || echo ""',
+      // 检查 TOOLS.md 是否存在且包含 qingflow 关键词
+      'grep -q "qingflow" ~/.openclaw/workspace/TOOLS.md 2>/dev/null && echo TOOLS_OK || echo TOOLS_FAIL',
     ].join('; ');
 
     try {
@@ -81,6 +88,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
         tokenInjected: lines.includes('TOKEN_OK'),
         cliAuthenticated,
         userEmail: userEmail || (lines.includes('TOKEN_OK') ? 'Token 已配置' : null),
+        toolsInstalled: lines.includes('TOOLS_OK'),
       }));
     } catch (e) {
       console.error('[checkAllStatus] failed:', e);
@@ -92,6 +100,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
         tokenInjected: false,
         cliAuthenticated: false,
         userEmail: null,
+        toolsInstalled: false,
       }));
     }
   };
@@ -200,7 +209,7 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
 
     await new Promise<void>((resolve) => {
       execApi.streamCommand(
-        `mkdir -p ~/.openclaw/workspace/config && echo '${mcporterConfig.replace(/'/g, "'\\''")}' > ~/.openclaw/workspace/config/mcporter.json`,
+        `mkdir -p ~/.openclaw/workspace/config && cat > ~/.openclaw/workspace/config/mcporter.json << 'MCPFILE'\n${mcporterConfig}\nMCPFILE`,
         () => {},
         () => {},
         () => {
@@ -314,6 +323,27 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
       });
   };
 
+  // Step 5: 写入 TOOLS.md
+  const handleInstallTools = async () => {
+    setStatus((prev) => ({ ...prev, installingTools: true }));
+
+    await new Promise<void>((resolve) => {
+      execApi.streamCommand(
+        `mkdir -p ~/.openclaw/workspace && cat > ~/.openclaw/workspace/TOOLS.md << 'TOOLSFILE'\n${TOOLS_MD}\nTOOLSFILE`,
+        () => {},
+        () => {},
+        () => {
+          setStatus((prev) => ({
+            ...prev,
+            toolsInstalled: true,
+            installingTools: false,
+          }));
+          resolve();
+        }
+      );
+    });
+  };
+
   // 监听 OAuth token（来自 postMessage 或 sessionStorage）
   useEffect(() => {
     // 1. 检查是否已有 token
@@ -344,8 +374,8 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
     };
   }, []);
 
-  const { pythonVenvInstalled, mcpInstalled, tokenInjected, userEmail, cliAuthenticated, installingPython, installingMcp, authenticating } = status;
-  const canProceed = cliAuthenticated;
+  const { pythonVenvInstalled, mcpInstalled, tokenInjected, userEmail, cliAuthenticated, toolsInstalled, installingPython, installingMcp, authenticating, installingTools } = status;
+  const canProceed = cliAuthenticated && toolsInstalled;
 
   return (
     <div
@@ -546,6 +576,58 @@ export function SetupChecker({ onComplete }: SetupCheckerProps) {
                   </>
                 ) : (
                   '认证'
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Step 5: 写入工具文档 */}
+        <div
+          className="p-4 rounded-lg"
+          style={{ backgroundColor: 'var(--bg-elevated)' }}
+        >
+          <div className="flex items-center gap-3">
+            {toolsInstalled === null ? (
+              cliAuthenticated ? (
+                <RefreshCw size={18} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+              ) : (
+                <XCircle size={18} style={{ color: 'var(--text-tertiary)' }} />
+              )
+            ) : toolsInstalled ? (
+              <CheckCircle size={18} style={{ color: 'var(--text-success)' }} />
+            ) : (
+              <XCircle size={18} style={{ color: 'var(--text-tertiary)' }} />
+            )}
+            <div className="flex-1">
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                步骤 5：写入工具文档
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                {toolsInstalled === null
+                  ? cliAuthenticated
+                    ? '写入中...'
+                    : '等待认证'
+                  : toolsInstalled
+                    ? 'TOOLS.md 已写入'
+                    : '写入工具文档'}
+              </p>
+            </div>
+
+            {cliAuthenticated && toolsInstalled !== true && (
+              <button
+                onClick={handleInstallTools}
+                disabled={installingTools}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                style={{ backgroundColor: '#22c55e', color: 'white' }}
+              >
+                {installingTools ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    写入中...
+                  </>
+                ) : (
+                  '写入'
                 )}
               </button>
             )}
