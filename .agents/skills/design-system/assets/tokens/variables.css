@@ -1,0 +1,123 @@
+/* ===== iClaw Design Tokens =====
+   Dieter Rams inspired neutral palette
+   Version: 1.0.0
+   Usage: Copy to project styles/ directory and @import in main CSS
+*/
+
+:root {
+  /* === Backgrounds - Light Mode (Warm Neutrals) === */
+  --bg-app: #F5F5F3;
+  --bg-sidebar: #FAFAF8;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8F8F6;
+  --bg-input: #EFEFED;
+  --bg-elevated: #E8E8E5;
+  --bg-overlay: rgba(255, 255, 255, 0.92);
+  --bg-code: #F0F0EE;
+
+  /* === Text - Light Mode (Warm Blacks) === */
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --text-tertiary: #9B9B9B;
+  --text-inverse: #FAFAF8;
+
+  /* === Borders - Light Mode === */
+  --border-primary: #D8D8D5;
+  --border-secondary: #E5E5E2;
+
+  /* === Accent - Warm Brass (Braun reference) === */
+  --accent: #B8956E;
+  --accent-hover: #A07D55;
+  --accent-muted: rgba(184, 149, 110, 0.15);
+
+  /* === Shadows - Minimal, Functional === */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* === Scrollbar === */
+  --scrollbar-track: #EFEFED;
+  --scrollbar-thumb: #D0D0CD;
+  --scrollbar-thumb-hover: #B0B0AD;
+
+  /* === Selection === */
+  --selection-bg: rgba(184, 149, 110, 0.25);
+
+  /* === Grid System === */
+  --grid-gap: 16px;
+  --grid-max-width: 1200px;
+
+  /* === State Colors - Light Mode === */
+  --state-running: #5D8A5D;
+  --state-running-bg: rgba(93, 138, 93, 0.12);
+  --state-running-border: rgba(93, 138, 93, 0.3);
+
+  --state-stopped: #A65D5D;
+  --state-stopped-bg: rgba(166, 93, 93, 0.12);
+  --state-stopped-border: rgba(166, 93, 93, 0.3);
+
+  --state-warning: #A68A5D;
+  --state-warning-bg: rgba(166, 138, 93, 0.12);
+  --state-warning-border: rgba(166, 138, 93, 0.3);
+
+  --state-diagnose: #7D6DA8;
+  --state-diagnose-bg: rgba(125, 109, 168, 0.12);
+  --state-diagnose-border: rgba(125, 109, 168, 0.3);
+}
+
+.dark {
+  /* === Backgrounds - Dark Mode (Cool Neutrals) === */
+  --bg-app: #141414;
+  --bg-sidebar: #1C1C1C;
+  --bg-card: #222222;
+  --bg-card-hover: #282828;
+  --bg-input: #1C1C1C;
+  --bg-elevated: #2A2A2A;
+  --bg-overlay: rgba(34, 34, 34, 0.92);
+  --bg-code: #1C1C1C;
+
+  /* === Text - Dark Mode === */
+  --text-primary: #ECECEC;
+  --text-secondary: #8A8A8A;
+  --text-tertiary: #5A5A5A;
+  --text-inverse: #141414;
+
+  /* === Borders - Dark Mode === */
+  --border-primary: #333333;
+  --border-secondary: #2A2A2A;
+
+  /* === Accent - Dark Mode (Lighter brass) === */
+  --accent: #C4A872;
+  --accent-hover: #D4B882;
+  --accent-muted: rgba(196, 168, 114, 0.12);
+
+  /* === Shadows - Dark Mode === */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 2px 12px rgba(0, 0, 0, 0.25);
+
+  /* === Scrollbar - Dark Mode === */
+  --scrollbar-track: #1C1C1C;
+  --scrollbar-thumb: #3A3A3A;
+  --scrollbar-thumb-hover: #4A4A4A;
+
+  /* === Selection - Dark Mode === */
+  --selection-bg: rgba(196, 168, 114, 0.3);
+
+  /* === State Colors - Dark Mode === */
+  --state-running: #6B9E6B;
+  --state-running-bg: rgba(107, 158, 107, 0.15);
+  --state-running-border: rgba(107, 158, 107, 0.35);
+
+  --state-stopped: #B86B6B;
+  --state-stopped-bg: rgba(184, 107, 107, 0.15);
+  --state-stopped-border: rgba(184, 107, 107, 0.35);
+
+  --state-warning: #B89A6B;
+  --state-warning-bg: rgba(184, 154, 107, 0.15);
+  --state-warning-border: rgba(184, 154, 107, 0.35);
+
+  --state-diagnose: #9180B8;
+  --state-diagnose-bg: rgba(145, 128, 184, 0.15);
+  --state-diagnose-border: rgba(145, 128, 184, 0.35);
+}

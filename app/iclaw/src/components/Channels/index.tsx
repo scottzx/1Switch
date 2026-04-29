@@ -6,10 +6,10 @@ import {
   MessageSquare,
   Check,
   X,
-    CheckCircle,
+  CheckCircle,
   XCircle,
   Play,
-    ChevronUp,
+  ChevronUp,
   Eye,
   EyeOff,
   Loader2,
@@ -191,8 +191,8 @@ export function Channels() {
 
   // 检查微信插件是否存在
   const checkWechatPlugin = () => {
-    // 检查 openclaw.json 中的插件安装配置
-    runCommand('grep -c "openclaw-weixin" /root/.openclaw/openclaw.json', '检测微信插件');
+    // 检查插件目录是否存在
+    runCommand('ls /root/.openclaw/extensions/openclaw-weixin/package.json 2>/dev/null && echo "已安装" || echo "未安装"', '检测微信插件');
   };
 
   // 删除微信插件
@@ -588,46 +588,44 @@ export function Channels() {
                         </div>
                       </div>
 
-                      {/* 配置表单 - 仅已配置时显示 */}
-                      {pluginInstalled === true && (
-                        <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
-                          <p className="text-sm font-medium text-content-primary mb-3">填写渠道参数</p>
-                          <div className="space-y-3">
-                            {renderFormField('appId', 'App ID', 'text', 'cli_xxx')}
-                            {renderFormField('appSecret', 'App Secret', 'text', 'App Secret')}
-                          </div>
-                          <p className="text-xs text-content-tertiary mt-3 mb-3">
-                            配置将自动写入 ~/.openclaw/openclaw.json
-                          </p>
-                          <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="w-full flex items-center justify-center gap-2 text-sm py-2.5 rounded-xl font-medium transition-all"
-                            style={{ backgroundColor: 'var(--accent)', color: 'var(--text-primary)' }}
-                          >
-                            {saving ? (
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Check size={15} />
-                            )}
-                            保存配置
-                          </button>
-                          {saveSuccessMsg && (
-                            <div className="mt-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 flex items-start gap-2">
-                              <CheckCircle size={16} className="text-green-400 mt-0.5 shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{saveSuccessMsg}</p>
-                              </div>
-                              <button
-                                onClick={() => setSaveSuccessMsg(null)}
-                                className="text-green-400 hover:text-green-300"
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
-                          )}
+                      {/* 配置表单 */}
+                      <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>
+                        <p className="text-sm font-medium text-content-primary mb-3">填写渠道参数</p>
+                        <div className="space-y-3">
+                          {renderFormField('appId', 'App ID', 'text', 'cli_xxx')}
+                          {renderFormField('appSecret', 'App Secret', 'text', 'App Secret')}
                         </div>
-                      )}
+                        <p className="text-xs text-content-tertiary mt-3 mb-3">
+                          配置将自动写入 ~/.openclaw/openclaw.json
+                        </p>
+                        <button
+                          onClick={handleSave}
+                          disabled={saving}
+                          className="w-full flex items-center justify-center gap-2 text-sm py-2.5 rounded-xl font-medium transition-all"
+                          style={{ backgroundColor: 'var(--accent)', color: 'var(--text-primary)' }}
+                        >
+                          {saving ? (
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Check size={15} />
+                          )}
+                          保存配置
+                        </button>
+                        {saveSuccessMsg && (
+                          <div className="mt-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30 flex items-start gap-2">
+                            <CheckCircle size={16} className="text-green-400 mt-0.5 shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{saveSuccessMsg}</p>
+                            </div>
+                            <button
+                              onClick={() => setSaveSuccessMsg(null)}
+                              className="text-green-400 hover:text-green-300"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
                       {/* 步骤 5: 运行网关 */}
                       <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-primary)' }}>

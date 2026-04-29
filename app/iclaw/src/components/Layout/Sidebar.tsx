@@ -9,7 +9,6 @@ import {
   Folder,
   Puzzle,
   X,
-  Workflow,
 } from 'lucide-react';
 import { PageType } from '../../App';
 import clsx from 'clsx';
@@ -33,7 +32,7 @@ const menuItems: { id: PageType; label: string; icon: React.ElementType }[] = [
   { id: 'ai', label: '模型配置', icon: Bot },
   { id: 'channels', label: '消息渠道', icon: MessageSquare },
   { id: 'skills', label: '技能管理', icon: Puzzle },
-  { id: 'qingflow-mcp', label: '轻流MCP', icon: Workflow },
+  // { id: 'qingflow-mcp', label: '轻流MCP', icon: Workflow },
   // { id: 'testing', label: '测试诊断', icon: FlaskConical },
   // { id: 'logs', label: '应用日志', icon: ScrollText },
   // { id: 'security', label: '安全防护', icon: ShieldAlert },

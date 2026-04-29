@@ -1,0 +1,40 @@
+/* iClaw Design System - Base CSS
+   Version: 1.0.0
+   Usage: @import this file in your main CSS entry point
+*/
+
+@import "./styles/variables.css";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+               'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--text-primary);
+}
+
+/* Dark mode toggle - add .dark class to <html> */
+.dark {
+  color-scheme: dark;
+}
+
+/* Subtle transitions */
+a, button {
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
