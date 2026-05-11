@@ -18,6 +18,7 @@
   },
   "sections": {
     "aiApplications": "AI Applications",
+    "aiTools": "AI Tools",
     "extendedApplications": "Extended Applications",
     "aiEcosystem": "AI Ecosystem",
     "aiTips": "AI Tips",
@@ -31,6 +32,22 @@
     "iclaw": {
       "name": "iClaw",
       "description": "iClaw device management and configuration console."
+    },
+    "ccRemote": {
+      "name": "CC Remote",
+      "description": "Remote AI agent terminal, access your AI workspace anywhere."
+    },
+    "ccConnect": {
+      "name": "CC Connect",
+      "description": "IM connection switching. Management port 9820, config at ~/.cc-connect/config.toml"
+    },
+    "ccSwitch": {
+      "name": "CC Switch",
+      "description": "LLM routing switch. Web UI port 3000, username admin"
+    },
+    "ccSkills": {
+      "name": "Skill Manager",
+      "description": "Local-first AI extension control center. Manage Skills, MCP servers, slash commands and CLI tools. Port 8082"
     },
     "claudeCode": {
       "name": "Claude Code",
@@ -74,7 +91,7 @@
     },
     "tailscale": {
       "name": "Tailscale",
-      "description": "Network tunneling and mesh VPN for secure remote access."
+      "description": "Zero-config VPN to securely connect to iClaw from anywhere via the Tailscale network. Run tailscale up after installation to get the login URL, then authorize to start using it."
     },
     "cronTask": {
       "name": "Scheduled Tasks",

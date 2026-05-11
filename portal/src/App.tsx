@@ -33,43 +33,31 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
         },
       ],
     },
-    // {
-    //   titleKey: 'sections.extendedApplications',
-    //   modules: [
-    //     {
-    //       id: 'qingliu',
-    //       nameKey: 'modules.qingliu.name',
-    //       descriptionKey: 'modules.qingliu.description',
-    //       type: 'route',
-    //       status: 'coming-soon',
-    //     },
-    //   ],
-    // },
     {
-      titleKey: 'sections.aiEcosystem',
+      titleKey: 'sections.aiTools',
       modules: [
         {
-          id: 'xfusion',
-          nameKey: 'modules.xfusion.name',
-          descriptionKey: 'modules.xfusion.description',
+          id: 'cc-connect',
+          nameKey: 'modules.ccConnect.name',
+          descriptionKey: 'modules.ccConnect.description',
           type: 'external',
-          url: 'https://llm.azopenai.com/', // 硬编码域名
+          url: `http://${deviceIp}:9820`,
           status: 'available',
         },
         {
-          id: 'clawhub',
-          nameKey: 'modules.clawhub.name',
-          descriptionKey: 'modules.clawhub.description',
+          id: 'cc-switch',
+          nameKey: 'modules.ccSwitch.name',
+          descriptionKey: 'modules.ccSwitch.description',
           type: 'external',
-          url: 'https://clawhub.ai/', // 硬编码域名
+          url: `http://${deviceIp}:3000`,
           status: 'available',
         },
         {
-          id: 'skillatlas',
-          nameKey: 'modules.skillatlas.name',
-          descriptionKey: 'modules.skillatlas.description',
+          id: 'cc-skills',
+          nameKey: 'modules.ccSkills.name',
+          descriptionKey: 'modules.ccSkills.description',
           type: 'external',
-          url: 'https://ai.skillatlas.cn/', // 硬编码域名
+          url: `http://${deviceIp}:8082`,
           status: 'available',
         },
       ],
@@ -82,7 +70,7 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
           nameKey: 'modules.openclawDocs.name',
           descriptionKey: 'modules.openclawDocs.description',
           type: 'external',
-          url: 'https://docs.openclaw.ai/zh-CN', // 硬编码域名
+          url: 'https://docs.openclaw.ai/zh-CN',
           status: 'available',
         },
         {
@@ -90,7 +78,23 @@ function buildAllSections(deviceIp: string): { titleKey: string; modules: Module
           nameKey: 'modules.iclawManual.name',
           descriptionKey: 'modules.iclawManual.description',
           type: 'external',
-          url: 'https://my.feishu.cn/wiki/XaVHwwfD5i6Lzhky9PFcLOJwnHd?from=from_copylink', // 硬编码域名
+          url: 'https://my.feishu.cn/wiki/XaVHwwfD5i6Lzhky9PFcLOJwnHd?from=from_copylink',
+          status: 'available',
+        },
+        {
+          id: 'skillatlas',
+          nameKey: 'modules.skillatlas.name',
+          descriptionKey: 'modules.skillatlas.description',
+          type: 'external',
+          url: 'https://ai.skillatlas.cn/',
+          status: 'available',
+        },
+        {
+          id: 'clawhub',
+          nameKey: 'modules.clawhub.name',
+          descriptionKey: 'modules.clawhub.description',
+          type: 'external',
+          url: 'https://clawhub.ai/',
           status: 'available',
         },
       ],

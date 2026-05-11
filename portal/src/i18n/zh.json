@@ -18,6 +18,7 @@
   },
   "sections": {
     "aiApplications": "AI 应用",
+    "aiTools": "AI 工具层",
     "extendedApplications": "扩展应用",
     "aiEcosystem": "AI 生态",
     "aiTips": "AI 技巧",
@@ -31,6 +32,22 @@
     "iclaw": {
       "name": "iClaw",
       "description": "iClaw 设备管理与配置控制台。"
+    },
+    "ccRemote": {
+      "name": "CC Remote",
+      "description": "远程智能体终端，随时随地访问您的 AI 工作区。"
+    },
+    "ccConnect": {
+      "name": "CC Connect",
+      "description": "IM 切换连接。管理端口 9820，配置 ~/.cc-connect/config.toml"
+    },
+    "ccSwitch": {
+      "name": "CC Switch",
+      "description": "LLM 路由切换。Web 界面端口 3000，用户名 admin"
+    },
+    "ccSkills": {
+      "name": "Skill Manager",
+      "description": "本地优先的 AI 扩展控制中心。管理 Skills、MCP 服务器、斜杠命令和 CLI 工具。端口 8082"
     },
     "claudeCode": {
       "name": "Claude Code",
@@ -74,7 +91,7 @@
     },
     "tailscale": {
       "name": "Tailscale",
-      "description": "网络隧道与 Mesh VPN，安全远程访问。"
+      "description": "零配置 VPN，通过 Tailscale 网络从任何地方安全地连接到 iClaw。安装后运行 tailscale up 获取登录 URL，授权后即可使用。"
     },
     "cronTask": {
       "name": "定时任务",

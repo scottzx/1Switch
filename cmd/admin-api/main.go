@@ -25,7 +25,7 @@ func main() {
 		port = "8080"
 	}
 
-	portalStaticDir := "."
+	portalStaticDir := "portal/dist"
 	iclawStaticDir := "app/iclaw"
 	terminalStaticDir := "app/terminal"
 
